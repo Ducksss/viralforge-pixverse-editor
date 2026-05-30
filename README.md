@@ -30,7 +30,7 @@
 
 The default workspace is the ViralForge Commerce campaign editor: sidebar navigation, PixVerse campaign preview, social preview, shot strip, commerce assistant rails, product hotspots, frame feedback, props, and listing assets stay on the main screen.
 
-The local NLE is spliced into that existing editor page as a compact Remotion Timeline bay. It uses the real MP4 footage in `src/assets/video/` as the campaign media pool, supports drag/drop and reorder, exposes trim/music/CTA controls, previews through Remotion Player, persists metadata locally, and exports a downloadable 9:16 MP4 through Mediabunny.
+The local NLE is spliced into that existing editor page as a compact Remotion Timeline bay. It uses the real MP4 footage in `src/assets/video/` as the campaign media pool, supports drag/drop and reorder, exposes trim/multitrack music/CTA controls, includes timeline jump-to-time controls, previews through Remotion Player, persists metadata locally, and exports a downloadable 9:16 MP4 through Mediabunny.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -63,7 +63,7 @@ Core editor flow:
 3. Scrub the 30-second assembled source cut built from `src/assets/video/video-1.mp4` and `src/assets/video/video-2.mp4`.
 4. Use the embedded Remotion Timeline bay to drag campaign shots or imported media into the local timeline.
 5. Reorder clips, select a clip, and trim source in/out.
-6. Select a music bed, adjust volume, and edit the CTA overlay shared by preview and export.
+6. Add one or more music beds to the A1 audio lane, adjust selected-bed timing/volume, and edit the CTA overlay shared by preview and export.
 7. Preview the local social cut through Remotion Player.
 8. Export a downloadable 9:16 MP4 through the Mediabunny orchestration layer.
 
@@ -118,7 +118,9 @@ npm run build
 - The bundled campaign uses two real MP4s from `src/assets/video/`, split into six 5-second shot cards with generated poster frames under `src/assets/video/posters/`.
 - Import local video/audio files into the embedded NLE media pool (metadata is probed with Mediabunny when possible).
 - Drag campaign shots or uploaded clips into the local timeline; reorder with drag-and-drop.
-- Trim clip source in/out, select a music bed, adjust volume, and edit the CTA overlay.
+- Click timeline ruler ticks or enter an exact jump time to seek the editor playhead.
+- Add multiple bundled or imported audio files to the A1 music lane, select an audio clip on the lane, then edit its source start, track start, duration, and volume.
+- Trim clip source in/out and edit the CTA overlay.
 - Export a 9:16 MP4 from the embedded timeline without leaving the campaign workspace.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -127,7 +129,7 @@ npm run build
 
 - V1 is fully browser-local: no upload, no authentication, no server rendering.
 - Uploaded file blobs are session-only. After a hard refresh, saved metadata remains, but uploads show `Reselect required`.
-- Source clip audio is muted in v1 export; the selected music bed is the supported audio track.
+- Source clip audio is muted in v1 export; placed A1 music-bed clips are the supported audio track.
 - Primary export target is 9:16 MP4; other aspect ratios are editable project settings.
 - Real MP4 export depends on the browser supporting the required AVC/AAC encoding path exposed through Mediabunny.
 

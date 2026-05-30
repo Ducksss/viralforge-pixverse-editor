@@ -24,8 +24,9 @@ or server rendering in v1.
 ## 3. Goals
 
 - Make the first screen feel like a real editor.
-- Support import/select media, drag/drop editing, clip reorder, trim, music,
-  CTA overlay, preview, persistence, and export.
+- Support import/select media, drag/drop editing, clip reorder, trim, precise
+  timeline seek, multitrack music beds, CTA overlay, preview, persistence, and
+  export.
 - Keep all state in one timeline model so preview and export cannot drift.
 - Keep v1 fully browser-local and transparent about persistence limits.
 - Preserve the older campaign workspace at `/campaign` for regression and
@@ -47,11 +48,13 @@ or server rendering in v1.
 2. Seller picks bundled real MP4 cuts from `src/assets/video/` or imports local video/audio.
 3. Seller drags clips from the media pool into the timeline.
 4. Seller reorders clips, selects clips, and trims source in/out.
-5. Seller chooses a music bed and edits music volume/start.
-6. Seller edits the CTA overlay.
-7. Seller previews through Remotion Player.
-8. Seller exports a 9:16 MP4 through Mediabunny.
-9. Seller downloads the resulting blob locally.
+5. Seller jumps to exact timeline times with the scrubber, ruler, or jump field.
+6. Seller adds one or more music beds to the A1 lane and edits music volume,
+   source start, track start, and duration.
+7. Seller edits the CTA overlay.
+8. Seller previews through Remotion Player.
+9. Seller exports a 9:16 MP4 through Mediabunny.
+10. Seller downloads the resulting blob locally.
 
 ## 6. Functional Requirements
 
@@ -79,19 +82,22 @@ or server rendering in v1.
 - Fall back to safe editable placeholder metadata when metadata parsing fails.
 - Mark restored uploaded media as `Reselect required` after hard refresh.
 - Support drag/drop from media cards to the timeline.
-- Provide explicit Add/Use buttons for keyboard and testability.
+- Provide explicit Add/Add audio buttons for keyboard and testability.
 
 ### Timeline
 
 - Use a custom timeline model, not DOM-derived state.
 - Represent media with `MediaAsset`.
 - Represent timeline clips with `TimelineClip`.
-- Represent music with `MusicTrack`.
+- Represent placed audio with `AudioClip`.
+- Keep `MusicTrack` as the legacy primary-bed compatibility view.
 - Represent CTA overlays with `TextOverlay`.
 - Keep clips gapless after add, trim, or reorder.
 - Resolve selected clip from playhead position.
 - Support sortable clip reorder with `@dnd-kit`.
 - Show video, music, and text lanes.
+- Support ruler clicks and exact jump-to-time input for playhead seeking.
+- Support multiple A1 audio clips from bundled or imported audio assets.
 
 ### Inspector
 
@@ -100,7 +106,8 @@ or server rendering in v1.
 - Show selected clip title and selected duration.
 - Allow source in/out trimming with bounds.
 - Allow moving the selected clip earlier or later.
-- Allow music track, music volume, and music start edits.
+- Allow selected audio clip track, volume, source start, track start, and
+  duration edits.
 - Allow CTA text, start, and duration edits.
 
 ### Preview
@@ -122,15 +129,15 @@ or server rendering in v1.
 - Use Mediabunny for browser codec support checks and MP4 writing.
 - Render video frames through a canvas sample pipeline.
 - Draw active clip visuals, safe zones, and CTA text into the export canvas.
-- Add the selected music bed as the supported audio track.
+- Mix placed A1 music-bed clips as the supported audio track.
 - Report progress, success, cancel, and error states.
 - Return a downloadable MP4 blob named `viralforge-summer-glow-9x16.mp4`.
 
 ### Persistence
 
 - Persist timeline metadata to `localStorage`.
-- Persist trims, clip order, playhead, music settings, CTA overlay, and project
-  settings.
+- Persist trims, clip order, playhead, audio clip placement/settings, CTA
+  overlay, and project settings.
 - Do not persist uploaded `File` objects or object URLs.
 - Restore uploaded assets as metadata-only rows requiring reselect.
 
@@ -156,7 +163,9 @@ Core types live in `src/editor/timeline.js` as JSDoc typedefs:
 
 - `MediaAsset`: bundled real-footage, uploaded, or generated media metadata.
 - `TimelineClip`: a placed clip with source in/out and gapless start time.
-- `MusicTrack`: selected music asset, enabled state, start trim, and volume.
+- `AudioClip`: placed audio bed with asset, A1 track id, start, duration,
+  source trim, volume, and enabled state.
+- `MusicTrack`: compatibility projection of the selected/primary audio bed.
 - `TextOverlay`: CTA text, timing, and position.
 - `TimelineProject`: complete editor state for preview, persistence, and
   export.
@@ -173,21 +182,23 @@ npm run build
 
 Coverage expectations:
 
-- Timeline helpers: duration, reorder, trim bounds, playhead resolution,
-  gapless sequencing, CTA timing, and serialization.
+- Timeline helpers: duration, reorder, trim bounds, audio clip placement,
+  playhead resolution, gapless sequencing, CTA timing, migration, and
+  serialization.
 - Media helpers: mocked files and mocked Mediabunny metadata responses.
 - Export orchestration: unsupported codecs, cancel path, progress events, and
   successful MP4 blob result.
-- UI: real media import/add, reorder, trim, music selection, CTA editing,
-  persistence/reload, upload reselect placeholder, and export status.
+- UI: real media import/add, reorder, trim, exact timeline seek, multiple A1
+  music beds, audio clip editing, CTA editing, persistence/reload, upload
+  reselect placeholder, and export status.
 - Legacy campaign workspace: preserved `/campaign` behavior.
 
 ## 10. Risks and Follow-Ups
 
 - Browser MP4 encoding support varies by platform and codec availability.
 - Large local media can be memory-intensive because v1 renders through canvas.
-- Real source audio mixing is intentionally deferred until the timeline model
-  supports per-clip audio policy.
+- Real source clip audio mixing is intentionally deferred; v1 mixes placed A1
+  music-bed clips and keeps video source audio muted.
 - Uploaded media persistence needs IndexedDB or the File System Access API for
   a permanent local-library version.
 - Server/cloud rendering would be needed for reliable long-form export and

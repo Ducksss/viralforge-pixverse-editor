@@ -1,4 +1,4 @@
-import { AbsoluteFill, Img, Sequence, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Freeze, Img, Sequence, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { getClipAtPlayhead } from "../editor/timeline.js";
 
 function getAsset(project, clip) {
@@ -22,24 +22,30 @@ export function EditorComposition({ project }) {
   const mediaSrc = asset?.objectUrl || asset?.src;
   const clipStartFrame = Math.round((clip?.startSeconds || 0) * fps);
   const clipDurationFrames = Math.max(1, Math.round((clip?.durationSeconds || 0) * fps));
+  const clipEndFrame = clipStartFrame + clipDurationFrames;
+  const holdFrame = Math.max(clipStartFrame, clipEndFrame - 1);
+  const isHoldingLastFrame = Boolean(clip && frame >= clipEndFrame);
   const sourceStartFrame = Math.round((clip?.sourceInSeconds || 0) * fps);
+  const videoLayer = mediaSrc && asset?.kind === "video" && clip ? (
+    <Sequence from={clipStartFrame} durationInFrames={clipDurationFrames} key={clip.id}>
+      <Video
+        muted
+        src={mediaSrc}
+        startFrom={sourceStartFrame}
+        style={{
+          height: "100%",
+          objectFit: "cover",
+          transform: `scale(${subtleZoom})`,
+          width: "100%",
+        }}
+      />
+    </Sequence>
+  ) : null;
 
   return (
     <AbsoluteFill style={{ background: "#07090d", color: "white", overflow: "hidden" }}>
-      {mediaSrc && asset?.kind === "video" && clip ? (
-        <Sequence from={clipStartFrame} durationInFrames={clipDurationFrames} key={clip.id}>
-          <Video
-            muted
-            src={mediaSrc}
-            startFrom={sourceStartFrame}
-            style={{
-              height: "100%",
-              objectFit: "cover",
-              transform: `scale(${subtleZoom})`,
-              width: "100%",
-            }}
-          />
-        </Sequence>
+      {videoLayer ? (
+        isHoldingLastFrame ? <Freeze frame={holdFrame}>{videoLayer}</Freeze> : videoLayer
       ) : asset?.posterSrc ? (
         <Img
           src={asset.posterSrc}

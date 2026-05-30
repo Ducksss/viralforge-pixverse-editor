@@ -2,13 +2,19 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App.jsx";
 
-vi.mock("@remotion/player", () => ({
-  Player: ({ inputProps }) => (
-    <div data-testid="remotion-player">
-      Remotion viewer {inputProps.project.aspectRatio}
-    </div>
-  ),
-}));
+vi.mock("@remotion/player", async () => {
+  const React = await vi.importActual("react");
+  return {
+    Player: React.forwardRef(({ inputProps }, ref) => {
+      React.useImperativeHandle(ref, () => ({ seekTo: () => {} }));
+      return (
+        <div data-testid="remotion-player">
+          Remotion viewer {inputProps.project.aspectRatio}
+        </div>
+      );
+    }),
+  };
+});
 
 describe("local NLE editor route", () => {
   beforeEach(() => {

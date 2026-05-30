@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -53,15 +53,20 @@ import { editorSnapshot } from "./editorData.js";
 import { inspectMediaFile } from "./editor/media.js";
 import {
   addAssetToTimeline,
+  addAudioAssetToTimeline,
   addMediaAsset,
   computeTimelineDuration,
   createInitialTimelineProject,
+  getAudioTrackClips,
   getMusicAsset,
   getSelectedClip,
+  removeAudioClip,
   reorderTimelineClip,
+  selectAudioClip,
   selectTimelineClip,
   setPlayhead,
   trimTimelineClip,
+  updateAudioClip,
   updateMusicTrack,
   updateTextOverlay,
 } from "./editor/timeline.js";
@@ -248,7 +253,7 @@ function Topbar({ project, durationSeconds, exportResult, onExport }) {
   );
 }
 
-function DraggableAssetCard({ asset, onAdd, onUseMusic }) {
+function DraggableAssetCard({ asset, onAdd, onAddAudio }) {
   const { attributes, isDragging, listeners, setNodeRef, transform } = useDraggable({
     id: `asset:${asset.id}`,
     data: {
@@ -273,9 +278,9 @@ function DraggableAssetCard({ asset, onAdd, onUseMusic }) {
       style={style}
     >
       <button
-        aria-label={isAudio ? `Use ${asset.name} as music` : `Add ${asset.name} to timeline`}
+        aria-label={isAudio ? `Add ${asset.name} to audio track` : `Add ${asset.name} to timeline`}
         className="media-thumb"
-        onClick={() => (isAudio ? onUseMusic(asset.id) : onAdd(asset.id))}
+        onClick={() => (isAudio ? onAddAudio(asset.id) : onAdd(asset.id))}
         type="button"
       >
         {asset.posterSrc ? (
@@ -304,17 +309,17 @@ function DraggableAssetCard({ asset, onAdd, onUseMusic }) {
       </div>
       <button
         className="compact-command"
-        onClick={() => (isAudio ? onUseMusic(asset.id) : onAdd(asset.id))}
+        onClick={() => (isAudio ? onAddAudio(asset.id) : onAdd(asset.id))}
         type="button"
       >
         {isAudio ? <Volume2 size={15} /> : <Plus size={15} />}
-        {isAudio ? "Use" : "Add"}
+        {isAudio ? "Add audio" : "Add"}
       </button>
     </article>
   );
 }
 
-function MediaPool({ project, onAddAssetToTimeline, onImportFiles, onUseMusic }) {
+function MediaPool({ project, onAddAssetToTimeline, onAddAudioAssetToTimeline, onImportFiles }) {
   const videoAssets = project.mediaAssets.filter((asset) => asset.kind !== "audio");
   const audioAssets = project.mediaAssets.filter((asset) => asset.kind === "audio");
 
@@ -346,7 +351,7 @@ function MediaPool({ project, onAddAssetToTimeline, onImportFiles, onUseMusic })
               asset={asset}
               key={asset.id}
               onAdd={onAddAssetToTimeline}
-              onUseMusic={onUseMusic}
+              onAddAudio={onAddAudioAssetToTimeline}
             />
           ))}
         </div>
@@ -360,7 +365,7 @@ function MediaPool({ project, onAddAssetToTimeline, onImportFiles, onUseMusic })
               asset={asset}
               key={asset.id}
               onAdd={onAddAssetToTimeline}
-              onUseMusic={onUseMusic}
+              onAddAudio={onAddAudioAssetToTimeline}
             />
           ))}
         </div>
@@ -370,7 +375,19 @@ function MediaPool({ project, onAddAssetToTimeline, onImportFiles, onUseMusic })
 }
 
 function Viewer({ durationSeconds, isPlaying, onPlayheadChange, onTogglePlay, project, selectedClip }) {
+  const playerRef = useRef(null);
   const playerDuration = Math.max(1, Math.ceil(durationSeconds * project.fps));
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player?.seekTo) {
+      return;
+    }
+
+    const targetSeconds = Math.min(Math.max(0, project.playheadSeconds), durationSeconds);
+    const targetFrame = Math.max(0, Math.min(playerDuration - 1, Math.round(targetSeconds * project.fps)));
+    player.seekTo(targetFrame);
+  }, [durationSeconds, playerDuration, project.fps, project.playheadSeconds]);
 
   return (
     <section className="viewer-panel">
@@ -397,6 +414,7 @@ function Viewer({ durationSeconds, isPlaying, onPlayheadChange, onTogglePlay, pr
           fps={project.fps}
           inputProps={{ project }}
           loop
+          ref={playerRef}
           style={{
             aspectRatio: `${project.width} / ${project.height}`,
             height: "auto",
@@ -441,6 +459,46 @@ function Viewer({ durationSeconds, isPlaying, onPlayheadChange, onTogglePlay, pr
   );
 }
 
+function getTrackPlacementStyle(clip, durationSeconds, minWidthPercent = 8) {
+  const timelineDuration = Math.max(
+    1,
+    durationSeconds,
+    (clip.startSeconds || 0) + (clip.durationSeconds || 0),
+  );
+  const leftPercent = Math.max(0, Math.min(99, ((clip.startSeconds || 0) / timelineDuration) * 100));
+  const rawWidthPercent = ((clip.durationSeconds || 0.5) / timelineDuration) * 100;
+  const widthPercent = Math.max(
+    1,
+    Math.min(100 - leftPercent, Math.max(minWidthPercent, rawWidthPercent)),
+  );
+
+  return {
+    left: `${roundStylePercent(leftPercent)}%`,
+    width: `${roundStylePercent(widthPercent)}%`,
+  };
+}
+
+function roundStylePercent(value) {
+  return String(Math.round(value * 100) / 100);
+}
+
+function stackTimelineClips(clips) {
+  const laneEnds = [];
+  const stackedClips = clips.map((clip) => {
+    const clipStart = clip.startSeconds || 0;
+    const clipEnd = clipStart + (clip.durationSeconds || 0);
+    const reusableLaneIndex = laneEnds.findIndex((laneEnd) => clipStart >= laneEnd - 0.001);
+    const laneIndex = reusableLaneIndex === -1 ? laneEnds.length : reusableLaneIndex;
+    laneEnds[laneIndex] = clipEnd;
+    return { ...clip, laneIndex };
+  });
+
+  return {
+    laneCount: Math.max(1, laneEnds.length),
+    stackedClips,
+  };
+}
+
 function SortableTimelineClip({ asset, clip, durationSeconds, isSelected, onSelect }) {
   const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
     id: clip.id,
@@ -481,12 +539,40 @@ function SortableTimelineClip({ asset, clip, durationSeconds, isSelected, onSele
   );
 }
 
+function AudioTimelineClip({ asset, clip, durationSeconds, isSelected, laneIndex, onSelect }) {
+  const style = {
+    ...getTrackPlacementStyle(clip, durationSeconds, 10),
+    top: `${26 + laneIndex * 44}px`,
+  };
+
+  return (
+    <article
+      className={`audio-clip ${isSelected ? "is-selected" : ""}`}
+      style={style}
+    >
+      <button
+        aria-label={`Audio clip ${clip.title}`}
+        onClick={() => onSelect(clip.id)}
+        type="button"
+      >
+        <Music2 size={16} />
+        <strong>{asset?.name || clip.title}</strong>
+        <small>
+          {formatSeconds(clip.startSeconds)} - {formatDuration(clip.durationSeconds)} · {Math.round(clip.volume * 100)}%
+        </small>
+      </button>
+    </article>
+  );
+}
+
 function Timeline({
   durationSeconds,
+  audioClips,
   musicAsset,
   onAddAssetToTimeline,
   onDropClip,
   onPlayheadChange,
+  onSelectAudioClip,
   onSelectClip,
   project,
 }) {
@@ -494,7 +580,27 @@ function Timeline({
     id: "timeline-drop",
     data: { type: "timeline" },
   });
+  const [seekDraft, setSeekDraft] = useState(String(project.playheadSeconds));
   const ticks = Array.from({ length: Math.max(2, Math.ceil(durationSeconds / 5) + 1) }, (_, index) => index * 5);
+  const selectedAudioClip = audioClips.find((clip) => clip.id === project.selectedAudioClipId) || audioClips[0];
+  const { laneCount: audioLaneCount, stackedClips: stackedAudioClips } = useMemo(
+    () => stackTimelineClips(audioClips),
+    [audioClips],
+  );
+
+  useEffect(() => {
+    setSeekDraft(String(project.playheadSeconds));
+  }, [project.playheadSeconds]);
+
+  function handleJump(event) {
+    event.preventDefault();
+    const value = Number(seekDraft);
+    if (Number.isNaN(value)) {
+      return;
+    }
+
+    onPlayheadChange(value);
+  }
 
   return (
     <section
@@ -519,16 +625,36 @@ function Timeline({
         </div>
         <div className="timeline-summary">
           <span>{project.timelineClips.length} clips</span>
+          <span>{audioClips.length} audio</span>
           <span>{formatDuration(durationSeconds)}</span>
         </div>
       </div>
 
-      <div className="time-ruler">
-        {ticks.map((tick) => (
-          <button key={tick} onClick={() => onPlayheadChange(tick)} type="button">
-            {formatSeconds(tick)}
+      <div className="timeline-navigation">
+        <div className="time-ruler">
+          {ticks.map((tick) => (
+            <button key={tick} onClick={() => onPlayheadChange(tick)} type="button">
+              {formatSeconds(tick)}
+            </button>
+          ))}
+        </div>
+        <form className="timeline-jump" onSubmit={handleJump}>
+          <label>
+            Jump
+            <input
+              aria-label="Jump to timeline time"
+              max={durationSeconds}
+              min="0"
+              onChange={(event) => setSeekDraft(event.target.value)}
+              step="0.1"
+              type="number"
+              value={seekDraft}
+            />
+          </label>
+          <button aria-label="Apply timeline seek" type="submit">
+            <SkipForward size={14} />
           </button>
-        ))}
+        </form>
       </div>
 
       <div className="track-row">
@@ -557,9 +683,25 @@ function Timeline({
 
       <div className="track-row audio-row">
         <div className="track-label">A1</div>
-        <div className="music-bed">
-          <Music2 size={16} />
-          <span>Music: {musicAsset?.name || "None"} at {Math.round(project.musicTrack.volume * 100)}%</span>
+        <div
+          className="timeline-track-items audio-track-items"
+          data-testid="audio-track"
+          style={{ minHeight: `${Math.max(76, 34 + audioLaneCount * 44)}px` }}
+        >
+          <span className="audio-track-summary">
+            Music: {musicAsset?.name || "None"} at {Math.round((selectedAudioClip?.volume ?? project.musicTrack.volume) * 100)}%
+          </span>
+          {stackedAudioClips.map((clip) => (
+            <AudioTimelineClip
+              asset={project.mediaAssets.find((asset) => asset.id === clip.assetId)}
+              clip={clip}
+              durationSeconds={durationSeconds}
+              isSelected={clip.id === project.selectedAudioClipId}
+              key={clip.id}
+              laneIndex={clip.laneIndex}
+              onSelect={onSelectAudioClip}
+            />
+          ))}
         </div>
       </div>
 
@@ -593,17 +735,21 @@ function AspectControl({ project, onChangeAspect }) {
 }
 
 function Inspector({
+  audioClips,
   mediaAssets,
   musicAsset,
   onChangeAspect,
+  onRemoveAudioClip,
   onMoveSelected,
   onTrimSelected,
+  onUpdateAudioClip,
   onUpdateMusic,
   onUpdateOverlay,
   project,
   selectedClip,
 }) {
   const overlay = project.textOverlays[0];
+  const selectedAudioClip = audioClips.find((clip) => clip.id === project.selectedAudioClipId) || audioClips[0] || null;
   const [trimDraft, setTrimDraft] = useState({ in: "", out: "" });
   const [volumeDraft, setVolumeDraft] = useState(String(Math.round(project.musicTrack.volume * 100)));
 
@@ -617,8 +763,8 @@ function Inspector({
   }, [selectedClip?.id]);
 
   useEffect(() => {
-    setVolumeDraft(String(Math.round(project.musicTrack.volume * 100)));
-  }, [project.musicTrack.assetId]);
+    setVolumeDraft(String(Math.round((selectedAudioClip?.volume ?? project.musicTrack.volume) * 100)));
+  }, [project.musicTrack.assetId, selectedAudioClip?.id, selectedAudioClip?.volume]);
 
   function handleTrimDraft(field, value) {
     setTrimDraft((current) => ({ ...current, [field]: value }));
@@ -719,12 +865,22 @@ function Inspector({
 
       <section className="inspector-section">
         <h3>Music</h3>
+        {selectedAudioClip ? (
+          <div className="selected-clip-card audio-selection-card">
+            <strong>{selectedAudioClip.title}</strong>
+            <span>
+              A1 starts {formatSeconds(selectedAudioClip.startSeconds)} · {formatDuration(selectedAudioClip.durationSeconds)}
+            </span>
+          </div>
+        ) : (
+          <p className="muted-copy">Add a music bed from the media pool to build an A1 track.</p>
+        )}
         <label>
           Music track
           <select
             aria-label="Music track"
             onChange={(event) => onUpdateMusic({ assetId: event.target.value, enabled: true })}
-            value={project.musicTrack.assetId}
+            value={selectedAudioClip?.assetId || project.musicTrack.assetId}
           >
             {mediaAssets.filter((asset) => asset.kind === "audio").map((asset) => (
               <option key={asset.id} value={asset.id}>{asset.name}</option>
@@ -733,9 +889,9 @@ function Inspector({
         </label>
         <div className="inspector-grid">
           <label>
-            Music volume
+            Audio clip volume
             <input
-              aria-label="Music volume"
+              aria-label="Music volume / audio clip volume"
               max="100"
               min="0"
               onChange={(event) => handleVolumeDraft(event.target.value)}
@@ -745,17 +901,47 @@ function Inspector({
             />
           </label>
           <label>
-            Music start
+            Source start
             <input
-              aria-label="Music start"
+              aria-label="Music start / audio source start"
               min="0"
               onChange={(event) => onUpdateMusic({ trimStartSeconds: Number(event.target.value) || 0 })}
               step="0.5"
               type="number"
-              value={project.musicTrack.trimStartSeconds}
+              value={selectedAudioClip?.trimStartSeconds ?? project.musicTrack.trimStartSeconds}
             />
           </label>
         </div>
+        <div className="inspector-grid">
+          <label>
+            Track start
+            <input
+              aria-label="Audio clip track start"
+              min="0"
+              onChange={(event) => selectedAudioClip && onUpdateAudioClip(selectedAudioClip.id, { startSeconds: Number(event.target.value) || 0 })}
+              step="0.5"
+              type="number"
+              value={selectedAudioClip?.startSeconds ?? 0}
+            />
+          </label>
+          <label>
+            Duration
+            <input
+              aria-label="Audio clip duration"
+              min="0.5"
+              onChange={(event) => selectedAudioClip && onUpdateAudioClip(selectedAudioClip.id, { durationSeconds: Number(event.target.value) || 0.5 })}
+              step="0.5"
+              type="number"
+              value={selectedAudioClip?.durationSeconds ?? 0.5}
+            />
+          </label>
+        </div>
+        {selectedAudioClip ? (
+          <button className="compact-command danger-command" onClick={() => onRemoveAudioClip(selectedAudioClip.id)} type="button">
+            <X size={15} />
+            Remove selected audio
+          </button>
+        ) : null}
         <p className="muted-copy">{musicAsset?.mood || "Select a music bed"} - source clip audio muted in v1.</p>
       </section>
 
@@ -940,6 +1126,7 @@ function LocalNleEditorApp() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const durationSeconds = computeTimelineDuration(project);
   const selectedClip = getSelectedClip(project);
+  const audioClips = getAudioTrackClips(project);
   const musicAsset = getMusicAsset(project);
 
   function commitProject(updater) {
@@ -953,6 +1140,10 @@ function LocalNleEditorApp() {
 
   function handleAddAssetToTimeline(assetId) {
     commitProject((currentProject) => addAssetToTimeline(currentProject, assetId));
+  }
+
+  function handleAddAudioAssetToTimeline(assetId) {
+    commitProject((currentProject) => addAudioAssetToTimeline(currentProject, assetId));
   }
 
   async function handleImportFiles(event) {
@@ -969,8 +1160,16 @@ function LocalNleEditorApp() {
     event.target.value = "";
   }
 
-  function handleUseMusic(assetId) {
-    commitProject((currentProject) => updateMusicTrack(currentProject, { assetId, enabled: true }));
+  function handleSelectAudioClip(audioClipId) {
+    commitProject((currentProject) => selectAudioClip(currentProject, audioClipId));
+  }
+
+  function handleUpdateAudioClip(audioClipId, changes) {
+    commitProject((currentProject) => updateAudioClip(currentProject, audioClipId, changes));
+  }
+
+  function handleRemoveAudioClip(audioClipId) {
+    commitProject((currentProject) => removeAudioClip(currentProject, audioClipId));
   }
 
   function handleSelectClip(clipId) {
@@ -1124,8 +1323,8 @@ function LocalNleEditorApp() {
           <div className="davinci-editor-grid">
             <MediaPool
               onAddAssetToTimeline={handleAddAssetToTimeline}
+              onAddAudioAssetToTimeline={handleAddAudioAssetToTimeline}
               onImportFiles={handleImportFiles}
-              onUseMusic={handleUseMusic}
               project={project}
             />
             <Viewer
@@ -1137,22 +1336,27 @@ function LocalNleEditorApp() {
               selectedClip={selectedClip}
             />
             <Inspector
+              audioClips={audioClips}
               mediaAssets={project.mediaAssets}
               musicAsset={musicAsset}
               onChangeAspect={handleChangeAspect}
+              onRemoveAudioClip={handleRemoveAudioClip}
               onMoveSelected={handleMoveSelected}
               onTrimSelected={handleTrimSelected}
+              onUpdateAudioClip={handleUpdateAudioClip}
               onUpdateMusic={(changes) => commitProject((currentProject) => updateMusicTrack(currentProject, changes))}
               onUpdateOverlay={handleUpdateOverlay}
               project={project}
               selectedClip={selectedClip}
             />
             <Timeline
+              audioClips={audioClips}
               durationSeconds={durationSeconds}
               musicAsset={musicAsset}
               onAddAssetToTimeline={handleAddAssetToTimeline}
               onDropClip={handleDropClip}
               onPlayheadChange={handlePlayheadChange}
+              onSelectAudioClip={handleSelectAudioClip}
               onSelectClip={handleSelectClip}
               project={project}
             />
