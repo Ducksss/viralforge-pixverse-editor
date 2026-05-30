@@ -1,0 +1,1068 @@
+/* Scoped local NLE editor styles. Keep every app rule under .davinci-shell. */
+body:has(.davinci-shell) {
+  background: #0a0e12;
+}
+
+.davinci-shell {
+  --nle-bg: #0a0e12;
+  --nle-sidebar: #0b1217;
+  --nle-panel: #141a20;
+  --nle-panel-soft: #1a2229;
+  --nle-panel-strong: #202a32;
+  --nle-line: rgba(255, 255, 255, 0.11);
+  --nle-line-strong: rgba(255, 255, 255, 0.2);
+  --nle-ink: #eef4f4;
+  --nle-muted: #a7b0b7;
+  --nle-faint: #77828b;
+  --nle-teal: #1fd0bd;
+  --nle-teal-strong: #16ad9f;
+  --nle-yellow: #f3c55b;
+  --nle-red: #ef6d6d;
+  --nle-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 100vh;
+  min-width: 0;
+  color: var(--nle-ink);
+  background:
+    radial-gradient(circle at 52% -12%, rgba(31, 208, 189, 0.18), transparent 28rem),
+    linear-gradient(180deg, #0d1318 0%, #090d10 100%);
+}
+
+.davinci-shell,
+.davinci-shell * {
+  box-sizing: border-box;
+}
+
+.davinci-shell button,
+.davinci-shell input,
+.davinci-shell select,
+.davinci-shell textarea {
+  color: inherit;
+  font: inherit;
+}
+
+.davinci-shell button {
+  cursor: pointer;
+}
+
+.davinci-shell button:focus-visible,
+.davinci-shell input:focus-visible,
+.davinci-shell select:focus-visible,
+.davinci-shell textarea:focus-visible,
+.davinci-shell a:focus-visible {
+  outline: 2px solid var(--nle-teal);
+  outline-offset: 2px;
+}
+
+.davinci-shell img {
+  display: block;
+  max-width: 100%;
+}
+
+.davinci-shell .editor-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100vh;
+  min-height: 0;
+  padding: 18px 14px;
+  background:
+    radial-gradient(circle at 74% 20%, rgba(31, 208, 189, 0.16), transparent 13rem),
+    linear-gradient(180deg, #101820 0%, #0a0f13 100%);
+  border-right: 1px solid var(--nle-line);
+  overflow-y: auto;
+  scrollbar-color: rgba(31, 208, 189, 0.55) transparent;
+}
+
+.davinci-shell .brand-lockup {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.davinci-shell .brand-mark {
+  display: grid;
+  width: 42px;
+  height: 34px;
+  place-items: center;
+  color: #07110d;
+  background: linear-gradient(135deg, #1fd0bd, #8bf3d4);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.davinci-shell .brand-lockup h1,
+.davinci-shell .brand-lockup p,
+.davinci-shell .editor-topbar h2,
+.davinci-shell .editor-topbar p,
+.davinci-shell .panel-header h2,
+.davinci-shell .panel-header p,
+.davinci-shell .assistant-title h2,
+.davinci-shell .media-section h3,
+.davinci-shell .inspector-section h3,
+.davinci-shell .project-brief p {
+  margin: 0;
+}
+
+.davinci-shell .brand-lockup h1 {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.davinci-shell .brand-lockup p,
+.davinci-shell .eyebrow {
+  color: var(--nle-teal);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.davinci-shell .workspace-nav {
+  display: grid;
+  gap: 7px;
+}
+
+.davinci-shell .workspace-nav button,
+.davinci-shell .sidebar-reset,
+.davinci-shell .primary-action,
+.davinci-shell .download-link,
+.davinci-shell .compact-command,
+.davinci-shell .icon-label-button,
+.davinci-shell .segmented-control button,
+.davinci-shell .move-controls button,
+.davinci-shell .transport-bar button,
+.davinci-shell .assistant-collapse-toggle,
+.davinci-shell .time-ruler button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 34px;
+  color: var(--nle-ink);
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--nle-line);
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.davinci-shell .workspace-nav button {
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0 11px;
+  color: var(--nle-muted);
+}
+
+.davinci-shell .workspace-nav button.is-active,
+.davinci-shell .primary-action,
+.davinci-shell .segmented-control button.is-active,
+.davinci-shell .audition-person-list button.is-selected,
+.davinci-shell .generate-audition-button {
+  color: #07110d;
+  background: var(--nle-teal);
+  border-color: var(--nle-teal);
+}
+
+.davinci-shell .project-brief,
+.davinci-shell .guardrail-pill,
+.davinci-shell .media-pool,
+.davinci-shell .viewer-panel,
+.davinci-shell .timeline-panel,
+.davinci-shell .inspector-panel,
+.davinci-shell .assistant-panel,
+.davinci-shell .deliver-panel {
+  border: 1px solid var(--nle-line);
+  border-radius: 8px;
+  background: rgba(20, 26, 32, 0.9);
+  box-shadow: var(--nle-shadow);
+}
+
+.davinci-shell .project-brief {
+  display: grid;
+  gap: 12px;
+  margin-top: auto;
+  padding: 14px;
+  box-shadow: none;
+}
+
+.davinci-shell .project-brief h2 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.22;
+}
+
+.davinci-shell .project-brief dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.davinci-shell .project-brief dl div,
+.davinci-shell .setting-row,
+.davinci-shell .metric-row,
+.davinci-shell .export-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.davinci-shell .project-brief dt,
+.davinci-shell .setting-row span,
+.davinci-shell .metric-row span {
+  color: var(--nle-muted);
+  font-size: 12px;
+}
+
+.davinci-shell .project-brief dd {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 850;
+  text-align: right;
+}
+
+.davinci-shell .guardrail-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  color: #d7fff6;
+  background: rgba(31, 208, 189, 0.12);
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.davinci-shell .sidebar-reset {
+  margin-top: auto;
+  color: var(--nle-muted);
+}
+
+.davinci-shell .editor-workspace {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+}
+
+.davinci-shell .editor-topbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+  min-height: 72px;
+  padding: 13px 16px;
+  background: rgba(10, 14, 18, 0.72);
+  border: 1px solid var(--nle-line);
+  border-radius: 8px;
+}
+
+.davinci-shell .editor-topbar h2 {
+  overflow: hidden;
+  font-size: 22px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.davinci-shell .topbar-meta,
+.davinci-shell .topbar-actions,
+.davinci-shell .viewer-badges,
+.davinci-shell .timeline-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.davinci-shell .topbar-meta span,
+.davinci-shell .viewer-badges span,
+.davinci-shell .timeline-summary span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  color: var(--nle-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--nle-line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.davinci-shell .topbar-actions {
+  justify-content: flex-end;
+}
+
+.davinci-shell .primary-action,
+.davinci-shell .download-link {
+  min-height: 38px;
+  padding: 0 13px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.davinci-shell .download-link {
+  background: var(--nle-panel-strong);
+}
+
+.davinci-shell .davinci-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.78fr) minmax(320px, 1.28fr) minmax(270px, 0.86fr);
+  grid-template-rows: minmax(0, 1fr) 260px;
+  grid-template-areas:
+    "media viewer inspector"
+    "timeline timeline assistant";
+  gap: 10px;
+  min-height: 0;
+  height: 100%;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.davinci-shell .media-pool {
+  grid-area: media;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1.35fr) minmax(88px, 0.72fr);
+  gap: 12px;
+  min-height: 0;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.davinci-shell .viewer-panel {
+  grid-area: viewer;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 10px;
+  min-height: 0;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.davinci-shell .timeline-panel {
+  grid-area: timeline;
+  display: grid;
+  grid-template-rows: auto 28px minmax(0, 1fr) 40px 40px;
+  gap: 7px;
+  min-height: 0;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.davinci-shell .inspector-panel {
+  grid-area: inspector;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 0;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.davinci-shell .right-assistant-stack {
+  grid-area: assistant;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.davinci-shell .assistant-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.davinci-shell .deliver-panel {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+}
+
+.davinci-shell .panel-header,
+.davinci-shell .timeline-header,
+.davinci-shell .assistant-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.davinci-shell .panel-header h2,
+.davinci-shell .assistant-title h2 {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.davinci-shell .icon-label-button {
+  position: relative;
+  padding: 0 11px;
+  color: #07110d;
+  background: var(--nle-teal);
+  border-color: var(--nle-teal);
+  font-weight: 900;
+}
+
+.davinci-shell .icon-label-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.davinci-shell .media-section {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.davinci-shell .media-section h3,
+.davinci-shell .inspector-section h3 {
+  color: var(--nle-muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.davinci-shell .media-grid,
+.davinci-shell .music-list {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.davinci-shell .media-asset {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--nle-line);
+  border-radius: 9px;
+}
+
+.davinci-shell .media-asset.is-dragging,
+.davinci-shell .timeline-clip.is-dragging {
+  opacity: 0.56;
+}
+
+.davinci-shell .media-thumb {
+  position: relative;
+  display: block;
+  min-height: 62px;
+  overflow: hidden;
+  padding: 0;
+  background: #222833;
+  border: 0;
+  border-radius: 7px;
+}
+
+.davinci-shell .media-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.davinci-shell .media-placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--nle-muted);
+  background: var(--nle-panel-strong);
+}
+
+.davinci-shell .media-kind {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 2px 5px;
+  color: #07110d;
+  background: var(--nle-teal);
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.davinci-shell .media-asset-meta {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.davinci-shell .media-asset-meta div {
+  display: flex;
+  gap: 7px;
+  min-width: 0;
+  color: var(--nle-faint);
+  font-size: 11px;
+}
+
+.davinci-shell .media-asset-meta strong {
+  color: var(--nle-yellow);
+}
+
+.davinci-shell .drag-handle {
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr);
+  gap: 5px;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  color: var(--nle-ink);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: grab;
+}
+
+.davinci-shell .drag-handle span,
+.davinci-shell .media-asset-meta span,
+.davinci-shell .media-asset-meta strong,
+.davinci-shell .timeline-clip strong,
+.davinci-shell .timeline-clip small,
+.davinci-shell .music-bed span,
+.davinci-shell .overlay-bed span,
+.davinci-shell .export-result span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.davinci-shell .compact-command {
+  justify-self: start;
+  min-height: 30px;
+  padding: 0 10px;
+  color: var(--nle-ink);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.davinci-shell .viewer-stage {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    #070a0d;
+  background-size: 32px 32px;
+  border: 1px solid var(--nle-line);
+  border-radius: 10px;
+}
+
+.davinci-shell .remotion-player {
+  display: grid;
+  width: min(320px, 78%);
+  aspect-ratio: 9 / 16;
+  place-items: center;
+  overflow: hidden;
+  background: #000;
+  border-radius: 16px;
+}
+
+.davinci-shell .transport-bar {
+  display: grid;
+  grid-template-columns: 34px 34px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.davinci-shell .transport-bar button {
+  width: 34px;
+  padding: 0;
+}
+
+.davinci-shell .transport-bar input {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--nle-teal);
+}
+
+.davinci-shell .transport-bar span,
+.davinci-shell .viewer-selection,
+.davinci-shell .muted-copy,
+.davinci-shell .assistant-block p,
+.davinci-shell .deliver-panel p {
+  color: var(--nle-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.davinci-shell .viewer-selection {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 800;
+}
+
+.davinci-shell .time-ruler {
+  display: grid;
+  grid-auto-columns: minmax(70px, max-content);
+  grid-auto-flow: column;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.davinci-shell .time-ruler button {
+  justify-content: flex-start;
+  min-height: 26px;
+  padding: 0 8px;
+  color: var(--nle-faint);
+  font-size: 11px;
+}
+
+.davinci-shell .track-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.davinci-shell .track-label {
+  display: grid;
+  place-items: center;
+  color: var(--nle-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.davinci-shell .timeline-track-items,
+.davinci-shell .music-bed,
+.davinci-shell .overlay-bed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 100%;
+  overflow-x: auto;
+  padding: 8px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    rgba(255, 255, 255, 0.045);
+  background-size: 56px 100%;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.davinci-shell .timeline-panel.is-over .timeline-track-items {
+  background:
+    linear-gradient(90deg, rgba(31, 208, 189, 0.2) 1px, transparent 1px),
+    rgba(31, 208, 189, 0.13);
+  outline: 2px solid var(--nle-teal);
+  outline-offset: -2px;
+}
+
+.davinci-shell .timeline-clip {
+  flex: 0 0 auto;
+  min-width: 128px;
+  align-self: stretch;
+}
+
+.davinci-shell .timeline-clip button {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 4px 8px;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 72px;
+  padding: 7px;
+  color: var(--nle-ink);
+  text-align: left;
+  background: rgba(31, 208, 189, 0.13);
+  border: 1px solid rgba(31, 208, 189, 0.42);
+  border-radius: 8px;
+}
+
+.davinci-shell .timeline-clip.is-selected button {
+  border-color: var(--nle-teal);
+  box-shadow: inset 0 0 0 1px var(--nle-teal);
+}
+
+.davinci-shell .timeline-clip img,
+.davinci-shell .timeline-clip button > span:first-child {
+  grid-row: 1 / span 2;
+  width: 48px;
+  height: 54px;
+  object-fit: cover;
+  background: #0b0f13;
+  border-radius: 6px;
+}
+
+.davinci-shell .timeline-clip button > span:first-child {
+  display: grid;
+  place-items: center;
+  color: var(--nle-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.davinci-shell .timeline-clip strong {
+  font-size: 13px;
+}
+
+.davinci-shell .timeline-clip small {
+  color: var(--nle-muted);
+  font-size: 11px;
+}
+
+.davinci-shell .music-bed {
+  color: #d7fff6;
+  background: rgba(31, 208, 189, 0.08);
+}
+
+.davinci-shell .overlay-bed {
+  color: #fff3cf;
+  background: rgba(243, 197, 91, 0.08);
+}
+
+.davinci-shell .audio-row .track-label {
+  color: #d7fff6;
+}
+
+.davinci-shell .overlay-row .track-label {
+  color: #fff3cf;
+}
+
+.davinci-shell .inspector-section {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--nle-line);
+  border-radius: 10px;
+}
+
+.davinci-shell .segmented-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--nle-line);
+  border-radius: 9px;
+}
+
+.davinci-shell .segmented-control button {
+  min-height: 31px;
+  color: var(--nle-muted);
+  background: transparent;
+  font-weight: 900;
+}
+
+.davinci-shell .selected-clip-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  color: #d7fff6;
+  background: rgba(31, 208, 189, 0.1);
+  border: 1px solid rgba(31, 208, 189, 0.38);
+  border-radius: 9px;
+}
+
+.davinci-shell .selected-clip-card strong,
+.davinci-shell .selected-clip-card span {
+  overflow-wrap: anywhere;
+}
+
+.davinci-shell .inspector-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.davinci-shell .move-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.davinci-shell label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--nle-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.davinci-shell input,
+.davinci-shell select,
+.davinci-shell textarea {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 9px;
+  color: var(--nle-ink);
+  background: #090e12;
+  border: 1px solid var(--nle-line-strong);
+  border-radius: 7px;
+}
+
+.davinci-shell textarea {
+  resize: vertical;
+}
+
+.davinci-shell .assistant-block {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--nle-line);
+  border-radius: 9px;
+}
+
+.davinci-shell .creator-casting-block {
+  border-color: rgba(31, 208, 189, 0.28);
+}
+
+.davinci-shell .trend-block {
+  border-color: rgba(243, 197, 91, 0.24);
+}
+
+.davinci-shell .collapsible-assistant-block.is-open {
+  box-shadow: inset 2px 0 0 rgba(31, 208, 189, 0.42);
+}
+
+.davinci-shell .assistant-title {
+  justify-content: flex-start;
+}
+
+.davinci-shell .assistant-title h2 {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.davinci-shell .assistant-title svg {
+  color: var(--nle-teal);
+}
+
+.davinci-shell .assistant-collapse-toggle {
+  flex: 0 0 auto;
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+}
+
+.davinci-shell .assistant-collapse-toggle svg {
+  transition: transform 0.16s ease;
+}
+
+.davinci-shell .collapsible-assistant-block.is-collapsed .assistant-collapse-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.davinci-shell .assistant-block-content {
+  display: contents;
+}
+
+.davinci-shell .assistant-block ol,
+.davinci-shell .compliance-list,
+.davinci-shell .export-result,
+.davinci-shell .audition-casting-summary,
+.davinci-shell .audition-person-list {
+  display: grid;
+  gap: 8px;
+}
+
+.davinci-shell .assistant-block ol {
+  margin: 0 0 0 18px;
+  padding: 0;
+  color: var(--nle-muted);
+}
+
+.davinci-shell .compliance-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--nle-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.davinci-shell .audition-casting-summary span {
+  color: var(--nle-muted);
+  font-size: 11px;
+}
+
+.davinci-shell .audition-person-list button,
+.davinci-shell .generate-audition-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 10px;
+  color: var(--nle-ink);
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--nle-line);
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.davinci-shell .generate-audition-button {
+  justify-content: center;
+  width: 100%;
+}
+
+.davinci-shell .audition-person-list span {
+  color: currentColor;
+  opacity: 0.74;
+}
+
+.davinci-shell .progress-track {
+  height: 7px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.davinci-shell .progress-track span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--nle-teal), var(--nle-yellow));
+}
+
+.davinci-shell .export-result {
+  color: #d7fff6;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.davinci-drag-overlay {
+  max-width: 220px;
+  padding: 9px 11px;
+  color: #07110d;
+  background: var(--nle-teal, #1fd0bd);
+  border-radius: 8px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.34);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+@media (min-width: 1181px) {
+  body:has(.davinci-shell) {
+    overflow: hidden;
+  }
+
+  .davinci-shell {
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 1180px) {
+  .davinci-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .davinci-shell .editor-sidebar {
+    position: static;
+    height: auto;
+    min-height: 0;
+  }
+
+  .davinci-shell .davinci-editor-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "viewer"
+      "timeline"
+      "media"
+      "inspector"
+      "assistant";
+    height: auto;
+    overflow: visible;
+  }
+
+  .davinci-shell .viewer-stage {
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 720px) {
+  .davinci-shell .editor-sidebar {
+    display: none;
+  }
+
+  .davinci-shell .editor-workspace {
+    padding: 12px;
+  }
+
+  .davinci-shell .editor-topbar {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .davinci-shell .topbar-meta,
+  .davinci-shell .topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .davinci-shell .viewer-panel,
+  .davinci-shell .timeline-panel,
+  .davinci-shell .media-pool,
+  .davinci-shell .inspector-panel,
+  .davinci-shell .assistant-panel,
+  .davinci-shell .deliver-panel {
+    padding: 12px;
+  }
+
+  .davinci-shell .viewer-stage {
+    min-height: 360px;
+  }
+
+  .davinci-shell .transport-bar {
+    grid-template-columns: 34px 34px minmax(0, 1fr);
+  }
+
+  .davinci-shell .transport-bar span {
+    grid-column: 1 / -1;
+  }
+
+  .davinci-shell .media-asset,
+  .davinci-shell .inspector-grid,
+  .davinci-shell .move-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .davinci-shell .time-ruler {
+    grid-auto-columns: minmax(70px, max-content);
+  }
+}

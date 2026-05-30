@@ -20,11 +20,11 @@ describe("ViralForge campaign workspace", () => {
 
     render(<App />);
 
-    expect(screen.getByText("Preview 36s")).toBeInTheDocument();
+    expect(screen.getByText("Preview 30s")).toBeInTheDocument();
     expect(screen.getByTestId("social-preview-title")).toHaveTextContent("Social Preview");
     expect(screen.getByRole("heading", { name: /Filming Tips/i })).toBeInTheDocument();
     expect(screen.getByText("Shot readiness")).toBeInTheDocument();
-    expect(screen.getByText("Shot 3 - 00:11 to 00:17")).toBeInTheDocument();
+    expect(screen.getByText("Shot 3 - 00:10 to 00:15")).toBeInTheDocument();
     expect(screen.getByText("Medium priority")).toBeInTheDocument();
     expect(screen.getByText("Safe crop")).toBeInTheDocument();
     expect(screen.getByText("Priority fixes")).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe("ViralForge campaign workspace", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Audition generated: Daniel Ong (12s)");
     expect(screen.getByText("Shots (7)")).toBeInTheDocument();
-    expect(screen.getByText("48.0s")).toBeInTheDocument();
+    expect(screen.getByText("42.0s")).toBeInTheDocument();
 
     const shotStrip = screen.getByText("Shots (7)").closest("section");
     expect(shotStrip).not.toBeNull();
@@ -101,7 +101,7 @@ describe("ViralForge campaign workspace", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Generation queued: 3 samples x 30s");
     expect(screen.getByText("Shots (9)")).toBeInTheDocument();
-    expect(screen.getByText("126.0s")).toBeInTheDocument();
+    expect(screen.getByText("120.0s")).toBeInTheDocument();
     expect(screen.getByText("1,730")).toBeInTheDocument();
 
     const shotStrip = screen.getByText("Shots (9)").closest("section");
@@ -109,5 +109,20 @@ describe("ViralForge campaign workspace", () => {
     expect(within(shotStrip).getByText("AI UGC Proof sample 1")).toBeInTheDocument();
     expect(within(shotStrip).getByText("AI UGC Proof sample 2")).toBeInTheDocument();
     expect(within(shotStrip).getByText("AI UGC Proof sample 3")).toBeInTheDocument();
+  });
+
+  it("renders the trend translator as a compact trend brief", async () => {
+    render(<App />);
+
+    await screen.findByText("Using demo fallback");
+
+    const heading = screen.getByRole("heading", { name: /trend brief beta/i });
+    const panel = heading.closest("section");
+
+    expect(panel).not.toBeNull();
+    expect(within(panel).getByText("Proof first. Deal second.")).toBeInTheDocument();
+    expect(within(panel).getByText("15s plan")).toBeInTheDocument();
+    expect(within(panel).queryByText(/Gen Z loves simple/i)).not.toBeInTheDocument();
+    expect(within(panel).queryByText(/Avoid poreless skin claims/i)).not.toBeInTheDocument();
   });
 });
