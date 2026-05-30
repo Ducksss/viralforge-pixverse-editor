@@ -1177,14 +1177,14 @@ function LocalNleEditorApp() {
   );
 }
 
-function CampaignAppShell() {
+function CampaignAppShell({ enableWizard = false } = {}) {
   const [wizardData, setWizardData] = useState(null);
   const [activeDemoStep, setActiveDemoStep] = useState("editor");
   const [repromptOpen, setRepromptOpen] = useState(false);
   const [productStory, setProductStory] = useState("");
   const [selectedTone, setSelectedTone] = useState("Authentic");
 
-  if (!isTestEnv) {
+  if (enableWizard && !isTestEnv) {
     if (!wizardData) {
       return (
         <SetupWizard
@@ -1307,6 +1307,12 @@ export default function App() {
       window.location.pathname === "/local-editor" ||
       new URLSearchParams(window.location.search).get("workspace") === "local-nle"
     );
+  const wizardRequested =
+    typeof window !== "undefined" &&
+    (
+      window.location.pathname === "/wizard" ||
+      new URLSearchParams(window.location.search).get("workspace") === "wizard"
+    );
 
-  return standaloneEditorRequested ? <LocalNleEditorApp /> : <CampaignAppShell />;
+  return standaloneEditorRequested ? <LocalNleEditorApp /> : <CampaignAppShell enableWizard={wizardRequested} />;
 }
