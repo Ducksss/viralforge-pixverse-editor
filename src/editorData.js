@@ -12,9 +12,20 @@ export const editorSnapshot = {
     currentTime: "00:12",
     totalTime: "00:36",
     aspectRatio: "16:9",
+    aspectRatios: [
+      { id: "16:9", label: "16:9 Landscape" },
+      { id: "9:16", label: "9:16 Vertical" },
+      { id: "1:1", label: "1:1 Square" },
+    ],
     model: "PixVerse: V6",
+    models: ["PixVerse: V6", "PixVerse: V5 Turbo", "PixVerse: Character"],
     quality: "720p",
+    qualities: ["720p", "1080p", "4K"],
+    balance: 2450,
+    generationCost: 120,
   },
+  exportOptions: ["Publish package", "Download MP4", "Listing image pack", "Creator brief PDF"],
+  shareOptions: ["Copy review link", "Invite collaborator", "Send to Shopee team"],
   selectedShotId: "shot-3",
   navItems: [
     { id: "trend", label: "Trend Radar", caption: "Live trends & alerts", badge: "NEW" },
@@ -48,9 +59,9 @@ export const editorSnapshot = {
     { id: "m-10", atSeconds: 31, kind: "product" },
   ],
   hotspots: [
-    { id: "hotspot-1", number: 1, name: "Vitamin C Serum", range: "00:03 - 00:14" },
-    { id: "hotspot-2", number: 2, name: "Dropper Detail", range: "00:10 - 00:17" },
-    { id: "hotspot-3", number: 3, name: "Glow Result", range: "00:18 - 00:28" },
+    { id: "hotspot-1", number: 1, name: "Vitamin C Serum", range: "00:03 - 00:14", x: 39, y: 61 },
+    { id: "hotspot-2", number: 2, name: "Dropper Detail", range: "00:10 - 00:17", x: 28, y: 54 },
+    { id: "hotspot-3", number: 3, name: "Glow Result", range: "00:18 - 00:28", x: 61, y: 38 },
   ],
   feedbackByShot: {
     "shot-1": [
@@ -85,6 +96,47 @@ export const editorSnapshot = {
     ],
   },
   trendChips: ["clean girl", "glass skin", "self care", "morning routine"],
+  trendCards: [
+    {
+      id: "glass-skin",
+      title: "Glass skin proof",
+      chips: ["clean girl", "glass skin", "self care", "morning routine"],
+      translation: "Gen Z loves simple, real routines that feel authentic and result-driven.",
+      example: "Cut from bare skin to one serum drop, then show the real glow in window light.",
+      checklist: [
+        "Show real skin, not perfect skin",
+        "Fast cuts + satisfying textures",
+        "Before/after moments build trust",
+        "Text on screen > long talking",
+      ],
+    },
+    {
+      id: "morning-routine",
+      title: "Morning routine angle",
+      chips: ["POV", "GRWM", "quick routine", "soft light"],
+      translation: "Frame the serum as the one step that makes a rushed morning feel put together.",
+      example: "Start with a bathroom shelf grab, then a 3-step routine ending on the Shopee CTA.",
+      checklist: [
+        "Open with a relatable morning cue",
+        "Keep each routine step under two seconds",
+        "Show texture before claims",
+        "End on a product-in-hand CTA",
+      ],
+    },
+    {
+      id: "deal-proof",
+      title: "Deal proof angle",
+      chips: ["TikTok Shop", "bundle", "price drop", "review proof"],
+      translation: "Make the value obvious while keeping the skincare result as the main reason to buy.",
+      example: "Use a split frame: product texture left, bundle price and review count right.",
+      checklist: [
+        "Show the exact bundle visually",
+        "Use one price message only",
+        "Pair discount with proof",
+        "Avoid cluttering the face frame",
+      ],
+    },
+  ],
   trendTranslation: [
     "Show real skin, not perfect skin",
     "Fast cuts + satisfying textures",
@@ -103,18 +155,40 @@ export const editorSnapshot = {
     { type: "good", title: "Great eye line", detail: "" },
   ],
   propsChecklist: [
-    { id: "amber-bottle", label: "Amber glass serum bottle", source: "Found on Shopee", done: true },
-    { id: "citrus-slices", label: "Citrus slices (fresh)", source: "Local market / Cold storage", done: true },
-    { id: "white-tray", label: "White marble tray", source: "IKEA / Shopee", done: false },
-    { id: "greenery", label: "Greenery / Eucalyptus", source: "Flower market / Shopee", done: false },
-    { id: "softbox", label: "Softbox lighting", source: "Aputure / Godox", done: true },
-    { id: "tripod", label: "Tripod / Phone mount", source: "Ulanzi / Shopee", done: false },
+    { id: "amber-bottle", label: "Amber glass serum bottle", source: "Found on Shopee", vendor: "Shopee", status: "Found", done: true },
+    { id: "citrus-slices", label: "Citrus slices (fresh)", source: "Local market / Cold storage", vendor: "Cold Storage", status: "Found", done: true },
+    { id: "white-tray", label: "White marble tray", source: "IKEA / Shopee", vendor: "IKEA", status: "To source", done: false },
+    { id: "greenery", label: "Greenery / Eucalyptus", source: "Flower market / Shopee", vendor: "Flower market", status: "To source", done: false },
+    { id: "softbox", label: "Softbox lighting", source: "Aputure / Godox", vendor: "Godox", status: "Found", done: true },
+    { id: "tripod", label: "Tripod / Phone mount", source: "Ulanzi / Shopee", vendor: "Ulanzi", status: "To source", done: false },
   ],
   listingAssets: {
+    images: ["shotProduct", "shotDropper", "shotBottle", "shotSocial", "shotModel", "shotBubbles"],
     description: "Brighten and even your skin with our Vitamin C Serum. Lightweight, fast-absorbing formula with powerful antioxidants for daily glow.",
     seo: ["vitamin c serum", "brightening serum", "glow skin", "anti dullness", "skincare", "for all skin types"],
+    captions: [
+      "Glow that sells in one serum drop.",
+      "Fast morning routine, real glass-skin finish.",
+      "Vitamin C texture shot built for TikTok Shop.",
+    ],
+  },
+  generationPresets: [
+    { id: "ugc-proof", label: "UGC Proof", prompt: "creator applies serum in window light", cost: 120 },
+    { id: "macro-texture", label: "Macro Texture", prompt: "gold serum texture macro pour", cost: 140 },
+    { id: "shop-cta", label: "Shop CTA", prompt: "product bottle with bundle callout", cost: 100 },
+  ],
+  aiSafeChecks: {
+    status: "AI Safe",
+    items: ["No medical cure claims", "No impossible skin results", "Commerce CTA is compliant"],
   },
 };
+
+function formatShotStart(seconds) {
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainingSeconds = String(safeSeconds % 60).padStart(2, "0");
+  return `${minutes}:${remainingSeconds}`;
+}
 
 export function getChecklistProgress(items) {
   const completed = items.filter((item) => item.done).length;
@@ -133,4 +207,75 @@ export function buildTimelineMarkers(events, durationSeconds = editorSnapshot.vi
     kind: event.kind,
     left: `${((event.atSeconds / durationSeconds) * 100).toFixed(1)}%`,
   }));
+}
+
+export function formatSeconds(seconds) {
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  const minutes = String(Math.floor(safeSeconds / 60)).padStart(2, "0");
+  const remainingSeconds = String(safeSeconds % 60).padStart(2, "0");
+  return `${minutes}:${remainingSeconds}`;
+}
+
+export function getShotAtTime(shots, seconds) {
+  if (shots.length === 0) {
+    return null;
+  }
+
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  return (
+    shots.find((shot) => (
+      safeSeconds >= shot.startSeconds &&
+      safeSeconds < shot.startSeconds + shot.durationSeconds
+    )) || shots[shots.length - 1]
+  );
+}
+
+export function getVideoDuration(shots) {
+  return shots.reduce((sum, shot) => sum + shot.durationSeconds, 0);
+}
+
+export function createGeneratedShot(shots, prompt) {
+  const number = shots.length + 1;
+  const startSeconds = getVideoDuration(shots);
+
+  return {
+    id: `shot-${number}`,
+    number,
+    start: formatShotStart(startSeconds),
+    startSeconds,
+    durationSeconds: 4,
+    title: "AI generated proof frame",
+    asset: "shotSocial",
+    aiGenerated: true,
+    prompt: prompt.trim(),
+  };
+}
+
+export function createTimelineEvent(events, currentSeconds, kind = "cta") {
+  const idNumber = events.length + 1;
+  const normalizedKind = kind.trim().toLowerCase() || "cta";
+  const label = normalizedKind === "cta"
+    ? "CTA"
+    : normalizedKind.charAt(0).toUpperCase() + normalizedKind.slice(1);
+
+  return {
+    id: `m-${idNumber}`,
+    atSeconds: Math.max(0, Math.floor(currentSeconds)),
+    kind: normalizedKind,
+    label,
+  };
+}
+
+export function createHotspot(hotspots, currentSeconds) {
+  const number = hotspots.length + 1;
+  const startSeconds = Math.max(0, Math.floor(currentSeconds));
+
+  return {
+    id: `hotspot-${number}`,
+    number,
+    name: "Shop CTA",
+    range: `${formatSeconds(startSeconds)} - ${formatSeconds(startSeconds + 4)}`,
+    x: 67,
+    y: 58,
+  };
 }
