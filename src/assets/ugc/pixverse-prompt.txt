@@ -1,0 +1,25 @@
+Generate 20 separate photorealistic UGC creator selfie portraits, vertical 9:16, head-and-shoulders, shot on a smartphone front camera in natural daylight. Real skin with visible pores and subtle imperfections, NOT airbrushed, genuine relaxed smile, eye contact, casual outfit, softly blurred everyday background. No text, no watermark, no logos. Make all 20 distinct people:
+
+MALE:
+1. East Asian man, early 20s, tidy black hair, light stubble.
+2. Black man, mid 20s, short fade, bright smile, white tee.
+3. South Asian man, early 20s, wavy dark hair, light beard, denim jacket.
+4. White man, early 40s, short brown hair with grey, neat stubble, navy shirt.
+5. Latino man, late 30s, dark hair, trimmed beard, olive henley.
+6. Middle Eastern man, mid 40s, salt-and-pepper beard, charcoal sweater.
+7. Older white man, early 60s, silver hair, laugh lines, checked shirt.
+8. Older East Asian man, late 60s, grey hair, glasses, beige cardigan.
+9. Older Black man, 60s, short grey hair, neat grey beard, green sweater.
+10. Southeast Asian man, early 20s, modern haircut, black hoodie.
+
+FEMALE:
+11. East Asian woman, early 20s, long black hair, dewy skin, cream knit top.
+12. Black woman, mid 20s, natural curly afro, radiant smile, mustard tee.
+13. White woman, early 20s, wavy blonde hair, light freckles, linen shirt.
+14. South Asian woman, late 30s, long dark hair, red blouse.
+15. Latina woman, early 40s, shoulder-length brown hair, white shirt.
+16. Middle Eastern woman, mid 40s, dark wavy hair, teal top and scarf.
+17. Older white woman, early 60s, grey bob, gentle smile lines, lavender blouse.
+18. Older East Asian woman, late 60s, short grey hair, glasses, pink cardigan.
+19. Older Black woman, 60s, silver curls, warm smile, orange patterned top.
+20. Southeast Asian woman, early 20s, long dark hair, cheerful, pastel blue top.

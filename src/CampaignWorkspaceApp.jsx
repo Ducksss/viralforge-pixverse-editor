@@ -287,6 +287,9 @@ function Topbar({
   setTitleDraft,
   statusMessage,
   titleDraft,
+  activeDemoStep,
+  onRepromptClick,
+  onPublishClick,
 }) {
   return (
     <header className="topbar">
@@ -324,6 +327,17 @@ function Topbar({
       )}
 
       <div className="topbar-actions">
+        {activeDemoStep === "editor" && (
+          <div style={{ display: "flex", gap: "8px", marginRight: "12px" }}>
+            <button className="btn-secondary" style={{ height: "34px", padding: "0 14px", fontSize: "12px", width: "auto", margin: 0 }} onClick={onRepromptClick} type="button">
+              Re-prompt AI
+            </button>
+            <button className="btn-primary btn-tiktok" style={{ height: "34px", padding: "0 14px", fontSize: "12px", width: "auto", margin: 0, background: "linear-gradient(135deg, #fe2c55 0%, #ff5a5f 100%)", color: "white" }} onClick={onPublishClick} type="button">
+              Publish Campaign ✓
+            </button>
+          </div>
+        )}
+
         <span className={`saved-state ${statusMessage === "Saved" ? "" : "is-working"}`} role="status" aria-live="polite">
           <span />
           <strong>{statusMessage}</strong>
@@ -1381,7 +1395,7 @@ function GenderPanel({ selectedGender, onSelectGender }) {
   );
 }
 
-function CreatorCasting({ onGenerateAudition, selectedPersonId, onSelectPerson }) {
+function CreatorCasting({ creatorProfiles, onGenerateAudition, selectedPersonId, onSelectPerson }) {
   return (
     <Panel className="creator-casting-panel">
       <div className="people-panel-heading">
@@ -1394,7 +1408,7 @@ function CreatorCasting({ onGenerateAudition, selectedPersonId, onSelectPerson }
         </button>
       </div>
       <div className="creator-grid">
-        {editorSnapshot.aiPeople.creatorProfiles.map((person) => {
+        {creatorProfiles.map((person) => {
           const selected = person.id === selectedPersonId;
 
           return (
@@ -1557,6 +1571,7 @@ function AuditionPlanPanel({ selectedPerson }) {
 }
 
 function PeopleWorkspace({
+  creatorProfiles,
   selectedGender,
   selectedPersonId,
   uploadedModelName,
@@ -1567,9 +1582,9 @@ function PeopleWorkspace({
 }) {
   const selectedPerson = useMemo(
     () =>
-      editorSnapshot.aiPeople.creatorProfiles.find((person) => person.id === selectedPersonId) ||
-      editorSnapshot.aiPeople.creatorProfiles[0],
-    [selectedPersonId],
+      creatorProfiles.find((person) => person.id === selectedPersonId) ||
+      creatorProfiles[0],
+    [selectedPersonId, creatorProfiles],
   );
   const selectedCreatorGender = selectedPerson.gender || selectedGender;
 
@@ -1586,6 +1601,7 @@ function PeopleWorkspace({
           <GenderPanel selectedGender={selectedCreatorGender} onSelectGender={onSelectGender} />
         </div>
         <CreatorCasting
+          creatorProfiles={creatorProfiles}
           onGenerateAudition={onGenerateAudition}
           selectedPersonId={selectedPersonId}
           onSelectPerson={onSelectPerson}
@@ -1781,7 +1797,7 @@ function MainEditor({
   );
 }
 
-export default function App() {
+export default function App({ wizardData, activeDemoStep, onRepromptClick, onPublishClick } = {}) {
   const [activePresetId, setActivePresetId] = useState(editorSnapshot.generationPresets[0].id);
   const [activePage, setActivePage] = useState(editorSnapshot.defaultPage);
   const [activeTab, setActiveTab] = useState("editor");
@@ -1809,11 +1825,26 @@ export default function App() {
   const [openMenu, setOpenMenu] = useState(null);
   const [currentProjectId, setCurrentProjectId] = useState(editorSnapshot.projects[0].id);
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
-  const [projectTitle, setProjectTitle] = useState(editorSnapshot.project.title);
+  const [projectTitle, setProjectTitle] = useState(() => {
+    if (wizardData && wizardData.product) {
+      return `${wizardData.product.name} - PixVerse Campaign`;
+    }
+    return editorSnapshot.project.title;
+  });
   const [quality, setQuality] = useState(editorSnapshot.video.quality);
   const [safeEnabled, setSafeEnabled] = useState(true);
-  const [selectedGender, setSelectedGender] = useState(editorSnapshot.aiPeople.defaultGender);
-  const [selectedPersonId, setSelectedPersonId] = useState(editorSnapshot.aiPeople.defaultPersonId);
+  const [selectedGender, setSelectedGender] = useState(() => {
+    if (wizardData && wizardData.character) {
+      return wizardData.character.gender === "Female" ? "Woman" : "Man";
+    }
+    return editorSnapshot.aiPeople.defaultGender;
+  });
+  const [selectedPersonId, setSelectedPersonId] = useState(() => {
+    if (wizardData && wizardData.character) {
+      return wizardData.character.id;
+    }
+    return editorSnapshot.aiPeople.defaultPersonId;
+  });
   const [sampleCount, setSampleCount] = useState(editorSnapshot.generationDefaults.sampleCount);
   const [selectedShotId, setSelectedShotId] = useState(editorSnapshot.selectedShotId);
   const [shots, setShots] = useState(editorSnapshot.shots);
@@ -1823,10 +1854,46 @@ export default function App() {
   const [trendIndex, setTrendIndex] = useState(0);
   const [uploadedModelName, setUploadedModelName] = useState("");
 
-  const currentProject = useMemo(
-    () => editorSnapshot.projects.find((project) => project.id === currentProjectId) || editorSnapshot.projects[0],
-    [currentProjectId],
-  );
+  const currentProject = useMemo(() => {
+    if (wizardData && wizardData.product) {
+      return {
+        id: "wizard-project",
+        category: "Skincare",
+        title: projectTitle,
+        product: wizardData.product.name,
+        thumb: wizardData.product.asset,
+        channels: "TikTok Ads / Organic",
+        brief: wizardData.story || "",
+        status: "Active"
+      };
+    }
+    return editorSnapshot.projects.find((project) => project.id === currentProjectId) || editorSnapshot.projects[0];
+  }, [currentProjectId, wizardData, projectTitle]);
+
+  const creatorProfiles = useMemo(() => {
+    if (wizardData && wizardData.character) {
+      const newProfile = {
+        id: wizardData.character.id,
+        name: wizardData.character.name,
+        gender: wizardData.character.gender === "Female" ? "Woman" : "Man",
+        role: `${wizardData.character.style} Spokesperson`,
+        locale: "Singapore",
+        language: "English",
+        fitScore: 95,
+        consent: "Model release signed",
+        asset: wizardData.character.id,
+        look: `${wizardData.character.style} style, natural window light`,
+        voice: `${wizardData.character.style} UGC voice`
+      };
+      
+      // Register character image in assets map dynamically
+      assets[wizardData.character.id] = wizardData.character.image;
+      
+      return [newProfile, ...editorSnapshot.aiPeople.creatorProfiles];
+    }
+    return editorSnapshot.aiPeople.creatorProfiles;
+  }, [wizardData]);
+
   const activePreset = useMemo(
     () => editorSnapshot.generationPresets.find((preset) => preset.id === activePresetId) || editorSnapshot.generationPresets[0],
     [activePresetId],
@@ -1994,7 +2061,7 @@ export default function App() {
   }
 
   function selectGenderIntent(gender) {
-    const matchingPerson = editorSnapshot.aiPeople.creatorProfiles.find((person) => person.gender === gender);
+    const matchingPerson = creatorProfiles.find((person) => person.gender === gender);
     setSelectedGender(gender);
     if (matchingPerson) {
       setSelectedPersonId(matchingPerson.id);
@@ -2002,7 +2069,7 @@ export default function App() {
   }
 
   function selectCreator(personId) {
-    const person = editorSnapshot.aiPeople.creatorProfiles.find((item) => item.id === personId);
+    const person = creatorProfiles.find((item) => item.id === personId);
     if (!person) {
       return;
     }
@@ -2012,8 +2079,8 @@ export default function App() {
   }
 
   function generateAudition() {
-    const selectedPerson = editorSnapshot.aiPeople.creatorProfiles.find((person) => person.id === selectedPersonId)
-      || editorSnapshot.aiPeople.creatorProfiles[0];
+    const selectedPerson = creatorProfiles.find((person) => person.id === selectedPersonId)
+      || creatorProfiles[0];
     const auditionShot = createAuditionShot(shots, selectedPerson, {
       scripts: editorSnapshot.aiPeople.auditionScripts,
     });
@@ -2082,10 +2149,14 @@ export default function App() {
           setTitleDraft={setTitleDraft}
           statusMessage={statusMessage}
           titleDraft={titleDraft}
+          activeDemoStep={activeDemoStep}
+          onRepromptClick={onRepromptClick}
+          onPublishClick={onPublishClick}
         />
         <div className={`content-shell ${activePage === "people" ? "people-content-shell" : ""}`}>
           {activePage === "people" ? (
             <PeopleWorkspace
+              creatorProfiles={creatorProfiles}
               onGenerateAudition={generateAudition}
               onSelectGender={selectGenderIntent}
               onSelectPerson={selectCreator}
