@@ -1307,12 +1307,6 @@ export default function App() {
       window.location.pathname === "/local-editor" ||
       new URLSearchParams(window.location.search).get("workspace") === "local-nle"
     );
-  const wizardRequested =
-    typeof window !== "undefined" &&
-    (
-      window.location.pathname === "/wizard" ||
-      new URLSearchParams(window.location.search).get("workspace") === "wizard"
-    );
 
-  return standaloneEditorRequested ? <LocalNleEditorApp /> : <CampaignAppShell enableWizard={wizardRequested} />;
+  return standaloneEditorRequested ? <LocalNleEditorApp /> : <CampaignAppShell enableWizard={true} />;
 }
