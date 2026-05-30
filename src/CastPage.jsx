@@ -75,7 +75,15 @@ export const CAST_AVATARS = [
 
 const MAX_CAST = 6;
 
-export default function CastPage({ product, story, tone, onBack, onGenerate, initialSelection = [] }) {
+export default function CastPage({
+  product,
+  story,
+  tone,
+  onBack,
+  onGenerate,
+  initialSelection = [],
+  embedded = false,
+}) {
   const [selectedIds, setSelectedIds] = useState(() => initialSelection.map((c) => c.id));
   const [genderFilter, setGenderFilter] = useState("All");
 
@@ -110,28 +118,30 @@ export default function CastPage({ product, story, tone, onBack, onGenerate, ini
   const variantCount = selectedAvatars.length;
 
   return (
-    <div className="cast-page">
-      <header className="cast-header">
-        <div className="cast-header-brand">
-          <div className="wizard-logo-mark" />
-          <div className="wizard-logo-text">
-            <h1>ViralForge</h1>
-            <p>Commerce</p>
+    <div className={`cast-page ${embedded ? "cast-page-embedded" : ""}`}>
+      {embedded ? null : (
+        <header className="cast-header">
+          <div className="cast-header-brand">
+            <div className="wizard-logo-mark" />
+            <div className="wizard-logo-text">
+              <h1>ViralForge</h1>
+              <p>Commerce</p>
+            </div>
           </div>
-        </div>
-        <div className="cast-breadcrumb" aria-label="Workflow progress">
-          <span className="cast-crumb done">Brand</span>
-          <span className="cast-crumb-sep">›</span>
-          <span className="cast-crumb done">Product</span>
-          <span className="cast-crumb-sep">›</span>
-          <span className="cast-crumb active">Casting</span>
-          <span className="cast-crumb-sep">›</span>
-          <span className="cast-crumb">Generate</span>
-        </div>
-        <button className="btn-back" onClick={onBack} type="button">
-          <ChevronLeft size={16} /> Edit story
-        </button>
-      </header>
+          <div className="cast-breadcrumb" aria-label="Workflow progress">
+            <span className="cast-crumb done">Brand</span>
+            <span className="cast-crumb-sep">›</span>
+            <span className="cast-crumb done">Product</span>
+            <span className="cast-crumb-sep">›</span>
+            <span className="cast-crumb active">Casting</span>
+            <span className="cast-crumb-sep">›</span>
+            <span className="cast-crumb">Generate</span>
+          </div>
+          <button className="btn-back" onClick={onBack} type="button">
+            <ChevronLeft size={16} /> Edit story
+          </button>
+        </header>
+      )}
 
       <main className="cast-body">
         <section className="cast-product-summary">

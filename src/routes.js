@@ -18,6 +18,7 @@ export const WORKSPACE_PAGE_PATHS = Object.freeze({
   editor: APP_ROUTES.editor,
   people: APP_ROUTES.aiPeople,
   props: APP_ROUTES.props,
+  cast: APP_ROUTES.cast,
   storyboard: APP_ROUTES.storyboard,
 });
 

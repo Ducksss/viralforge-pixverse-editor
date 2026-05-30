@@ -74,6 +74,7 @@ export const editorSnapshot = {
     { id: "scheduler", label: "Shoot Scheduler", caption: "Calendar & call sheets" },
     { id: "props", label: "Props", caption: "Find & source props" },
     { id: "people", label: "AI People", caption: "Models & consent", badge: "UGC" },
+    { id: "cast", label: "Casting", caption: "Pair product × people" },
     { id: "editor", label: "Editor", caption: "Edit & generate" },
     { id: "listings", label: "Listings", caption: "Auto content & SEO" },
     { id: "ugc", label: "UGC Inbox", caption: "Reviews & clips", badge: "12" },

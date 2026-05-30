@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ChevronRight, ChevronLeft, Sparkles, Check, Info } from "lucide-react";
+import { ChevronRight, ChevronLeft, Sparkles, Check, Globe, Search } from "lucide-react";
 import { assets } from "./assetMap.js";
 
 // Female portraits
@@ -46,6 +46,16 @@ const PRODUCTS = [
   { id: "prod-5", name: "Organic Avocado Eye Cream", price: "$29.99", category: "Skincare", asset: "centellaAmpoule" }
 ];
 
+const DEFAULT_PRODUCT_NAME = "Summer Glow Vitamin C Serum";
+const DEFAULT_PRODUCT = PRODUCTS.find((product) => product.name === DEFAULT_PRODUCT_NAME) ?? PRODUCTS[0];
+
+export const DEFAULT_PRODUCT_STORY = [
+  "Create a 15-second vertical UGC skincare ad that continues from the previous video. Use the same Korean on-camera person, same face, same hairstyle, same outfit, same bathroom vanity setting, and same warm summer lighting. Use the uploaded image as the exact product reference for Summer Glow Vitamin C Serum. The product must remain a green serum bottle with green packaging for the entire video. Do not change it to orange, yellow, white, gold, blue, pink, or transparent. Keep the same bottle shape, green label, cap, logo placement, proportions, and packaging design from the uploaded image.",
+  "Start with the creator turning slightly toward the mirror and showing her healthy dewy glow result with a confident natural smile. Keep the skin realistic, bright, and not overly filtered.",
+  "Then show the creator placing the green serum bottle on a white marble tray with fresh leaves, a clean towel, and minimal citrus accents. The camera slowly pushes in on the product like a Shopee/TikTok Shop listing hero shot. Product should be centered, front-facing, sharp, and label-visible.",
+  "End with the creator holding the serum next to her face and giving a natural final recommendation. Finish on a clean product close-up on the vanity with a premium commerce-ready look. Add English voiceover audio with a natural Korean female beauty influencer accent, friendly TikTok skincare tone, clear pronunciation, soft confident delivery.",
+].join("\n\n");
+
 const TONES = ["Authentic", "Funny", "Urgent", "Soft Sell"];
 
 const HOOKS = [
@@ -91,14 +101,44 @@ const AVATARS = [
 ];
 
 export default function SetupWizard({ onComplete }) {
-  const [step, setStep] = useState("query"); // Start on query; login, connecting, query, story, character
+  const [step, setStep] = useState("branding"); // branding, scanning, query, story, character
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanLines, setScanLines] = useState([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0]);
-  const [productStory, setProductStory] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(DEFAULT_PRODUCT);
+  const [productStory, setProductStory] = useState(DEFAULT_PRODUCT_STORY);
   const [selectedTone, setSelectedTone] = useState("Authentic");
   const [selectedCharacter, setSelectedCharacter] = useState(AVATARS[0]);
   const [genderFilter, setGenderFilter] = useState("All");
+
+  // Scanning animation side effect
+  useEffect(() => {
+    if (step === "scanning") {
+      setScanProgress(0);
+      setScanLines([]);
+      const messages = [
+        "Fetching homepage…",
+        "Parsing product catalogue…",
+        "Extracting brand colours…",
+        "Detecting product images…",
+        `Found ${PRODUCTS.length} products ✓`,
+      ];
+      let i = 0;
+      const interval = setInterval(() => {
+        i++;
+        const pct = Math.min(Math.round((i / messages.length) * 100), 100);
+        setScanProgress(pct);
+        if (messages[i - 1]) setScanLines((prev) => [...prev, messages[i - 1]]);
+        if (i >= messages.length) {
+          clearInterval(interval);
+          setTimeout(() => setStep("query"), 700);
+        }
+      }, 600);
+      return () => clearInterval(interval);
+    }
+  }, [step]);
 
   // Step 2 Connection Loader side effect
   useEffect(() => {
@@ -109,6 +149,12 @@ export default function SetupWizard({ onComplete }) {
       return () => clearTimeout(timer);
     }
   }, [step]);
+
+  const handleBrandingSubmit = (e) => {
+    e.preventDefault();
+    if (!websiteUrl.trim()) return;
+    setStep("scanning");
+  };
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
@@ -158,6 +204,79 @@ export default function SetupWizard({ onComplete }) {
 
   return (
     <div className="wizard-container">
+
+      {/* ── Step 0: Branding ── */}
+      {step === "branding" && (
+        <div className="wizard-card">
+          <div className="wizard-logo-area">
+            <div className="wizard-logo-mark" />
+            <div className="wizard-logo-text">
+              <h1>ViralForge</h1>
+              <p>Commerce</p>
+            </div>
+          </div>
+
+          <h2 className="wizard-title">Find your brand</h2>
+          <p className="wizard-subtitle">
+            Enter your company website and we'll automatically discover your products and brand identity.
+          </p>
+
+          <form className="branding-form" onSubmit={handleBrandingSubmit}>
+            <div className="branding-url-field">
+              <span className="branding-url-icon"><Globe size={18} /></span>
+              <input
+                id="website-url"
+                type="url"
+                placeholder="https://yourstore.com"
+                required
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                autoComplete="url"
+                autoFocus
+              />
+            </div>
+
+            <div className="branding-trusted">
+              <span className="branding-trusted-dot" />
+              Secure · We only read publicly available data
+            </div>
+
+            <button type="submit" className="btn-primary btn-teal" style={{ marginTop: "8px" }}>
+              <Search size={16} /> Scan for products
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ── Scanning animation ── */}
+      {step === "scanning" && (
+        <div className="wizard-card">
+          <div className="scanning-header">
+            <div className="scanning-globe-ring">
+              <Globe size={28} className="scanning-globe-icon" />
+            </div>
+            <h2 className="wizard-title" style={{ marginTop: "20px" }}>Scanning your store…</h2>
+            <p className="wizard-subtitle" style={{ marginBottom: "24px" }}>
+              {websiteUrl}
+            </p>
+          </div>
+
+          <div className="scanning-bar-track">
+            <div className="scanning-bar-fill" style={{ width: `${scanProgress}%` }} />
+          </div>
+          <div className="scanning-pct">{scanProgress}%</div>
+
+          <div className="scanning-log">
+            {scanLines.map((line, i) => (
+              <div key={i} className="scanning-log-line">
+                <Check size={12} className="scanning-check" />
+                {line}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {step === "login" && (
         <div className="wizard-card">
           <div className="wizard-logo-area">
@@ -215,7 +334,9 @@ export default function SetupWizard({ onComplete }) {
       {step === "query" && (
         <div className="wizard-card wide">
           <div className="wizard-steps">
+            <span className="wizard-step-dot" />
             <span className="wizard-step-dot active" />
+            <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />
           </div>
 
@@ -245,7 +366,9 @@ export default function SetupWizard({ onComplete }) {
           </div>
 
           <div className="wizard-footer">
-            <div style={{ width: "80px" }} /> {/* Hidden Back spacer to maintain layout balance */}
+            <button className="btn-back" onClick={() => setStep("branding")} type="button">
+              <ChevronLeft size={16} /> Back
+            </button>
             <button
               className="btn-primary btn-teal"
               style={{ width: "auto", padding: "0 24px" }}
@@ -263,7 +386,9 @@ export default function SetupWizard({ onComplete }) {
         <div className="wizard-card">
           <div className="wizard-steps">
             <span className="wizard-step-dot" />
+            <span className="wizard-step-dot" />
             <span className="wizard-step-dot active" />
+            <span className="wizard-step-dot" />
           </div>
 
           <h2 className="wizard-title">What's your product story?</h2>
@@ -331,21 +456,81 @@ export default function SetupWizard({ onComplete }) {
               className="btn-primary btn-teal"
               style={{ width: "auto", padding: "0 24px" }}
               disabled={!productStory.trim()}
-              onClick={() =>
-                onComplete({
-                  product: selectedProduct,
-                  story: productStory,
-                  tone: selectedTone,
-                })
-              }
+              onClick={() => setStep("character")}
               type="button"
             >
-              Cast influencers <ChevronRight size={16} />
+              Build my video <ChevronRight size={16} />
             </button>
           </div>
         </div>
       )}
 
+      {step === "character" && (
+        <div className="wizard-card wide">
+          <div className="wizard-steps">
+            <span className="wizard-step-dot" />
+            <span className="wizard-step-dot" />
+            <span className="wizard-step-dot" />
+            <span className="wizard-step-dot active" />
+          </div>
+
+          <h2 className="wizard-title">Who's telling your story?</h2>
+          <p className="wizard-subtitle">Select an AI avatar model to act as the face of your campaign.</p>
+
+          <div className="character-gender-tabs">
+            {["All", "Female", "Male"].map((g) => (
+              <button
+                key={g}
+                type="button"
+                className={`gender-tab ${genderFilter === g ? "active" : ""}`}
+                onClick={() => setGenderFilter(g)}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+
+          <div className="character-grid">
+            {filteredAvatars.map((char) => (
+              <button
+                key={char.id}
+                className={`character-card ${selectedCharacter?.id === char.id ? "selected" : ""}`}
+                onClick={() => handleCharacterSelect(char)}
+                type="button"
+              >
+                <div className="avatar-circle" style={{ overflow: "hidden", background: "#f0f0f0" }}>
+                  {char.image ? (
+                    <img
+                      src={char.image}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      alt={char.name}
+                    />
+                  ) : (
+                    <span>{char.name.charAt(0)}</span>
+                  )}
+                </div>
+                <h3 className="character-name">{char.name}</h3>
+                <span className="character-tag">{char.style}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="wizard-footer">
+            <button className="btn-back" onClick={() => setStep("story")} type="button">
+              <ChevronLeft size={16} /> Back
+            </button>
+            <button
+              className="btn-primary btn-teal"
+              style={{ width: "auto", padding: "0 24px" }}
+              disabled={!selectedCharacter}
+              onClick={handleFinish}
+              type="button"
+            >
+              Generate video <Sparkles size={16} style={{ marginLeft: "4px" }} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

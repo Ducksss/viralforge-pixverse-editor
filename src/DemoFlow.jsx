@@ -57,22 +57,38 @@ export default function DemoFlow({ data, onReset }) {
       const pct = Math.min(100, (elapsed / duration) * 100);
       setProgress(pct);
 
-      if (pct < 12.5) {
-        setLoadingText("Analysing your product…");
-      } else if (pct < 25.0) {
-        setLoadingText("Writing the shot list…");
-      } else if (pct < 37.5) {
-        setLoadingText("Generating shot 1 of 5…");
-      } else if (pct < 50.0) {
-        setLoadingText("Generating shot 2 of 5…");
-      } else if (pct < 62.5) {
-        setLoadingText("Generating shot 3 of 5…");
-      } else if (pct < 75.0) {
-        setLoadingText("Generating shot 4 of 5…");
-      } else if (pct < 87.5) {
-        setLoadingText("Generating shot 5 of 5…");
+      if (hasReprompted) {
+        if (pct < 12.5) {
+          setLoadingText("Analysing your product…");
+        } else if (pct < 25.0) {
+          setLoadingText("Writing the shot list…");
+        } else if (pct < 37.5) {
+          setLoadingText("Generating shot 1 of 5…");
+        } else if (pct < 50.0) {
+          setLoadingText("Generating shot 2 of 5…");
+        } else if (pct < 62.5) {
+          setLoadingText("Generating shot 3 of 5…");
+        } else if (pct < 75.0) {
+          setLoadingText("Generating shot 4 of 5…");
+        } else if (pct < 87.5) {
+          setLoadingText("Generating shot 5 of 5…");
+        } else {
+          setLoadingText("Finishing up…");
+        }
       } else {
-        setLoadingText("Finishing up…");
+        if (pct < 16.6) {
+          setLoadingText("Analysing your product…");
+        } else if (pct < 33.3) {
+          setLoadingText("Writing the shot list…");
+        } else if (pct < 50.0) {
+          setLoadingText("Generating shot 1 of 3…");
+        } else if (pct < 66.6) {
+          setLoadingText("Generating shot 2 of 3…");
+        } else if (pct < 83.3) {
+          setLoadingText("Generating shot 3 of 3…");
+        } else {
+          setLoadingText("Finishing up…");
+        }
       }
 
       if (pct >= 100) {
@@ -184,7 +200,7 @@ export default function DemoFlow({ data, onReset }) {
 
   const handleShotCardClick = (idx) => {
     setSelectedShotIndex(idx);
-    
+
     // Seek logic to make it feel like a real editor
     if (currentVideoSrc !== video1) {
       setCurrentVideoSrc(video1);
@@ -208,6 +224,17 @@ export default function DemoFlow({ data, onReset }) {
     if (currentVideoSrc === video2) {
       setSelectedShotIndex(4);
     } else {
+      if (!isExtended && time >= 17) {
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0;
+        }
+        if (socialVideoRef.current) {
+          socialVideoRef.current.currentTime = 0;
+        }
+        setSelectedShotIndex(0);
+        return;
+      }
+
       const shotStarts = [0, 5, 11, 17, 23];
       let activeIdx = 0;
       for (let i = 0; i < shotStarts.length; i++) {
@@ -242,7 +269,7 @@ export default function DemoFlow({ data, onReset }) {
     }
   };
 
-  const activeShots = SHOT_THUMBS;
+  const activeShots = isExtended ? SHOT_THUMBS : SHOT_THUMBS.slice(0, 3);
 
   return (
     <div style={{ width: "100%", height: "100%", boxSizing: "border-box" }}>
@@ -330,7 +357,7 @@ export default function DemoFlow({ data, onReset }) {
                   onTimeUpdate={handleTimeUpdate}
                   style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
                 />
-                
+
                 {/* Control Badge */}
                 <div className="video-player-badge" style={{ pointerEvents: "none" }}>
                   <Play size={10} fill="currentColor" style={{ marginRight: "4px" }} />
@@ -338,7 +365,7 @@ export default function DemoFlow({ data, onReset }) {
                     ? `Previewing Extended Campaign (${currentVideoSrc === video1 ? "Video 1" : "Video 2"})`
                     : "Previewing Campaign"}
                 </div>
-                
+
                 {/* Control Overlay Buttons */}
                 <div style={{ position: "absolute", bottom: "16px", right: "16px", zIndex: 20, display: "flex", gap: "8px" }}>
                   <button
@@ -397,7 +424,7 @@ export default function DemoFlow({ data, onReset }) {
 
               <div className="demo-shot-strip-container">
                 <p style={{ fontSize: "12px", fontWeight: "700", color: "var(--muted)", margin: "0 0 10px" }}>
-                  Shots ({activeShots.length}) • {isExtended ? "32.0s" : "24.0s"}
+                  Shots ({activeShots.length}) • {isExtended ? "30.0s" : "15.0s"}
                 </p>
                 <div className="demo-shot-strip" style={{ gridTemplateColumns: `repeat(${activeShots.length}, 1fr)` }}>
                   {activeShots.map((thumb, idx) => (
@@ -635,7 +662,7 @@ export default function DemoFlow({ data, onReset }) {
                 The video has been successfully pushed and linked to your product listing on TikTok Shop.
               </p>
 
-              <button className="btn-primary btn-teal" onClick={onReset} type="button">
+              <button className="btn-primary btn-teal" onClick={() => { window.location.href = "/editor"; }} type="button">
                 Start new campaign
               </button>
             </div>

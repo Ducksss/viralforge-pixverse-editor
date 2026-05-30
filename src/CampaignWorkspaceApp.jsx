@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDot,
+  Clapperboard,
   ClipboardList,
   Copy,
   Download,
@@ -55,6 +56,7 @@ import {
   X,
 } from "lucide-react";
 import { assets } from "./assetMap.js";
+import CastPage from "./CastPage.jsx";
 import { CampaignNleBay } from "./CampaignNleBay.jsx";
 import { getClipAtPlayhead } from "./editor/timeline.js";
 import {
@@ -80,6 +82,7 @@ const navIcons = {
   scheduler: CalendarDays,
   props: Store,
   people: Users,
+  cast: Clapperboard,
   editor: Film,
   listings: ShoppingBag,
   ugc: Inbox,
@@ -2169,6 +2172,7 @@ function MainEditor({
 export default function App({
   activeDemoStep,
   activePage: routedActivePage,
+  onGenerateCampaign,
   onNavigateWorkspace,
   onPublishClick,
   onRepromptClick,
@@ -2263,10 +2267,10 @@ export default function App({
         look: `${wizardData.character.style} style, natural window light`,
         voice: `${wizardData.character.style} UGC voice`
       };
-      
+
       // Register character image in assets map dynamically
       assets[wizardData.character.id] = wizardData.character.image;
-      
+
       return [newProfile, ...editorSnapshot.aiPeople.creatorProfiles];
     }
     return editorSnapshot.aiPeople.creatorProfiles;
@@ -2497,7 +2501,7 @@ export default function App({
   }
 
   function navigateWorkspace(id) {
-    if (id === "editor" || id === "people" || id === "props") {
+    if (id === "editor" || id === "people" || id === "props" || id === "cast") {
       if (onNavigateWorkspace) {
         onNavigateWorkspace(id);
       } else {
@@ -2546,9 +2550,34 @@ export default function App({
           onPublishClick={onPublishClick}
         />
         <div
-          className={`content-shell ${activePage === "people" ? "people-content-shell" : ""} ${activePage === "props" ? "props-content-shell" : ""}`}
+          className={`content-shell ${activePage === "people" ? "people-content-shell" : ""} ${activePage === "props" ? "props-content-shell" : ""} ${activePage === "cast" ? "cast-content-shell" : ""}`}
         >
-          {activePage === "props" ? (
+          {activePage === "cast" ? (
+            <CastPage
+              embedded
+              initialSelection={wizardData?.characters || []}
+              onBack={() => navigateWorkspace("people")}
+              onGenerate={(characters) => {
+                if (onGenerateCampaign) {
+                  onGenerateCampaign({ characters });
+                } else {
+                  setSavedMessage(`${characters.length} influencer${characters.length === 1 ? "" : "s"} cast`);
+                  navigateWorkspace("editor");
+                }
+              }}
+              product={
+                wizardData?.product || {
+                  id: currentProject?.id || "prod-current",
+                  name: currentProject?.product || "Current product",
+                  price: currentProject?.price || "",
+                  category: currentProject?.category || "Product",
+                  asset: currentProject?.thumb,
+                }
+              }
+              story={wizardData?.story || ""}
+              tone={wizardData?.tone || "Authentic"}
+            />
+          ) : activePage === "props" ? (
             <PropsWorkspace
               brandGuide={editorSnapshot.brandGuide}
               onContinue={({ productName }) => {

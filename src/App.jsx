@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -1398,75 +1398,103 @@ function LocalNleEditorApp() {
   );
 }
 
+const WIZARD_STORAGE_KEY = "viralforge.wizardData";
+
+function readPersistedWizardData() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(WIZARD_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writePersistedWizardData(value) {
+  if (typeof window === "undefined") return;
+  try {
+    if (value) {
+      window.sessionStorage.setItem(WIZARD_STORAGE_KEY, JSON.stringify(value));
+    } else {
+      window.sessionStorage.removeItem(WIZARD_STORAGE_KEY);
+    }
+  } catch {
+    /* ignore quota / privacy mode errors */
+  }
+}
+
+function usePersistedWizardData() {
+  const [data, setDataRaw] = useState(readPersistedWizardData);
+  const setData = useCallback((nextOrUpdater) => {
+    setDataRaw((current) => {
+      const next = typeof nextOrUpdater === "function" ? nextOrUpdater(current) : nextOrUpdater;
+      writePersistedWizardData(next);
+      return next;
+    });
+  }, []);
+  return [data, setData];
+}
+
 function CampaignAppShell({
   activePage = "editor",
   enableWizard = false,
   onNavigateWorkspace,
 } = {}) {
-  const [wizardData, setWizardData] = useState(null);
+  const navigate = useNavigate();
+  const [wizardData, setWizardData] = usePersistedWizardData();
   const [activeDemoStep, setActiveDemoStep] = useState("editor");
   const [repromptOpen, setRepromptOpen] = useState(false);
-  const [productStory, setProductStory] = useState("");
-  const [selectedTone, setSelectedTone] = useState("Authentic");
+  const [productStory, setProductStory] = useState(wizardData?.story || "");
+  const [selectedTone, setSelectedTone] = useState(wizardData?.tone || "Authentic");
 
-  if (enableWizard && !isTestEnv) {
-    if (!wizardData) {
-      return (
-        <SetupWizard
-          onComplete={(data) => {
-            setWizardData({ ...data, characters: data.characters || [], character: data.character || null });
-            setProductStory(data.story || "");
-            setSelectedTone(data.tone || "Authentic");
-            setActiveDemoStep("cast");
-          }}
-        />
-      );
-    }
+  // Wizard takeover: only when explicitly enabled and no data yet.
+  if (enableWizard && !isTestEnv && !wizardData) {
+    return (
+      <SetupWizard
+        onComplete={(data) => {
+          const seedCharacters = data.characters && data.characters.length > 0
+            ? data.characters
+            : data.character
+              ? [data.character]
+              : [];
+          const fullData = {
+            ...data,
+            characters: seedCharacters,
+            character: data.character || seedCharacters[0] || null,
+          };
+          // Persist synchronously so the /cast mount can hydrate.
+          writePersistedWizardData(fullData);
+          setWizardData(fullData);
+          setProductStory(fullData.story || "");
+          setSelectedTone(fullData.tone || "Authentic");
+          navigate(APP_ROUTES.cast);
+        }}
+      />
+    );
+  }
 
-    if (activeDemoStep === "cast" || !wizardData.character) {
-      return (
-        <CastPage
-          initialSelection={wizardData.characters || []}
-          onBack={() => {
-            setWizardData(null);
-            setActiveDemoStep("editor");
-          }}
-          onGenerate={(characters) => {
-            setWizardData((current) => ({
-              ...current,
-              characters,
-              character: characters[0],
-            }));
-            setActiveDemoStep("generating");
-          }}
-          product={wizardData.product}
-          story={wizardData.story}
-          tone={wizardData.tone}
-        />
-      );
-    }
+  // DemoFlow takeover whenever we're in generation/publish — works from any route.
+  if (wizardData && activeDemoStep === "generating") {
+    return (
+      <DemoFlow
+        data={wizardData}
+        onReset={() => setActiveDemoStep("editor")}
+        setView={(view) => setActiveDemoStep(view === "editor" ? "editor" : view)}
+        view="generating"
+      />
+    );
+  }
 
-    if (activeDemoStep === "generating") {
-      return (
-        <DemoFlow
-          data={wizardData}
-          setView={(view) => setActiveDemoStep(view === "editor" ? "editor" : view)}
-          view="generating"
-        />
-      );
-    }
-
-    if (activeDemoStep === "publish" || activeDemoStep === "success") {
-      return (
-        <DemoFlow
-          data={wizardData}
-          onBackToEditor={() => setActiveDemoStep("editor")}
-          onReset={() => setActiveDemoStep("editor")}
-          setView={(view) => setActiveDemoStep(view)}
-          view={activeDemoStep}
-        />
-      );
-    }
+  if (wizardData && (activeDemoStep === "publish" || activeDemoStep === "success")) {
+    return (
+      <DemoFlow
+        data={wizardData}
+        onBackToEditor={() => setActiveDemoStep("editor")}
+        onReset={() => setActiveDemoStep("editor")}
+        setView={(view) => setActiveDemoStep(view)}
+        view={activeDemoStep}
+      />
+    );
   }
 
   return (
@@ -1474,6 +1502,14 @@ function CampaignAppShell({
       <CampaignWorkspaceApp
         activeDemoStep={activeDemoStep}
         activePage={activePage}
+        onGenerateCampaign={({ characters }) => {
+          setWizardData((current) => ({
+            ...(current || {}),
+            characters,
+            character: characters[0],
+          }));
+          setActiveDemoStep("generating");
+        }}
         onNavigateWorkspace={onNavigateWorkspace}
         onPublishClick={() => setActiveDemoStep("publish")}
         onRepromptClick={() => setRepromptOpen(true)}
@@ -1674,46 +1710,6 @@ function StoryboardRoute() {
   );
 }
 
-const FALLBACK_CAST_PRODUCT = {
-  id: "prod-7",
-  name: "Sunbyme Miracle Serum",
-  price: "$22.00",
-  category: "Skincare",
-  asset: "sunbymeSerum",
-};
-
-function CastStandaloneRoute() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const passed = location.state || {};
-  const product = passed.product || FALLBACK_CAST_PRODUCT;
-  const story = passed.story || "";
-  const tone = passed.tone || "Authentic";
-
-  return (
-    <CastPage
-      initialSelection={passed.characters || []}
-      onBack={() => navigate(APP_ROUTES.wizard)}
-      onGenerate={(characters) => {
-        navigate(APP_ROUTES.wizard, {
-          state: {
-            castedData: {
-              product,
-              story,
-              tone,
-              characters,
-              character: characters[0],
-            },
-          },
-        });
-      }}
-      product={product}
-      story={story}
-      tone={tone}
-    />
-  );
-}
-
 function AppRouteSwitch() {
   const location = useLocation();
   const legacyWorkspaceRedirect = getLegacyWorkspaceQueryRedirect(location.search);
@@ -1734,7 +1730,7 @@ function AppRouteSwitch() {
       <Route path={APP_ROUTES.aiPeople} element={<CampaignWorkspaceRoute />} />
       <Route path={APP_ROUTES.props} element={<CampaignWorkspaceRoute />} />
       <Route path={APP_ROUTES.storyboard} element={<StoryboardRoute />} />
-      <Route path={APP_ROUTES.cast} element={<CastStandaloneRoute />} />
+      <Route path={APP_ROUTES.cast} element={<CampaignWorkspaceRoute />} />
       <Route path={APP_ROUTES.wizard} element={<CampaignWorkspaceRoute enableWizard />} />
       <Route path={APP_ROUTES.localEditor} element={<LocalNleEditorApp />} />
       <Route path="*" element={<Navigate replace to={APP_ROUTES.editor} />} />
