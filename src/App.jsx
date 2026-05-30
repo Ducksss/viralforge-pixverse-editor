@@ -93,8 +93,10 @@ import {
   getWorkspacePath,
 } from "./routes.js";
 import CampaignWorkspaceApp from "./CampaignWorkspaceApp.jsx";
+import CastPage from "./CastPage.jsx";
 import DemoFlow from "./DemoFlow.jsx";
 import SetupWizard from "./SetupWizard.jsx";
+import StoryboardWizard from "./StoryboardWizard.jsx";
 
 const seededProject = createInitialTimelineProject();
 const seededAssetById = new Map(seededProject.mediaAssets.map((asset) => [asset.id, asset]));
@@ -1412,11 +1414,34 @@ function CampaignAppShell({
       return (
         <SetupWizard
           onComplete={(data) => {
-            setWizardData(data);
+            setWizardData({ ...data, characters: data.characters || [], character: data.character || null });
             setProductStory(data.story || "");
             setSelectedTone(data.tone || "Authentic");
+            setActiveDemoStep("cast");
+          }}
+        />
+      );
+    }
+
+    if (activeDemoStep === "cast" || !wizardData.character) {
+      return (
+        <CastPage
+          initialSelection={wizardData.characters || []}
+          onBack={() => {
+            setWizardData(null);
+            setActiveDemoStep("editor");
+          }}
+          onGenerate={(characters) => {
+            setWizardData((current) => ({
+              ...current,
+              characters,
+              character: characters[0],
+            }));
             setActiveDemoStep("generating");
           }}
+          product={wizardData.product}
+          story={wizardData.story}
+          tone={wizardData.tone}
         />
       );
     }
@@ -1539,6 +1564,156 @@ function CampaignWorkspaceRoute({ enableWizard = false } = {}) {
   );
 }
 
+function StoryboardRoute() {
+  const navigate = useNavigate();
+  const [wizardData, setWizardData] = useState(null);
+  const [demoStep, setDemoStep] = useState("editor");
+  const [repromptOpen, setRepromptOpen] = useState(false);
+  const [productStory, setProductStory] = useState("");
+  const [selectedTone, setSelectedTone] = useState("Authentic");
+
+  if (!wizardData) {
+    return (
+      <StoryboardWizard
+        onComplete={(data) => {
+          setWizardData(data);
+          setProductStory(data.story || "");
+          setSelectedTone(data.tone || "Authentic");
+          setDemoStep("generating");
+        }}
+      />
+    );
+  }
+
+  if (demoStep === "generating") {
+    return (
+      <DemoFlow
+        data={wizardData}
+        onReset={() => {
+          setWizardData(null);
+          setDemoStep("editor");
+        }}
+      />
+    );
+  }
+
+  if (demoStep === "publish" || demoStep === "success") {
+    return (
+      <DemoFlow
+        data={wizardData}
+        onReset={() => setDemoStep("editor")}
+        setView={(v) => setDemoStep(v)}
+        view={demoStep}
+      />
+    );
+  }
+
+  return (
+    <div style={{ height: "100%", width: "100%" }}>
+      <CampaignAppShell
+        activePage="editor"
+        activeDemoStep={demoStep}
+        onNavigateWorkspace={(pageId) => navigate(getWorkspacePath(pageId))}
+        onPublishClick={() => setDemoStep("publish")}
+        onRepromptClick={() => setRepromptOpen(true)}
+        wizardData={wizardData}
+      />
+      {repromptOpen && (
+        <div className="reprompt-modal-overlay">
+          <div className="reprompt-modal">
+            <div className="reprompt-modal-header">
+              <h3>Edit Campaign Prompts</h3>
+              <button className="close-modal" onClick={() => setRepromptOpen(false)} type="button">
+                <X size={18} />
+              </button>
+            </div>
+            <form
+              className="reprompt-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setRepromptOpen(false);
+                setWizardData((current) => ({
+                  ...current,
+                  story: productStory,
+                  tone: selectedTone,
+                }));
+                setDemoStep("generating");
+              }}
+            >
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "8px", textAlign: "left" }}>
+                <label htmlFor="sb-modal-story" style={{ fontSize: "13px", fontWeight: "700" }}>Adjust Product Story</label>
+                <textarea
+                  id="sb-modal-story"
+                  onChange={(event) => setProductStory(event.target.value)}
+                  required
+                  style={{ border: "1px solid var(--line-strong)", borderRadius: "8px", fontFamily: "inherit", height: "120px", outline: "none", padding: "12px" }}
+                  value={productStory}
+                />
+              </div>
+              <div className="tone-selector" style={{ margin: "16px 0 24px", textAlign: "left" }}>
+                <span className="tone-label" style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "8px" }}>Tone</span>
+                <div className="tone-pills" style={{ display: "flex", gap: "8px" }}>
+                  {["Authentic", "Funny", "Urgent", "Soft Sell"].map((tone) => (
+                    <button className={`tone-pill ${selectedTone === tone ? "selected" : ""}`} key={tone} onClick={() => setSelectedTone(tone)} type="button">
+                      {tone}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-actions" style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                <button className="btn-secondary" onClick={() => setRepromptOpen(false)} style={{ padding: "0 20px", width: "auto" }} type="button">Cancel</button>
+                <button className="btn-primary btn-teal" style={{ padding: "0 20px", width: "auto" }} type="submit">
+                  Regenerate <RefreshCw size={14} style={{ marginLeft: "6px" }} />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const FALLBACK_CAST_PRODUCT = {
+  id: "prod-7",
+  name: "Sunbyme Miracle Serum",
+  price: "$22.00",
+  category: "Skincare",
+  asset: "sunbymeSerum",
+};
+
+function CastStandaloneRoute() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const passed = location.state || {};
+  const product = passed.product || FALLBACK_CAST_PRODUCT;
+  const story = passed.story || "";
+  const tone = passed.tone || "Authentic";
+
+  return (
+    <CastPage
+      initialSelection={passed.characters || []}
+      onBack={() => navigate(APP_ROUTES.wizard)}
+      onGenerate={(characters) => {
+        navigate(APP_ROUTES.wizard, {
+          state: {
+            castedData: {
+              product,
+              story,
+              tone,
+              characters,
+              character: characters[0],
+            },
+          },
+        });
+      }}
+      product={product}
+      story={story}
+      tone={tone}
+    />
+  );
+}
+
 function AppRouteSwitch() {
   const location = useLocation();
   const legacyWorkspaceRedirect = getLegacyWorkspaceQueryRedirect(location.search);
@@ -1557,6 +1732,9 @@ function AppRouteSwitch() {
       <Route path={APP_ROUTES.home} element={<Navigate replace to={APP_ROUTES.editor} />} />
       <Route path={APP_ROUTES.editor} element={<CampaignWorkspaceRoute />} />
       <Route path={APP_ROUTES.aiPeople} element={<CampaignWorkspaceRoute />} />
+      <Route path={APP_ROUTES.props} element={<CampaignWorkspaceRoute />} />
+      <Route path={APP_ROUTES.storyboard} element={<StoryboardRoute />} />
+      <Route path={APP_ROUTES.cast} element={<CastStandaloneRoute />} />
       <Route path={APP_ROUTES.wizard} element={<CampaignWorkspaceRoute enableWizard />} />
       <Route path={APP_ROUTES.localEditor} element={<LocalNleEditorApp />} />
       <Route path="*" element={<Navigate replace to={APP_ROUTES.editor} />} />

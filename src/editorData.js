@@ -509,6 +509,25 @@ export const editorSnapshot = {
       strengths: ["Clear product ending", "Clean background"],
     },
   },
+  brandGuide: {
+    brandName: "Sunbyme",
+    website: "sunbyme.com",
+    tagline: "Skin-first beauty, made for everyday glow",
+    voice: "Warm, confident, and reassuring — speaks like a trusted friend, not a clinician.",
+    palette: [
+      { name: "Sunbyme Coral", hex: "#FF6E5A" },
+      { name: "Cream", hex: "#FFF6EE" },
+      { name: "Ink", hex: "#1A1A1A" },
+      { name: "Sage", hex: "#7FA98A" },
+    ],
+    typography: {
+      heading: "Söhne Breit",
+      body: "Inter",
+    },
+    keywords: ["clean beauty", "K-beauty inspired", "barrier-safe", "Gen Z friendly"],
+    doNotSay: ["miracle cure", "anti-aging guarantee", "doctor recommended"],
+    logoAssetKey: "neutrogenaBoost",
+  },
   propsChecklist: [
     { id: "amber-bottle", label: "Amber glass serum bottle", source: "Found on Shopee", vendor: "Shopee", status: "Found", done: true },
     { id: "citrus-slices", label: "Citrus slices (fresh)", source: "Local market / Cold storage", vendor: "Cold Storage", status: "Found", done: true },

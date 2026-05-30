@@ -20,6 +20,7 @@ describe("ViralForge campaign workspace", () => {
 
     render(<App />);
 
+    expect(screen.queryByText("All Projects")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Remotion Timeline" })).toBeInTheDocument();
     expect(screen.getByTestId("social-preview-title")).toHaveTextContent("Social Preview");
     expect(screen.queryByText("Preview 30s")).not.toBeInTheDocument();
@@ -46,6 +47,21 @@ describe("ViralForge campaign workspace", () => {
     expect(screen.getByRole("heading", { name: "Creator Casting" })).toBeInTheDocument();
     expect(screen.getByText("Reusable licensed AI creators for UGC campaign variants")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Generation Readiness" })).toBeInTheDocument();
+  });
+
+  it("renders campaign topbar actions with dedicated no-wrap controls", async () => {
+    render(<App activeDemoStep="editor" />);
+
+    expect(screen.queryByText("All Projects")).not.toBeInTheDocument();
+
+    const repromptButton = screen.getByRole("button", { name: "Re-prompt AI" });
+    const publishButton = screen.getByRole("button", { name: "Publish Campaign" });
+
+    expect(repromptButton).toHaveClass("campaign-header-action", "is-secondary");
+    expect(repromptButton).not.toHaveClass("btn-secondary");
+    expect(publishButton).toHaveClass("campaign-header-action", "is-primary");
+    expect(publishButton).not.toHaveClass("btn-primary");
+    expect(await screen.findByText("Using demo fallback")).toBeInTheDocument();
   });
 
   it("updates people reference, gender, and selected creator state locally", async () => {

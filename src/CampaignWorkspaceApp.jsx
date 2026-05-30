@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
+  ArrowRight,
   BadgeCheck,
   BarChart3,
   Bell,
@@ -17,12 +18,16 @@ import {
   Edit3,
   FileImage,
   Film,
+  Globe,
   Home,
   Image,
+  ImagePlus,
   Inbox,
   Layers,
   Maximize2,
   Monitor,
+  Package,
+  Palette,
   Pause,
   PenLine,
   Play,
@@ -40,12 +45,14 @@ import {
   Star,
   Store,
   Trash2,
+  Type,
   Upload,
   UserRound,
   Users,
   Volume2,
   VolumeX,
   WandSparkles,
+  X,
 } from "lucide-react";
 import { assets } from "./assetMap.js";
 import { CampaignNleBay } from "./CampaignNleBay.jsx";
@@ -299,7 +306,6 @@ function Topbar({
         <IconButton label="Back to all projects" className="ghost-icon">
           <ChevronLeft size={20} />
         </IconButton>
-        <span className="all-projects">All Projects</span>
       </div>
 
       {isEditingTitle ? (
@@ -330,12 +336,14 @@ function Topbar({
 
       <div className="topbar-actions">
         {activeDemoStep === "editor" && (
-          <div style={{ display: "flex", gap: "8px", marginRight: "12px" }}>
-            <button className="btn-secondary" style={{ height: "34px", padding: "0 14px", fontSize: "12px", width: "auto", margin: 0 }} onClick={onRepromptClick} type="button">
-              Re-prompt AI
+          <div className="campaign-quick-actions" aria-label="Campaign publishing actions">
+            <button className="campaign-header-action is-secondary" onClick={onRepromptClick} type="button">
+              <WandSparkles size={14} />
+              <span>Re-prompt AI</span>
             </button>
-            <button className="btn-primary btn-tiktok" style={{ height: "34px", padding: "0 14px", fontSize: "12px", width: "auto", margin: 0, background: "linear-gradient(135deg, #fe2c55 0%, #ff5a5f 100%)", color: "white" }} onClick={onPublishClick} type="button">
-              Publish Campaign ✓
+            <button className="campaign-header-action is-primary" onClick={onPublishClick} type="button">
+              <span>Publish Campaign</span>
+              <Check size={14} />
             </button>
           </div>
         )}
@@ -1791,6 +1799,285 @@ function PeopleWorkspace({
   );
 }
 
+function BrandGuidePanel({ brandGuide }) {
+  return (
+    <Panel className="brand-guide-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>Brand Guide</h3>
+          <p>Pulled from {brandGuide.website} during onboarding</p>
+        </div>
+        <span className="brand-guide-pill">
+          <Check size={13} />
+          Synced
+        </span>
+      </div>
+
+      <div className="brand-guide-summary">
+        <div className="brand-guide-logo" aria-hidden="true">
+          {assets[brandGuide.logoAssetKey] ? (
+            <img src={assets[brandGuide.logoAssetKey]} alt="" />
+          ) : (
+            <Globe size={20} />
+          )}
+        </div>
+        <div>
+          <strong>{brandGuide.brandName}</strong>
+          <small>{brandGuide.tagline}</small>
+        </div>
+      </div>
+
+      <div className="brand-guide-section">
+        <div className="brand-guide-section-heading">
+          <Palette size={14} />
+          <strong>Palette</strong>
+        </div>
+        <div className="brand-swatch-row">
+          {brandGuide.palette.map((swatch) => (
+            <div className="brand-swatch" key={swatch.hex}>
+              <span className="brand-swatch-chip" style={{ background: swatch.hex }} />
+              <span className="brand-swatch-meta">
+                <strong>{swatch.name}</strong>
+                <small>{swatch.hex}</small>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="brand-guide-grid">
+        <div className="brand-guide-section">
+          <div className="brand-guide-section-heading">
+            <Type size={14} />
+            <strong>Typography</strong>
+          </div>
+          <div className="brand-guide-type">
+            <span>
+              <small>Headings</small>
+              <strong>{brandGuide.typography.heading}</strong>
+            </span>
+            <span>
+              <small>Body</small>
+              <strong>{brandGuide.typography.body}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div className="brand-guide-section">
+          <div className="brand-guide-section-heading">
+            <Sparkles size={14} />
+            <strong>Voice</strong>
+          </div>
+          <p className="brand-guide-voice">{brandGuide.voice}</p>
+        </div>
+      </div>
+
+      <div className="brand-guide-section">
+        <div className="brand-guide-section-heading">
+          <strong>Keywords</strong>
+        </div>
+        <div className="brand-tag-row">
+          {brandGuide.keywords.map((keyword) => (
+            <span className="brand-tag" key={keyword}>{keyword}</span>
+          ))}
+        </div>
+      </div>
+
+      <div className="brand-guide-section">
+        <div className="brand-guide-section-heading">
+          <strong>Avoid</strong>
+        </div>
+        <div className="brand-tag-row">
+          {brandGuide.doNotSay.map((phrase) => (
+            <span className="brand-tag is-warning" key={phrase}>{phrase}</span>
+          ))}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function ProductUploadPanel({ onUpload, onRemove, productPreview, productName }) {
+  return (
+    <Panel className="product-upload-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>Drop your product</h3>
+          <p>Add a clear product photo on a neutral background.</p>
+        </div>
+        <Package size={18} />
+      </div>
+
+      {productPreview ? (
+        <div className="product-preview-card">
+          <img src={productPreview} alt={productName || "Uploaded product preview"} />
+          <div className="product-preview-meta">
+            <strong>{productName || "Product image"}</strong>
+            <small>Ready to use as the hero reference</small>
+            <button className="link-button" onClick={onRemove} type="button">
+              <X size={13} />
+              Remove and re-upload
+            </button>
+          </div>
+        </div>
+      ) : (
+        <label className="product-dropzone" htmlFor="props-product-upload">
+          <input
+            accept="image/png,image/jpeg,image/webp"
+            aria-label="Upload product image"
+            className="sr-only"
+            id="props-product-upload"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (loadEvent) => {
+                  onUpload({
+                    name: file.name,
+                    preview: loadEvent.target?.result || "",
+                  });
+                };
+                reader.readAsDataURL(file);
+              }
+            }}
+            type="file"
+          />
+          <span className="upload-glyph"><ImagePlus size={26} /></span>
+          <strong>Upload product photo</strong>
+          <small>PNG, JPG, WEBP — single product, even lighting, no clutter</small>
+        </label>
+      )}
+    </Panel>
+  );
+}
+
+function ProductDescriptionPanel({ description, onChange, productName, onProductNameChange }) {
+  const characterCount = description.length;
+
+  return (
+    <Panel className="product-description-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>Tell us about it</h3>
+          <p>What is the product, who is it for, and what should the ad emphasize?</p>
+        </div>
+      </div>
+
+      <label className="props-input-field">
+        <span>Product name</span>
+        <input
+          aria-label="Product name"
+          onChange={(event) => onProductNameChange(event.target.value)}
+          placeholder="e.g. Sunbyme Miracle Serum"
+          type="text"
+          value={productName}
+        />
+      </label>
+
+      <label className="props-input-field">
+        <span>Description</span>
+        <textarea
+          aria-label="Product description"
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="Describe what makes it special — ingredients, the texture, who it's for, where it fits in their routine, the proof you'd want shown on screen."
+          rows={6}
+          value={description}
+        />
+        <small className={characterCount > 600 ? "is-warning" : ""}>
+          {characterCount}/600 characters
+        </small>
+      </label>
+    </Panel>
+  );
+}
+
+function PropsActionBar({ canContinue, onContinue }) {
+  return (
+    <Panel className="props-action-bar">
+      <div>
+        <strong>Generate the ad concept</strong>
+        <small>
+          {canContinue
+            ? "Looks good. Next, pick the AI creator who will appear in the ad."
+            : "Upload a product photo and add a description to continue."}
+        </small>
+      </div>
+      <button
+        className="props-continue-button"
+        disabled={!canContinue}
+        onClick={onContinue}
+        type="button"
+      >
+        <Sparkles size={15} />
+        Generate ad
+        <ArrowRight size={15} />
+      </button>
+    </Panel>
+  );
+}
+
+function PropsWorkspace({ brandGuide, onContinue }) {
+  const [product, setProduct] = useState(null);
+  const [productName, setProductName] = useState("");
+  const [description, setDescription] = useState("");
+
+  const canContinue = Boolean(product) && description.trim().length > 0;
+
+  return (
+    <main className="props-page">
+      <section className="props-main">
+        <header className="props-hero">
+          <div>
+            <p className="card-kicker">Step 1 of 2 — Props</p>
+            <h2>Bring in your product</h2>
+            <p>
+              We&apos;ll generate an ad concept using your brand guide, your product, and the
+              description you give us — before you pick the AI creator who&apos;ll star in it.
+            </p>
+          </div>
+          <ol className="props-stepper" aria-label="Props workflow">
+            <li className="is-active"><b>1</b>Upload product</li>
+            <li className="is-active"><b>2</b>Describe it</li>
+            <li><b>3</b>Pick AI creator</li>
+          </ol>
+        </header>
+
+        <div className="props-builder-grid">
+          <ProductUploadPanel
+            onRemove={() => {
+              setProduct(null);
+              setProductName("");
+            }}
+            onUpload={(uploaded) => {
+              setProduct(uploaded);
+              if (!productName) {
+                setProductName(uploaded.name.replace(/\.[^.]+$/, ""));
+              }
+            }}
+            productName={productName}
+            productPreview={product?.preview || null}
+          />
+          <ProductDescriptionPanel
+            description={description}
+            onChange={setDescription}
+            onProductNameChange={setProductName}
+            productName={productName}
+          />
+        </div>
+
+        <PropsActionBar
+          canContinue={canContinue}
+          onContinue={() => onContinue({ product, productName, description })}
+        />
+      </section>
+
+      <aside className="props-right-rail">
+        <BrandGuidePanel brandGuide={brandGuide} />
+      </aside>
+    </main>
+  );
+}
+
 function RightRail({
   checklist,
   listingTab,
@@ -2210,7 +2497,7 @@ export default function App({
   }
 
   function navigateWorkspace(id) {
-    if (id === "editor" || id === "people") {
+    if (id === "editor" || id === "people" || id === "props") {
       if (onNavigateWorkspace) {
         onNavigateWorkspace(id);
       } else {
@@ -2258,8 +2545,20 @@ export default function App({
           onRepromptClick={onRepromptClick}
           onPublishClick={onPublishClick}
         />
-        <div className={`content-shell ${activePage === "people" ? "people-content-shell" : ""}`}>
-          {activePage === "people" ? (
+        <div
+          className={`content-shell ${activePage === "people" ? "people-content-shell" : ""} ${activePage === "props" ? "props-content-shell" : ""}`}
+        >
+          {activePage === "props" ? (
+            <PropsWorkspace
+              brandGuide={editorSnapshot.brandGuide}
+              onContinue={({ productName }) => {
+                if (productName) {
+                  setSavedMessage(`${productName} ready — pick an AI creator`);
+                }
+                navigateWorkspace("people");
+              }}
+            />
+          ) : activePage === "people" ? (
             <PeopleWorkspace
               creatorProfiles={creatorProfiles}
               onGenerateAudition={generateAudition}

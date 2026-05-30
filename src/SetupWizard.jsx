@@ -217,7 +217,6 @@ export default function SetupWizard({ onComplete }) {
           <div className="wizard-steps">
             <span className="wizard-step-dot active" />
             <span className="wizard-step-dot" />
-            <span className="wizard-step-dot" />
           </div>
 
           <h2 className="wizard-title">Select your product</h2>
@@ -265,7 +264,6 @@ export default function SetupWizard({ onComplete }) {
           <div className="wizard-steps">
             <span className="wizard-step-dot" />
             <span className="wizard-step-dot active" />
-            <span className="wizard-step-dot" />
           </div>
 
           <h2 className="wizard-title">What's your product story?</h2>
@@ -333,75 +331,21 @@ export default function SetupWizard({ onComplete }) {
               className="btn-primary btn-teal"
               style={{ width: "auto", padding: "0 24px" }}
               disabled={!productStory.trim()}
-              onClick={() => setStep("character")}
+              onClick={() =>
+                onComplete({
+                  product: selectedProduct,
+                  story: productStory,
+                  tone: selectedTone,
+                })
+              }
               type="button"
             >
-              Build my video <ChevronRight size={16} />
+              Cast influencers <ChevronRight size={16} />
             </button>
           </div>
         </div>
       )}
 
-      {step === "character" && (
-        <div className="wizard-card wide">
-          <div className="wizard-steps">
-            <span className="wizard-step-dot" />
-            <span className="wizard-step-dot" />
-            <span className="wizard-step-dot active" />
-          </div>
-
-          <h2 className="wizard-title">Who's telling your story?</h2>
-          <p className="wizard-subtitle">Select an AI avatar model to act as the face of your campaign.</p>
-
-          <div className="character-gender-tabs">
-            {["All", "Female", "Male"].map((g) => (
-              <button
-                key={g}
-                type="button"
-                className={`gender-tab ${genderFilter === g ? "active" : ""}`}
-                onClick={() => setGenderFilter(g)}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-
-          <div className="character-grid">
-            {filteredAvatars.map((char) => (
-              <button
-                key={char.id}
-                className={`character-card ${selectedCharacter?.id === char.id ? "selected" : ""}`}
-                onClick={() => handleCharacterSelect(char)}
-                type="button"
-              >
-                <img
-                  src={char.image}
-                  className="avatar-circle"
-                  style={{ objectFit: "cover" }}
-                  alt={char.name}
-                />
-                <h3 className="character-name">{char.name}</h3>
-                <span className="character-tag">{char.style}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="wizard-footer">
-            <button className="btn-back" onClick={() => setStep("story")} type="button">
-              <ChevronLeft size={16} /> Back
-            </button>
-            <button
-              className="btn-primary btn-teal"
-              style={{ width: "auto", padding: "0 24px" }}
-              disabled={!selectedCharacter}
-              onClick={handleFinish}
-              type="button"
-            >
-              Generate video <Sparkles size={16} style={{ marginLeft: "4px" }} />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -13,6 +13,14 @@ const SHOT_THUMBS = [
 ];
 
 export default function DemoFlow({ data, onReset }) {
+  const cast = Array.isArray(data.characters) && data.characters.length > 0
+    ? data.characters
+    : data.character
+      ? [data.character]
+      : [];
+  const [variantIndex, setVariantIndex] = useState(0);
+  const activeCharacter = cast[variantIndex] || data.character || cast[0];
+  const characterForDisplay = activeCharacter || { name: "Spokesperson", image: undefined, style: "Relatable" };
   const [view, setView] = useState("generating"); // generating, editor, publish, success
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState("Analysing your product…");
@@ -221,7 +229,7 @@ export default function DemoFlow({ data, onReset }) {
       case 1:
         return `Shot 2: Texture Close-up - Sinks in fast, zero sticky residue`;
       case 2:
-        return `Shot 3: Spokesperson Intro - "${data.character.name} sharing her skincare routine"`;
+        return `Shot 3: Spokesperson Intro - "${characterForDisplay.name} sharing her skincare routine"`;
       case 3:
         return `Shot 4: Core Ingredients - Formulated with 10% Pure Vitamin C`;
       case 4:
@@ -275,7 +283,36 @@ export default function DemoFlow({ data, onReset }) {
             <div className="demo-editor-title">
               <strong>{data.product.name} - {isExtended ? "Extended Campaign" : "PixVerse Campaign"}</strong>
             </div>
-            <div style={{ width: "120px" }} />
+            {cast.length > 1 ? (
+              <div className="variant-switcher" aria-label="Cast variant">
+                <button
+                  className="variant-switcher-btn"
+                  onClick={() => setVariantIndex((i) => (i - 1 + cast.length) % cast.length)}
+                  type="button"
+                  aria-label="Previous variant"
+                >
+                  ‹
+                </button>
+                <div className="variant-switcher-label">
+                  {characterForDisplay.image ? (
+                    <img src={characterForDisplay.image} alt="" />
+                  ) : null}
+                  <span>
+                    <strong>{characterForDisplay.name}</strong> · Variant {variantIndex + 1} of {cast.length}
+                  </span>
+                </div>
+                <button
+                  className="variant-switcher-btn"
+                  onClick={() => setVariantIndex((i) => (i + 1) % cast.length)}
+                  type="button"
+                  aria-label="Next variant"
+                >
+                  ›
+                </button>
+              </div>
+            ) : (
+              <div style={{ width: "120px" }} />
+            )}
           </header>
 
           <div className="demo-editor-body">
@@ -353,7 +390,7 @@ export default function DemoFlow({ data, onReset }) {
                 </div>
 
                 <div className="video-overlay-text" style={{ pointerEvents: "none" }}>
-                  <strong>{data.character.name}</strong>
+                  <strong>{characterForDisplay.name}</strong>
                   <p>{getOverlayText(selectedShotIndex)}</p>
                 </div>
               </div>
@@ -403,7 +440,7 @@ export default function DemoFlow({ data, onReset }) {
                     style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.85 }}
                   />
                   <div className="phone-overlay-caption">
-                    <strong>@{data.character.name.toLowerCase()}</strong>
+                    <strong>@{characterForDisplay.name.toLowerCase()}</strong>
                     <p style={{ margin: "4px 0" }}>{activeHook} #skincare #tiktokshop #viralforge</p>
                     <span className="phone-cta-button">Shop Link Below</span>
                   </div>
@@ -504,14 +541,14 @@ export default function DemoFlow({ data, onReset }) {
 
                 {/* Summary Card */}
                 <div className="publish-summary-card">
-                  <img src={data.character.image} alt="Spokesperson summary" />
+                  <img src={characterForDisplay.image} alt="Spokesperson summary" />
                   <div>
                     <span className="product-category" style={{ margin: 0 }}>Active Spokesperson</span>
                     <strong style={{ fontSize: "16px", color: "var(--ink)", display: "block" }}>
-                      {data.character.name}
+                      {characterForDisplay.name}
                     </strong>
                     <span style={{ fontSize: "12px", color: "var(--muted)" }}>
-                      Role: {data.character.style} Spokesperson
+                      Role: {characterForDisplay.style} Spokesperson
                     </span>
                   </div>
                 </div>

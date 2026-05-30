@@ -2,7 +2,10 @@ export const APP_ROUTES = Object.freeze({
   home: "/",
   editor: "/editor",
   aiPeople: "/ai-people",
+  props: "/props",
+  storyboard: "/storyboard",
   wizard: "/wizard",
+  cast: "/cast",
   localEditor: "/local-editor",
 });
 
@@ -14,6 +17,8 @@ export const LEGACY_ROUTE_REDIRECTS = Object.freeze({
 export const WORKSPACE_PAGE_PATHS = Object.freeze({
   editor: APP_ROUTES.editor,
   people: APP_ROUTES.aiPeople,
+  props: APP_ROUTES.props,
+  storyboard: APP_ROUTES.storyboard,
 });
 
 const WORKSPACE_PATH_PAGES = Object.freeze(
