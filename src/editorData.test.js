@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildTimelineMarkers, editorSnapshot, getChecklistProgress } from "./editorData.js";
+import {
+  buildTimelineMarkers,
+  editorSnapshot,
+  getChecklistProgress,
+  getPeopleReadiness,
+} from "./editorData.js";
 
 describe("editorSnapshot", () => {
   it("models the PixVerse campaign editor with a 36 second assembled video", () => {
@@ -28,5 +33,29 @@ describe("editorSnapshot", () => {
       { id: "m-2", kind: "product", left: "5.6%" },
       { id: "m-3", kind: "benefit", left: "16.7%" },
     ]);
+  });
+
+  it("models reusable AI people with upload readiness", () => {
+    expect(editorSnapshot.aiPeople.defaultGender).toBe("Woman");
+    expect(editorSnapshot.aiPeople.creatorProfiles.map((person) => person.name)).toEqual([
+      "Maya Chen",
+      "Daniel Ong",
+      "Jordan Lee",
+    ]);
+    expect(editorSnapshot.aiPeople.genderOptions.map((option) => option.label)).toEqual([
+      "Woman",
+      "Man",
+      "Non-binary",
+    ]);
+    expect(getPeopleReadiness(editorSnapshot.aiPeople)).toEqual({
+      completed: 4,
+      total: 5,
+      label: "4/5",
+    });
+    expect(getPeopleReadiness(editorSnapshot.aiPeople, { referenceUploaded: true })).toEqual({
+      completed: 5,
+      total: 5,
+      label: "5/5",
+    });
   });
 });
