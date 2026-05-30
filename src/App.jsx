@@ -45,6 +45,7 @@ import {
   Volume2,
   VolumeX,
   WandSparkles,
+  X,
 } from "lucide-react";
 import { assets } from "./assetMap.js";
 import {
@@ -192,6 +193,9 @@ function Topbar({
   setTitleDraft,
   statusMessage,
   titleDraft,
+  activeDemoStep,
+  onRepromptClick,
+  onPublishClick,
 }) {
   return (
     <header className="topbar">
@@ -229,6 +233,17 @@ function Topbar({
       )}
 
       <div className="topbar-actions">
+        {activeDemoStep === "editor" && (
+          <div style={{ display: "flex", gap: "8px", marginRight: "12px" }}>
+            <button className="btn-secondary" style={{ height: "34px", padding: "0 14px", fontSize: "12px", width: "auto", margin: 0 }} onClick={onRepromptClick} type="button">
+              Re-prompt AI
+            </button>
+            <button className="btn-primary btn-tiktok" style={{ height: "34px", padding: "0 14px", fontSize: "12px", width: "auto", margin: 0, background: "linear-gradient(135deg, #fe2c55 0%, #ff5a5f 100%)", color: "white" }} onClick={onPublishClick} type="button">
+              Publish Campaign ✓
+            </button>
+          </div>
+        )}
+
         <span className={`saved-state ${statusMessage === "Saved" ? "" : "is-working"}`} role="status" aria-live="polite">
           <span />
           {statusMessage}
@@ -1401,6 +1416,10 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [creatorProfiles, setCreatorProfiles] = useState(editorSnapshot.aiPeople.creatorProfiles);
   const [wizardData, setWizardData] = useState(null);
+  const [activeDemoStep, setActiveDemoStep] = useState("generating");
+  const [repromptOpen, setRepromptOpen] = useState(false);
+  const [productStory, setProductStory] = useState("");
+  const [selectedTone, setSelectedTone] = useState("Authentic");
 
   
   const [activePresetId, setActivePresetId] = useState(editorSnapshot.generationPresets[0].id);
@@ -1569,19 +1588,78 @@ export default function App() {
       return (
         <SetupWizard
           onComplete={(data) => {
+            setSelectedProduct(data.product);
+            setProductStory(data.story);
+            setSelectedTone(data.tone);
+            setProjectTitle(`${data.product.name} - PixVerse Campaign`);
+            
+            const newProfile = {
+              id: data.character.id,
+              name: data.character.name,
+              gender: data.character.gender === "Female" ? "Woman" : "Man",
+              role: `${data.character.style} Spokesperson`,
+              locale: "Singapore",
+              language: "English",
+              fitScore: 95,
+              consent: "Model release signed",
+              asset: data.character.id,
+              look: `${data.character.style} style, natural window light`,
+              voice: `${data.character.style} UGC voice`
+            };
+
+            // Register character image in assets map dynamically
+            assets[data.character.id] = data.character.image;
+
+            setCreatorProfiles([newProfile, ...editorSnapshot.aiPeople.creatorProfiles]);
+            setSelectedPersonId(newProfile.id);
+            setSelectedGender(newProfile.gender);
+
             setWizardData(data);
+            setActiveDemoStep("generating");
           }}
         />
       );
     }
-    return (
-      <DemoFlow
-        data={wizardData}
-        onReset={() => {
-          setWizardData(null);
-        }}
-      />
-    );
+
+    if (activeDemoStep === "generating") {
+      return (
+        <DemoFlow
+          data={wizardData}
+          view="generating"
+          setView={(v) => {
+            if (v === "editor") {
+              setWizardComplete(true);
+              setActiveDemoStep("editor");
+            }
+          }}
+        />
+      );
+    }
+
+    if (activeDemoStep === "publish" || activeDemoStep === "success") {
+      return (
+        <DemoFlow
+          data={wizardData}
+          view={activeDemoStep}
+          setView={(v) => {
+            if (v === "editor") {
+              setWizardComplete(true);
+              setActiveDemoStep("editor");
+            } else {
+              setActiveDemoStep(v);
+            }
+          }}
+          onReset={() => {
+            setWizardComplete(true);
+            setActiveDemoStep("editor");
+          }}
+          onBackToEditor={() => {
+            setWizardComplete(true);
+            setActiveDemoStep("editor");
+          }}
+        />
+      );
+    }
   }
 
   if (!wizardComplete) {
@@ -1643,6 +1721,12 @@ export default function App() {
           setTitleDraft={setTitleDraft}
           statusMessage={statusMessage}
           titleDraft={titleDraft}
+          activeDemoStep={activeDemoStep}
+          onRepromptClick={() => setRepromptOpen(true)}
+          onPublishClick={() => {
+            setWizardComplete(false);
+            setActiveDemoStep("publish");
+          }}
         />
         <div className={`content-shell ${activePage === "people" ? "people-content-shell" : ""}`}>
           {activePage === "people" ? (
@@ -1743,6 +1827,65 @@ export default function App() {
           )}
         </div>
       </div>
+      {repromptOpen && (
+        <div className="reprompt-modal-overlay">
+          <div className="reprompt-modal">
+            <div className="reprompt-modal-header">
+              <h3>Edit Campaign Prompts</h3>
+              <button className="close-modal" onClick={() => setRepromptOpen(false)} type="button">
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              setRepromptOpen(false);
+              setWizardComplete(false);
+              setActiveDemoStep("generating");
+            }} className="reprompt-form">
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "8px", textAlign: "left" }}>
+                <label htmlFor="modal-story" style={{ fontSize: "13px", fontWeight: "700" }}>Adjust Product Story</label>
+                <textarea
+                  id="modal-story"
+                  value={productStory}
+                  onChange={(e) => setProductStory(e.target.value)}
+                  required
+                  style={{
+                    height: "120px",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--line-strong)",
+                    outline: "none",
+                    fontFamily: "inherit"
+                  }}
+                />
+              </div>
+              <div className="tone-selector" style={{ margin: "16px 0 24px", textAlign: "left" }}>
+                <span className="tone-label" style={{ fontSize: "13px", fontWeight: "700", display: "block", marginBottom: "8px" }}>Tone</span>
+                <div className="tone-pills" style={{ display: "flex", gap: "8px" }}>
+                  {["Authentic", "Funny", "Urgent", "Soft Sell"].map((tone) => (
+                    <button
+                      key={tone}
+                      type="button"
+                      className={`tone-pill ${selectedTone === tone ? "selected" : ""}`}
+                      onClick={() => setSelectedTone(tone)}
+                    >
+                      {tone}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-actions" style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                <button className="btn-secondary" style={{ width: "auto", padding: "0 20px" }} onClick={() => setRepromptOpen(false)} type="button">
+                  Cancel
+                </button>
+                <button className="btn-primary btn-teal" style={{ width: "auto", padding: "0 20px" }} type="submit">
+                  Regenerate <RefreshCw size={14} style={{ marginLeft: "6px" }} />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
