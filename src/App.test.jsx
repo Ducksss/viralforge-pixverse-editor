@@ -110,4 +110,19 @@ describe("ViralForge campaign workspace", () => {
     expect(within(shotStrip).getByText("AI UGC Proof sample 2")).toBeInTheDocument();
     expect(within(shotStrip).getByText("AI UGC Proof sample 3")).toBeInTheDocument();
   });
+
+  it("renders the trend translator as a compact trend brief", async () => {
+    render(<App />);
+
+    await screen.findByText("Using demo fallback");
+
+    const heading = screen.getByRole("heading", { name: /trend brief beta/i });
+    const panel = heading.closest("section");
+
+    expect(panel).not.toBeNull();
+    expect(within(panel).getByText("Proof first. Deal second.")).toBeInTheDocument();
+    expect(within(panel).getByText("15s plan")).toBeInTheDocument();
+    expect(within(panel).queryByText(/Gen Z loves simple/i)).not.toBeInTheDocument();
+    expect(within(panel).queryByText(/Avoid poreless skin claims/i)).not.toBeInTheDocument();
+  });
 });

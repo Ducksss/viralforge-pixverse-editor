@@ -53,7 +53,7 @@ describe("right rail collapsible panels", () => {
     await screen.findByText("Synced PixVerse API");
 
     assertIndependentCollapse([
-      { collapse: /collapse gen z trend translator/i, expand: /expand gen z trend translator/i, content: () => screen.getByText(/what's the vibe/i), query: () => screen.queryByText(/what's the vibe/i) },
+      { collapse: /collapse trend brief/i, expand: /expand trend brief/i, content: () => screen.getByText(/what's the vibe/i), query: () => screen.queryByText(/what's the vibe/i) },
       { collapse: /collapse top performing videos/i, expand: /expand top performing videos/i, content: () => screen.getByText("Glass Skin in 3 Steps"), query: () => screen.queryByText("Glass Skin in 3 Steps") },
       { collapse: /collapse filming tips/i, expand: /expand filming tips/i, content: () => screen.getByText("Shot readiness"), query: () => screen.queryByText("Shot readiness") },
       { collapse: /collapse props sourcing checklist/i, expand: /expand props sourcing checklist/i, content: () => screen.getByText("White marble tray"), query: () => screen.queryByText("White marble tray") },

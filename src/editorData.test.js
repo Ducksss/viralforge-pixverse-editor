@@ -206,6 +206,28 @@ describe("editorSnapshot", () => {
     expect(auditionShot.prompt).toContain("Commerce close");
   });
 
+  it("keeps trend translator briefs compact for right-rail scanning", () => {
+    for (const trend of editorSnapshot.trendCards) {
+      expect(trend.signal.length).toBeLessThanOrEqual(48);
+      expect(trend.shopperIntent.length).toBeLessThanOrEqual(56);
+      expect(trend.translation.length).toBeLessThanOrEqual(72);
+      expect(trend.example.length).toBeLessThanOrEqual(72);
+      expect(trend.hook.length).toBeLessThanOrEqual(56);
+      expect(trend.guardrail.length).toBeLessThanOrEqual(56);
+      expect(trend.overlayCopy.length).toBeLessThanOrEqual(44);
+      expect(trend.cta.length).toBeLessThanOrEqual(52);
+      expect(trend.checklist).toHaveLength(3);
+
+      for (const item of trend.checklist) {
+        expect(item.length).toBeLessThanOrEqual(30);
+      }
+
+      for (const step of trend.shotPlan) {
+        expect(step.detail.length).toBeLessThanOrEqual(48);
+      }
+    }
+  });
+
   it("defines switchable commerce projects for the current project card", () => {
     expect(editorSnapshot.projects.map((project) => project.title)).toEqual([
       "Summer Glow Vitamin C Serum Launch",

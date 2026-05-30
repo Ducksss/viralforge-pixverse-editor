@@ -84,7 +84,7 @@ major areas:
 - Waveform timeline with creative markers
 - Product hotspot panel for campaign purchase cues
 - Frame feedback panel with score and improvement guidance
-- Gen Z trend translator for platform-native creative advice
+- Compact trend brief for platform-native creative advice
 - Top performing video references for benchmark inspiration
 - Filming tips based on the current frame
 - Props sourcing checklist with editable completion state
@@ -199,11 +199,11 @@ Expected result: the video campaign becomes a reusable commerce asset set.
 - Support different feedback entries per shot.
 - Include a Compare control for future shot comparison workflows.
 
-### Trend Translator
+### Trend Brief
 
 - Display trend chips for campaign direction.
-- Translate trends into practical seller guidance.
-- Include specific short-form creative recommendations.
+- Summarize trends into one-line seller guidance.
+- Include compact hook, shot plan, overlay copy, and CTA recommendations.
 
 ### Props Checklist
 

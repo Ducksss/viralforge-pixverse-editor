@@ -958,8 +958,8 @@ function TrendTranslator({
   return (
     <CollapsiblePanel
       className="trend-panel"
-      label="Gen Z Trend Translator"
-      title={<><span className="plain-heading">Gen Z Trend Translator</span> <span>Beta</span></>}
+      label="Trend Brief"
+      title={<><span className="plain-heading">Trend Brief</span> <span>Beta</span></>}
     >
       <p className="micro-label">What&apos;s the vibe?</p>
       <div className="chip-row">
@@ -989,7 +989,7 @@ function TrendTranslator({
         <strong>{trend.hook}</strong>
       </div>
       <div className="trend-plan-heading">
-        <strong>15s shot plan</strong>
+        <strong>15s plan</strong>
         <small>{trend.guardrail}</small>
       </div>
       <ol className="trend-shot-plan">
