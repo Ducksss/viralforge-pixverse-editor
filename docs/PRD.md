@@ -1,348 +1,172 @@
-# Product Requirements Document: ViralForge PixVerse Editor
+# Product Requirements Document: ViralForge Local Video Editor
 
 ## 1. Product Overview
 
-ViralForge PixVerse Editor is a web-based campaign editing demo for commerce
-sellers who want to turn an AI-generated product video into a complete
-marketing asset workflow. The current product focuses on a skincare launch
-campaign for Summer Glow Vitamin C Serum and presents a 36-second
-PixVerse-style video as the central content component.
+ViralForge is now a browser-local video editor for commerce sellers assembling
+short-form product videos. The primary workspace is a DaVinci Resolve-inspired
+edit page with a media pool, Remotion preview monitor, inspector, and custom
+multitrack timeline.
 
-The app is not a video generation tool. It is a product experience around an
-AI-generated video: sellers can review the assembled campaign, inspect shots,
-track product hotspots, get frame-level feedback, translate trends into useful
-creative direction, plan props, and prepare listing assets for commerce
-channels. The AI People workspace adds pre-generation creator casting so
-sellers can upload or select licensed people references before creating UGC
-variants.
+The commerce layer remains in the product, but it acts as assistant context
+inside the editor: trend beats, filming review, CTA/listing metadata, and
+compliance guardrails. The app does not require authentication, cloud storage,
+or server rendering in v1.
 
-## 2. Track Fit
+## 2. Target Users
 
-- Track: Video Generation Track
-- Domain: Marketing / E-commerce
-- AI video role: Product demo and short-form campaign creative
-- Required video length: At least 30 seconds
-- Current campaign length: 36 seconds
-- Functional requirement beyond playback: Shot review, social preview,
-  hotspots, feedback, sourcing checklist, trend guidance, and listing assets
+- Small commerce sellers cutting product clips for Shopee, TikTok Shop,
+  Instagram Reels, and similar channels.
+- Marketing operators who need a fast product-video assembly workflow without
+  installing a desktop NLE.
+- Demo evaluators who need to see a real editing flow rather than a dashboard
+  with playback attached.
 
-## 3. Problem Statement
+## 3. Goals
 
-Small commerce sellers often struggle to turn a generated product video into a
-ready-to-use campaign. A video may look good, but sellers still need to know
-whether it fits current trends, highlights the right product moments, supports
-purchase intent, and can be converted into channel-specific assets.
+- Make the first screen feel like a real editor.
+- Support import/select media, drag/drop editing, clip reorder, trim, music,
+  CTA overlay, preview, persistence, and export.
+- Keep all state in one timeline model so preview and export cannot drift.
+- Keep v1 fully browser-local and transparent about persistence limits.
+- Preserve the older campaign workspace at `/campaign` for regression and
+  related ViralForge commerce workflows.
 
-ViralForge solves this by wrapping the video in a practical editor workflow
-that helps sellers review, improve, and package the campaign.
+## 4. Non-Goals
 
-## 4. Target Users
+- No PixVerse API generation call in v1.
+- No cloud media storage or permanent uploaded blob persistence.
+- No authentication or seller account integration.
+- No server-side Remotion render.
+- No source clip audio mixing in v1 export.
+- No attempt to replace professional NLEs for color, keyframes, effects, or
+  multi-user collaboration.
 
-### Primary User
+## 5. Core User Flow
 
-Small to mid-sized e-commerce sellers who promote products on Shopee, TikTok
-Shop, Instagram Reels, and similar short-form commerce channels.
+1. Seller opens the editor at `/`.
+2. Seller picks seeded sample clips or imports local video/audio.
+3. Seller drags clips from the media pool into the timeline.
+4. Seller reorders clips, selects clips, and trims source in/out.
+5. Seller chooses a music bed and edits music volume/start.
+6. Seller edits the CTA overlay.
+7. Seller previews through Remotion Player.
+8. Seller exports a 9:16 MP4 through Mediabunny.
+9. Seller downloads the resulting blob locally.
 
-### Secondary Users
+## 6. Functional Requirements
 
-- Marketing freelancers creating product campaign assets for sellers
-- Social commerce teams validating short-form creative
-- Hackathon judges evaluating PixVerse video integration inside a functional
-  product experience
+### Media Pool
 
-## 5. Goals
-
-- Make the PixVerse-generated video a meaningful campaign asset, not a
-  decorative embed.
-- Help sellers understand what each shot contributes to conversion.
-- Provide practical post-generation workflow tools around a finished video.
-- Demonstrate a complete TRAE-assisted build workflow: concept, storyboard,
-  prompt planning, UI implementation, testing, and validation.
-- Create a polished demo that can be cloned, run locally, tested, and deployed.
-
-## 6. Non-Goals
-
-- Generate videos directly inside the app.
-- Authenticate with PixVerse or spend PixVerse credits.
-- Process real user uploads.
-- Integrate real checkout, payments, or seller account data.
-- Replace a full video editor such as Premiere, CapCut, or Final Cut Pro.
-
-## 7. Current Product Experience
-
-The current app presents a polished ViralForge Commerce editor with these
-major areas:
-
-- Left navigation for campaign workflow modules
-- Top project bar with project title, saved state, aspect ratio, export, and
-  share controls
-- AI People workspace for model-reference upload, gender intent, creator
-  casting, generation readiness, and consent guardrails
-- Main PixVerse video preview for the 36-second campaign
-- Vertical social preview for 9:16 short-form channels
-- Six-shot storyboard strip with timing and selected state
-- Waveform timeline with creative markers
-- Product hotspot panel for campaign purchase cues
-- Frame feedback panel with score and improvement guidance
-- Gen Z trend translator for platform-native creative advice
-- Top performing video references for benchmark inspiration
-- Filming tips based on the current frame
-- Props sourcing checklist with editable completion state
-- Listing assets panel for generated images, description, and SEO keywords
-
-## 8. Core User Flows
-
-### Flow 1: Review Campaign Video
-
-1. Seller opens the campaign editor.
-2. Seller watches or scans the 16:9 video preview.
-3. Seller checks the 9:16 social preview to understand mobile presentation.
-4. Seller reviews the 36-second duration and six-shot structure.
-
-Expected result: the seller understands the complete campaign asset and how it
-will appear in social commerce contexts.
-
-### Flow 2: Prepare AI People
-
-1. Seller opens the AI People workspace.
-2. Seller uploads a model reference image.
-3. Seller chooses gender intent for the generated creator.
-4. Seller selects a reusable AI creator profile.
-5. Seller checks readiness and consent guardrails before generation.
-
-Expected result: the seller can cast a licensed UGC creator and verify that the
-people setup is ready before generating campaign variants.
-
-### Flow 3: Inspect Shots
-
-1. Seller selects a shot from the storyboard strip.
-2. The selected shot receives a visible active state.
-3. The frame feedback panel updates to match the selected shot.
-4. Seller reviews score, strengths, and suggested improvements.
-
-Expected result: the seller can evaluate the campaign shot by shot instead of
-only watching the video passively.
-
-### Flow 4: Validate Product Hotspots
-
-1. Seller opens the Product Hotspots panel.
-2. Seller sees purchase-relevant moments such as serum, dropper detail, and
-   glow result.
-3. Seller reviews the time ranges where these moments appear.
-
-Expected result: the video supports product discovery and purchase intent.
-
-### Flow 5: Prepare Props
-
-1. Seller reviews the props sourcing checklist.
-2. Seller marks items complete as they are sourced.
-3. Completion progress updates immediately.
-
-Expected result: the seller can move from creative review to practical
-production planning.
-
-### Flow 6: Package Listing Assets
-
-1. Seller reviews generated listing images.
-2. Seller checks product description and SEO keywords.
-3. Seller uses the assets as a basis for Shopee or TikTok Shop listing content.
-
-Expected result: the video campaign becomes a reusable commerce asset set.
-
-## 9. Functional Requirements
-
-### Campaign Preview
-
-- Show a 16:9 primary video preview area.
-- Show visible campaign timing of 00:12 / 00:36 in the preview frame.
-- Provide playback-style controls for play, skip, volume, loop, captions, and
-  fullscreen presentation.
-- Preserve video as the central content component of the screen.
-
-### AI People
-
-- Show a UGC AI People workspace as a first-class sidebar destination.
-- Provide a model-reference upload control for people images.
-- Show uploaded filename and readiness state after a reference is selected.
-- Provide gender options for Woman, Man, and Non-binary.
-- Selecting gender must update local UI state.
-- Show at least three reusable creator profiles with name, gender, fit score,
-  role, language, voice, and consent status.
-- Selecting a creator must update the hero and selected-creator rail.
-- Show generation readiness with a derived completed-count label.
-- Show consent and usage guardrails before generation.
-- Show a timed UGC audition plan mapped to campaign moments.
-
-### Shot Strip
-
-- Display exactly six campaign shots.
-- Show start time and duration for each shot.
-- Default selected shot should be shot 3.
-- Selecting a shot must update local UI state.
-- Selected shot must update frame feedback content.
+- Show deterministic seeded video clips and music beds.
+- Allow local video/audio import.
+- Probe media metadata with Mediabunny when possible.
+- Fall back to safe editable placeholder metadata when metadata parsing fails.
+- Mark restored uploaded media as `Reselect required` after hard refresh.
+- Support drag/drop from media cards to the timeline.
+- Provide explicit Add/Use buttons for keyboard and testability.
 
 ### Timeline
 
-- Show a waveform-style timeline.
-- Show creative markers at deterministic positions based on timestamp.
-- Preserve the total campaign duration of 36 seconds.
+- Use a custom timeline model, not DOM-derived state.
+- Represent media with `MediaAsset`.
+- Represent timeline clips with `TimelineClip`.
+- Represent music with `MusicTrack`.
+- Represent CTA overlays with `TextOverlay`.
+- Keep clips gapless after add, trim, or reorder.
+- Resolve selected clip from playhead position.
+- Support sortable clip reorder with `@dnd-kit`.
+- Show video, music, and text lanes.
 
-### Product Hotspots
+### Inspector
 
-- Show at least three product hotspots.
-- Each hotspot must include name, number, and time range.
-- Hotspots must connect to commerce-relevant product moments.
+- Show project aspect settings for 9:16, 16:9, and 1:1.
+- Keep 9:16 MP4 as the primary export target.
+- Show selected clip title and selected duration.
+- Allow source in/out trimming with bounds.
+- Allow moving the selected clip earlier or later.
+- Allow music track, music volume, and music start edits.
+- Allow CTA text, start, and duration edits.
 
-### Frame Feedback
+### Preview
 
-- Show score, status, and feedback note for the selected shot.
-- Support different feedback entries per shot.
-- Include a Compare control for future shot comparison workflows.
+- Use `@remotion/player` for in-browser preview.
+- Render the same project state used by export.
+- Show seeded media poster frames or upload placeholders.
+- Render safe zones and CTA overlay.
+- Respect project aspect dimensions.
 
-### Trend Translator
+### Export
 
-- Display trend chips for campaign direction.
-- Translate trends into practical seller guidance.
-- Include specific short-form creative recommendations.
+- Use Mediabunny for browser codec support checks and MP4 writing.
+- Render video frames through a canvas sample pipeline.
+- Draw active clip visuals, safe zones, and CTA text into the export canvas.
+- Add the selected music bed as the supported audio track.
+- Report progress, success, cancel, and error states.
+- Return a downloadable MP4 blob named `viralforge-summer-glow-9x16.mp4`.
 
-### Props Checklist
+### Persistence
 
-- Show six sourcing items.
-- Show progress as completed count over total count.
-- Allow checklist items to be toggled.
-- Update progress immediately when a user toggles an item.
+- Persist timeline metadata to `localStorage`.
+- Persist trims, clip order, playhead, music settings, CTA overlay, and project
+  settings.
+- Do not persist uploaded `File` objects or object URLs.
+- Restore uploaded assets as metadata-only rows requiring reselect.
 
-### Listing Assets
+### Commerce Assistant
 
-- Show generated image thumbnails.
-- Show a generated listing description.
-- Show SEO keyword chips.
-- Provide a Copy All control for future clipboard integration.
+- Show trend beats connected to timeline timing.
+- Show filming review context and runtime/coverage summary.
+- Show CTA/listing-oriented overlay metadata.
+- Show compliance guardrails including `AI Safe`.
 
-## 10. UX Requirements
+## 7. Technical Requirements
 
-- The first viewport must feel like a real editor, not a landing page.
-- The video must be visually dominant.
-- Controls must be code-native and interactive where expected.
-- Sidebar navigation must communicate a complete commerce workflow.
-- The UI should be dense enough for productivity, but still readable.
-- Cards should use small radii and restrained borders.
-- Desktop layout should match the provided reference image closely.
-- Mobile layout should avoid horizontal clipping by stacking panels.
-- Copy must be specific to the campaign and domain.
+- React + Vite for the application shell.
+- `remotion@4.0.469` and `@remotion/player@4.0.469` for preview.
+- `mediabunny@1.45.4` for metadata and export orchestration.
+- `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/utilities` for drag/drop.
+- Vitest and Testing Library for unit and UI coverage.
+- No server dependency for the default editor path.
 
-## 11. Content Requirements
+## 8. Data Model
 
-The demo should consistently reference:
+Core types live in `src/editor/timeline.js` as JSDoc typedefs:
 
-- Brand: ViralForge Commerce
-- Project: Summer Glow Skincare - PixVerse Campaign
-- Product: Summer Glow Vitamin C Serum
-- Channels: Shopee and TikTok Shop
-- Campaign duration: 36 seconds
-- PixVerse model label: PixVerse: V6
-- Quality label: 720p
+- `MediaAsset`: seeded, uploaded, or generated media metadata.
+- `TimelineClip`: a placed clip with source in/out and gapless start time.
+- `MusicTrack`: selected music asset, enabled state, start trim, and volume.
+- `TextOverlay`: CTA text, timing, and position.
+- `TimelineProject`: complete editor state for preview, persistence, and
+  export.
+- `ExportJob`: UI state for progress, completion, cancel, and error handling.
 
-## 12. Technical Requirements
+## 9. Validation
 
-- Framework: React
-- Build tool: Vite
-- Test runner: Vitest
-- UI test library: Testing Library
-- Icons: lucide-react
-- Styling: plain CSS with design tokens
-- Runtime: local development server at `http://127.0.0.1:5173/`
-- Repository: standalone GitHub repository
+Required commands:
 
-## 13. Test Requirements
+```sh
+npm test
+npm run build
+```
 
-Automated tests must verify:
+Coverage expectations:
 
-- The campaign model contains a 36-second assembled video.
-- The six shot durations sum to 36 seconds.
-- Hotspot data contains the expected commerce moments.
-- Checklist progress is computed correctly.
-- Timeline markers are positioned deterministically.
-- The AI People model includes creator profiles, gender options, and readiness
-  data.
-- Upload readiness updates from 4/5 to 5/5 when a model reference is present.
-- The editor renders the primary workflow panels.
-- The AI People page renders upload, casting, readiness, and guardrail panels.
-- Uploading a model reference updates visible local UI state.
-- Selecting gender and creator profiles updates visible local UI state.
-- Selecting shot 2 updates frame feedback.
-- Checking the white marble tray updates checklist progress from 3/6 to 4/6.
+- Timeline helpers: duration, reorder, trim bounds, playhead resolution,
+  gapless sequencing, CTA timing, and serialization.
+- Media helpers: mocked files and mocked Mediabunny metadata responses.
+- Export orchestration: unsupported codecs, cancel path, progress events, and
+  successful MP4 blob result.
+- UI: sample import/add, reorder, trim, music selection, CTA editing,
+  persistence/reload, upload reselect placeholder, and export status.
+- Legacy campaign workspace: preserved `/campaign` behavior.
 
-Manual validation should verify:
+## 10. Risks and Follow-Ups
 
-- App loads at the local Vite URL.
-- No framework error overlay appears.
-- Browser console has no relevant app warnings or errors.
-- Desktop screenshot matches the reference structure.
-- Mobile screenshot avoids clipped primary content.
-
-## 14. Success Metrics
-
-### Demo Success
-
-- A judge or viewer can understand the product in under 30 seconds.
-- The video is clearly central to the workflow.
-- The app demonstrates functionality beyond playback.
-- The experience looks like a complete commerce editor rather than a mock
-  player page.
-
-### Engineering Success
-
-- `npm test` passes.
-- `npm run build` passes.
-- The app runs locally with `npm run dev`.
-- The repository is self-contained and documented.
-
-### Product Success
-
-- Sellers can identify which shots support purchase intent.
-- Sellers can see what props and assets are still needed.
-- Sellers can translate creative trends into concrete campaign changes.
-- Sellers can move from video review to listing preparation.
-
-## 15. Risks and Mitigations
-
-### Risk: The video feels decorative
-
-Mitigation: Surround the video with functional workflows such as hotspots,
-feedback, trend translation, props, and listing assets.
-
-### Risk: The demo is mistaken for a video generation tool
-
-Mitigation: Position the app as a post-generation campaign editor and make the
-video a content asset inside a broader product workflow.
-
-### Risk: Static data feels fake
-
-Mitigation: Use specific campaign copy, product names, realistic time ranges,
-shot-level feedback, and commerce channel details.
-
-### Risk: Mobile layout clips content
-
-Mitigation: Stack panels under 760px, use compact navigation, and preserve the
-video frame with containment.
-
-## 16. Future Enhancements
-
-- Connect to the PixVerse API or CLI workflow for real generated clips.
-- Add upload/import flow for final PixVerse videos.
-- Add real playback state and seekable timeline.
-- Add hotspot editing with drag handles on video frames.
-- Add listing copy export to clipboard.
-- Add campaign variants for different products and channels.
-- Add comments, approval, and team review workflow.
-- Add deployment workflow for a public demo link.
-
-## 17. Open Questions
-
-- Should future versions support authenticated PixVerse generation inside the
-  app, or stay focused on post-generation review?
-- Should the primary buyer flow include a real product listing preview?
-- Should listing export target Shopee, TikTok Shop, Shopify, or a generic CSV?
-- Should frame feedback be rule-based, AI-generated, or manually authored in
-  the demo?
+- Browser MP4 encoding support varies by platform and codec availability.
+- Large local media can be memory-intensive because v1 renders through canvas.
+- Real source audio mixing is intentionally deferred until the timeline model
+  supports per-clip audio policy.
+- Uploaded media persistence needs IndexedDB or the File System Access API for
+  a permanent local-library version.
+- Server/cloud rendering would be needed for reliable long-form export and
+  background jobs.

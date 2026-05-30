@@ -61,5 +61,14 @@ describe("right rail collapsible panels", () => {
     ]);
   }, 10000);
 
-  // Editor collapsible panels test will be added in PR 2 when LocalNleEditor is introduced.
+  it("collapses every local editor assistant block independently", () => {
+    render(<EditorApp />);
+
+    assertIndependentCollapse([
+      { collapse: /collapse creator casting/i, expand: /expand creator casting/i, content: () => screen.getByRole("button", { name: /generate audition/i }), query: () => screen.queryByRole("button", { name: /generate audition/i }) },
+      { collapse: /collapse trend beats/i, expand: /expand trend beats/i, content: () => screen.getByText(/0s hook needs product/i), query: () => screen.queryByText(/0s hook needs product/i) },
+      { collapse: /collapse filming review/i, expand: /expand filming review/i, content: () => screen.getByText("Coverage"), query: () => screen.queryByText("Coverage") },
+      { collapse: /collapse compliance/i, expand: /expand compliance/i, content: () => screen.getByText(/No medical claim/i), query: () => screen.queryByText(/No medical claim/i) },
+    ]);
+  });
 });
