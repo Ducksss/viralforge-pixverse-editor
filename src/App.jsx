@@ -1112,7 +1112,7 @@ function LocalNleEditorApp() {
             onExport={handleExport}
             project={project}
           />
-          <div className="editor-grid">
+          <div className="davinci-editor-grid">
             <MediaPool
               onAddAssetToTimeline={handleAddAssetToTimeline}
               onImportFiles={handleImportFiles}
