@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { Sparkles, Check, ChevronRight, Play, RefreshCw, Send, ArrowRight, X, Calendar } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Sparkles, Check, ChevronRight, Play, RefreshCw, Send, ArrowRight, X, Calendar, Pause, Volume2, VolumeX } from "lucide-react";
 import { assets } from "./assetMap.js";
+import video1 from "./assets/video/video-1.mp4";
+import video2 from "./assets/video/video-2.mp4";
 
 const SHOT_THUMBS = [
   { label: "Shot 1: Product Close-up", asset: "projectThumb" },
@@ -22,6 +24,16 @@ export default function DemoFlow({ data, onReset }) {
   const [productStory, setProductStory] = useState(data.story || "");
   const [selectedTone, setSelectedTone] = useState(data.tone || "Authentic");
   const [postingTime, setPostingTime] = useState("Now");
+
+  // New video control states
+  const [isExtended, setIsExtended] = useState(false);
+  const [hasReprompted, setHasReprompted] = useState(false);
+  const [currentVideoSrc, setCurrentVideoSrc] = useState(video1);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const videoRef = useRef(null);
+  const socialVideoRef = useRef(null);
 
   // Screen 5: Generating progress timer
   useEffect(() => {
@@ -62,26 +74,137 @@ export default function DemoFlow({ data, onReset }) {
         clearInterval(interval);
         setTimeout(() => {
           setView("editor");
+          if (hasReprompted) {
+            setIsExtended(true);
+            setCurrentVideoSrc(video1);
+            setSelectedShotIndex(0);
+          }
         }, 400);
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [view]);
+  }, [view, hasReprompted]);
+
+  // Synchronize playing and muted states to elements
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+      }
+    }
+    if (socialVideoRef.current) {
+      if (isPlaying) {
+        socialVideoRef.current.play().catch(() => {});
+      } else {
+        socialVideoRef.current.pause();
+      }
+    }
+  }, [currentVideoSrc, isPlaying]);
 
   const skipGenerating = () => {
     setProgress(100);
     setView("editor");
+    if (hasReprompted) {
+      setIsExtended(true);
+      setCurrentVideoSrc(video1);
+      setSelectedShotIndex(0);
+    }
   };
 
   const handleRegenerate = (e) => {
     e.preventDefault();
     setRepromptOpen(false);
+    setHasReprompted(true);
     setView("generating");
   };
 
   const handlePublishSubmit = () => {
     setView("success");
+  };
+
+  const handleVideoEnded = () => {
+    if (isExtended) {
+      if (currentVideoSrc === video1) {
+        setCurrentVideoSrc(video2);
+        setSelectedShotIndex(6); // Show the 7th shot
+      } else {
+        setCurrentVideoSrc(video1);
+        setSelectedShotIndex(0); // Loop back
+      }
+    } else {
+      // Loop video 1 normally
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+      }
+      if (socialVideoRef.current) {
+        socialVideoRef.current.currentTime = 0;
+        socialVideoRef.current.play().catch(() => {});
+      }
+    }
+  };
+
+  const handleTogglePlay = () => {
+    setIsPlaying((prev) => {
+      const nextPlay = !prev;
+      if (videoRef.current) {
+        if (nextPlay) videoRef.current.play().catch(() => {});
+        else videoRef.current.pause();
+      }
+      if (socialVideoRef.current) {
+        if (nextPlay) socialVideoRef.current.play().catch(() => {});
+        else socialVideoRef.current.pause();
+      }
+      return nextPlay;
+    });
+  };
+
+  const handleToggleMute = () => {
+    setIsMuted((prev) => {
+      const nextMute = !prev;
+      if (videoRef.current) videoRef.current.muted = nextMute;
+      if (socialVideoRef.current) socialVideoRef.current.muted = nextMute;
+      return nextMute;
+    });
+  };
+
+  const handleShotCardClick = (idx) => {
+    setSelectedShotIndex(idx);
+    
+    // Seek logic to make it feel like a real editor
+    if (isExtended && idx === 6) {
+      if (currentVideoSrc !== video2) {
+        setCurrentVideoSrc(video2);
+      }
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0;
+          videoRef.current.play().catch(() => {});
+        }
+        if (socialVideoRef.current) {
+          socialVideoRef.current.currentTime = 0;
+          socialVideoRef.current.play().catch(() => {});
+        }
+      }, 50);
+    } else {
+      if (currentVideoSrc !== video1) {
+        setCurrentVideoSrc(video1);
+      }
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.currentTime = idx * 4;
+          videoRef.current.play().catch(() => {});
+        }
+        if (socialVideoRef.current) {
+          socialVideoRef.current.currentTime = idx * 4;
+          socialVideoRef.current.play().catch(() => {});
+        }
+      }, 50);
+    }
+    setIsPlaying(true);
   };
 
   // Get active hook
@@ -101,10 +224,16 @@ export default function DemoFlow({ data, onReset }) {
         return `Shot 5: Before / After Glow - Visible brightness in 5 seconds`;
       case 5:
         return `Shot 6: Outro CTA - Buy ${data.product.name} on TikTok Shop below!`;
+      case 6:
+        return `Shot 7: Extended CTA - Limited time discount, buy one get one free!`;
       default:
         return "";
     }
   };
+
+  const activeShots = isExtended 
+    ? [...SHOT_THUMBS, { label: "Shot 7: Extended Offer CTA", asset: "shotBottle" }]
+    : SHOT_THUMBS;
 
   return (
     <div style={{ width: "100%", height: "100%", boxSizing: "border-box" }}>
@@ -141,7 +270,7 @@ export default function DemoFlow({ data, onReset }) {
               <strong style={{ fontSize: "16px", color: "var(--ink)" }}>ViralForge Campaign Studio</strong>
             </div>
             <div className="demo-editor-title">
-              <strong>{data.product.name} - PixVerse Campaign</strong>
+              <strong>{data.product.name} - {isExtended ? "Extended Campaign" : "PixVerse Campaign"}</strong>
             </div>
             <div style={{ width: "120px" }} />
           </header>
@@ -149,21 +278,77 @@ export default function DemoFlow({ data, onReset }) {
           <div className="demo-editor-body">
             {/* Left 65%: Video preview & Shot strip */}
             <div className="demo-editor-left">
-              <div className="demo-video-preview">
-                {/* Background image is selected character or product asset */}
-                <img
-                  src={
-                    selectedShotIndex === 2
-                      ? data.character.image
-                      : assets[SHOT_THUMBS[selectedShotIndex].asset] || data.character.image
-                  }
-                  alt="Preview background"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.65 }}
+              <div className="demo-video-preview" style={{ position: "relative", minHeight: "280px" }}>
+                <video
+                  ref={videoRef}
+                  src={currentVideoSrc}
+                  autoPlay
+                  muted={isMuted}
+                  playsInline
+                  onEnded={handleVideoEnded}
+                  onClick={handleTogglePlay}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />
-                <div className="video-player-badge">
-                  <Play size={10} fill="currentColor" /> Previewing Campaign
+                
+                {/* Control Badge */}
+                <div className="video-player-badge" style={{ pointerEvents: "none" }}>
+                  <Play size={10} fill="currentColor" style={{ marginRight: "4px" }} />
+                  {isExtended
+                    ? `Previewing Extended Campaign (${currentVideoSrc === video1 ? "Video 1" : "Video 2"})`
+                    : "Previewing Campaign"}
                 </div>
-                <div className="video-overlay-text">
+                
+                {/* Control Overlay Buttons */}
+                <div style={{ position: "absolute", bottom: "16px", right: "16px", zIndex: 20, display: "flex", gap: "8px" }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTogglePlay();
+                    }}
+                    style={{
+                      background: "rgba(18, 24, 30, 0.8)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      borderRadius: "6px",
+                      padding: "6px 10px",
+                      color: "#ffffff",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                    type="button"
+                  >
+                    {isPlaying ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" />}
+                    {isPlaying ? "Pause" : "Play"}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleMute();
+                    }}
+                    style={{
+                      background: "rgba(18, 24, 30, 0.8)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      borderRadius: "6px",
+                      padding: "6px 10px",
+                      color: "#ffffff",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                    type="button"
+                  >
+                    {isMuted ? <VolumeX size={12} /> : <Volume2 size={12} />}
+                    {isMuted ? "Unmute" : "Mute"}
+                  </button>
+                </div>
+
+                <div className="video-overlay-text" style={{ pointerEvents: "none" }}>
                   <strong>{data.character.name}</strong>
                   <p>{getOverlayText(selectedShotIndex)}</p>
                 </div>
@@ -171,14 +356,14 @@ export default function DemoFlow({ data, onReset }) {
 
               <div className="demo-shot-strip-container">
                 <p style={{ fontSize: "12px", fontWeight: "700", color: "var(--muted)", margin: "0 0 10px" }}>
-                  Shots (6) • 24.0s
+                  Shots ({activeShots.length}) • {isExtended ? "32.0s" : "24.0s"}
                 </p>
-                <div className="demo-shot-strip">
-                  {SHOT_THUMBS.map((thumb, idx) => (
+                <div className="demo-shot-strip" style={{ gridTemplateColumns: `repeat(${activeShots.length}, 1fr)` }}>
+                  {activeShots.map((thumb, idx) => (
                     <button
                       key={idx}
                       className={`demo-shot-card ${selectedShotIndex === idx ? "active" : ""}`}
-                      onClick={() => setSelectedShotIndex(idx)}
+                      onClick={() => handleShotCardClick(idx)}
                       type="button"
                     >
                       <div className="demo-shot-thumb">
@@ -201,10 +386,14 @@ export default function DemoFlow({ data, onReset }) {
               <div className="social-preview-section">
                 <span className="section-kicker">Social Preview (9:16)</span>
                 <div className="demo-phone-frame">
-                  <img
-                    src={data.character.image}
-                    alt="Social preview avatar"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }}
+                  <video
+                    ref={socialVideoRef}
+                    src={currentVideoSrc}
+                    autoPlay
+                    muted
+                    playsInline
+                    loop={false}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.85 }}
                   />
                   <div className="phone-overlay-caption">
                     <strong>@{data.character.name.toLowerCase()}</strong>
@@ -218,7 +407,7 @@ export default function DemoFlow({ data, onReset }) {
               <div className="campaign-metadata-section">
                 <div className="ai-score-badge">
                   <Sparkles size={14} />
-                  <span>AI Score: <strong>89 — Good</strong></span>
+                  <span>AI Score: <strong>{isExtended ? "95 — Excellent" : "89 — Good"}</strong></span>
                 </div>
                 <div className="campaign-info-row">
                   <small>Selected Product</small>
