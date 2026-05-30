@@ -1437,7 +1437,7 @@ function CampaignAppShell({
           data={wizardData}
           onBackToEditor={() => setActiveDemoStep("editor")}
           onReset={() => {
-            window.location.href = "/local-editor";
+            setActiveDemoStep("editor");
           }}
           setView={(view) => setActiveDemoStep(view)}
           view={activeDemoStep}
