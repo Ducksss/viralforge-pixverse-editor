@@ -45,6 +45,12 @@ npm run build
   generation, and copy commands update realistic local editor state instead of
   calling external services.
 
+## Product Requirements
+
+See [docs/PRD.md](docs/PRD.md) for the product requirements, target user,
+core workflows, functional requirements, success metrics, risks, and future
+enhancements.
+
 ## Interactive Workflows
 
 - Rename the campaign from the top bar and watch saved status update.
