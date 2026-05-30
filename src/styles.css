@@ -4476,6 +4476,136 @@ img {
   background: var(--teal);
 }
 
+/* ── Step 0: Branding ── */
+.branding-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.branding-url-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.branding-url-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--teal);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.branding-url-field input {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px 0 46px;
+  font-size: 15px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.branding-url-field input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(24, 199, 181, 0.15);
+}
+
+.branding-trusted {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.branding-trusted-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+/* ── Scanning animation ── */
+.scanning-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.scanning-globe-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(24, 199, 181, 0.15), rgba(24, 199, 181, 0.05));
+  border: 2px solid rgba(24, 199, 181, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--teal);
+  animation: scanning-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes scanning-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(24, 199, 181, 0.3); }
+  50%       { box-shadow: 0 0 0 12px rgba(24, 199, 181, 0); }
+}
+
+.scanning-bar-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.scanning-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--teal), var(--teal-strong));
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scanning-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal-strong);
+  text-align: right;
+  margin-top: 6px;
+}
+
+.scanning-log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.scanning-log-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  animation: log-fade-in 0.3s ease;
+}
+
+.scanning-check {
+  color: var(--teal);
+  flex-shrink: 0;
+}
+
+@keyframes log-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Screen 1: Login Form */
 .login-form {
   display: flex;

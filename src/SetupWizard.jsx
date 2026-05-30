@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { ChevronRight, ChevronLeft, Sparkles, Check, Info } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { ChevronRight, ChevronLeft, Sparkles, Check, Info, Globe, Search, ShoppingBag } from "lucide-react";
 import { assets } from "./assetMap.js";
 
 // Female portraits
@@ -91,7 +91,10 @@ const AVATARS = [
 ];
 
 export default function SetupWizard({ onComplete }) {
-  const [step, setStep] = useState("query"); // Start on query; login, connecting, query, story, character
+  const [step, setStep] = useState("branding"); // branding, scanning, query, story, character
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanLines, setScanLines] = useState([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0]);
@@ -99,6 +102,35 @@ export default function SetupWizard({ onComplete }) {
   const [selectedTone, setSelectedTone] = useState("Authentic");
   const [selectedCharacter, setSelectedCharacter] = useState(AVATARS[0]);
   const [genderFilter, setGenderFilter] = useState("All");
+  const scanTimerRef = useRef(null);
+
+  // Scanning animation side effect
+  useEffect(() => {
+    if (step === "scanning") {
+      setScanProgress(0);
+      setScanLines([]);
+      const messages = [
+        "Fetching homepage…",
+        "Parsing product catalogue…",
+        "Extracting brand colours…",
+        "Detecting product images…",
+        `Found ${PRODUCTS.length} products ✓`,
+      ];
+      let i = 0;
+      const interval = setInterval(() => {
+        i++;
+        const pct = Math.min(Math.round((i / messages.length) * 100), 100);
+        setScanProgress(pct);
+        if (messages[i - 1]) setScanLines((prev) => [...prev, messages[i - 1]]);
+        if (i >= messages.length) {
+          clearInterval(interval);
+          setTimeout(() => setStep("query"), 700);
+        }
+      }, 600);
+      scanTimerRef.current = interval;
+      return () => clearInterval(interval);
+    }
+  }, [step]);
 
   // Step 2 Connection Loader side effect
   useEffect(() => {
@@ -109,6 +141,12 @@ export default function SetupWizard({ onComplete }) {
       return () => clearTimeout(timer);
     }
   }, [step]);
+
+  const handleBrandingSubmit = (e) => {
+    e.preventDefault();
+    if (!websiteUrl.trim()) return;
+    setStep("scanning");
+  };
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
@@ -158,6 +196,79 @@ export default function SetupWizard({ onComplete }) {
 
   return (
     <div className="wizard-container">
+
+      {/* ── Step 0: Branding ── */}
+      {step === "branding" && (
+        <div className="wizard-card">
+          <div className="wizard-logo-area">
+            <div className="wizard-logo-mark" />
+            <div className="wizard-logo-text">
+              <h1>ViralForge</h1>
+              <p>Commerce</p>
+            </div>
+          </div>
+
+          <h2 className="wizard-title">Find your brand</h2>
+          <p className="wizard-subtitle">
+            Enter your company website and we'll automatically discover your products and brand identity.
+          </p>
+
+          <form className="branding-form" onSubmit={handleBrandingSubmit}>
+            <div className="branding-url-field">
+              <span className="branding-url-icon"><Globe size={18} /></span>
+              <input
+                id="website-url"
+                type="url"
+                placeholder="https://yourstore.com"
+                required
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                autoComplete="url"
+                autoFocus
+              />
+            </div>
+
+            <div className="branding-trusted">
+              <span className="branding-trusted-dot" />
+              Secure · We only read publicly available data
+            </div>
+
+            <button type="submit" className="btn-primary btn-teal" style={{ marginTop: "8px" }}>
+              <Search size={16} /> Scan for products
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ── Scanning animation ── */}
+      {step === "scanning" && (
+        <div className="wizard-card">
+          <div className="scanning-header">
+            <div className="scanning-globe-ring">
+              <Globe size={28} className="scanning-globe-icon" />
+            </div>
+            <h2 className="wizard-title" style={{ marginTop: "20px" }}>Scanning your store…</h2>
+            <p className="wizard-subtitle" style={{ marginBottom: "24px" }}>
+              {websiteUrl}
+            </p>
+          </div>
+
+          <div className="scanning-bar-track">
+            <div className="scanning-bar-fill" style={{ width: `${scanProgress}%` }} />
+          </div>
+          <div className="scanning-pct">{scanProgress}%</div>
+
+          <div className="scanning-log">
+            {scanLines.map((line, i) => (
+              <div key={i} className="scanning-log-line">
+                <Check size={12} className="scanning-check" />
+                {line}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {step === "login" && (
         <div className="wizard-card">
           <div className="wizard-logo-area">
@@ -215,6 +326,7 @@ export default function SetupWizard({ onComplete }) {
       {step === "query" && (
         <div className="wizard-card wide">
           <div className="wizard-steps">
+            <span className="wizard-step-dot" />
             <span className="wizard-step-dot active" />
             <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />
@@ -246,7 +358,9 @@ export default function SetupWizard({ onComplete }) {
           </div>
 
           <div className="wizard-footer">
-            <div style={{ width: "80px" }} /> {/* Hidden Back spacer to maintain layout balance */}
+            <button className="btn-back" onClick={() => setStep("branding")} type="button">
+              <ChevronLeft size={16} /> Back
+            </button>
             <button
               className="btn-primary btn-teal"
               style={{ width: "auto", padding: "0 24px" }}
@@ -263,6 +377,7 @@ export default function SetupWizard({ onComplete }) {
       {step === "story" && (
         <div className="wizard-card">
           <div className="wizard-steps">
+            <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />
             <span className="wizard-step-dot active" />
             <span className="wizard-step-dot" />
@@ -347,6 +462,7 @@ export default function SetupWizard({ onComplete }) {
           <div className="wizard-steps">
             <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />
+            <span className="wizard-step-dot" />
             <span className="wizard-step-dot active" />
           </div>
 
@@ -374,12 +490,17 @@ export default function SetupWizard({ onComplete }) {
                 onClick={() => handleCharacterSelect(char)}
                 type="button"
               >
-                <img
-                  src={char.image}
-                  className="avatar-circle"
-                  style={{ objectFit: "cover" }}
-                  alt={char.name}
-                />
+                <div className="avatar-circle" style={{ overflow: "hidden", background: "#f0f0f0" }}>
+                  {char.image ? (
+                    <img
+                      src={char.image}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      alt={char.name}
+                    />
+                  ) : (
+                    <span>{char.name.charAt(0)}</span>
+                  )}
+                </div>
                 <h3 className="character-name">{char.name}</h3>
                 <span className="character-tag">{char.style}</span>
               </button>
