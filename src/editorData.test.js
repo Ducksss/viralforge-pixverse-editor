@@ -15,16 +15,24 @@ import {
 } from "./editorData.js";
 
 describe("editorSnapshot", () => {
-  it("models the PixVerse campaign editor with a 36 second assembled video", () => {
-    expect(editorSnapshot.project.title).toBe("Summer Glow Vitamin C Serum Launch");
+  it("models the PixVerse campaign editor with a 30 second real-footage assembled video", () => {
+    expect(editorSnapshot.project.title).toBe("AHA BHA PHA 30 Days Miracle Serum Launch");
     expect(editorSnapshot.project.category).toBe("Serum");
-    expect(editorSnapshot.video.durationSeconds).toBe(36);
+    expect(editorSnapshot.video.durationSeconds).toBe(30);
     expect(editorSnapshot.shots).toHaveLength(6);
-    expect(editorSnapshot.shots.map((shot) => shot.durationSeconds).reduce((sum, duration) => sum + duration, 0)).toBe(36);
+    expect(editorSnapshot.shots.map((shot) => shot.durationSeconds).reduce((sum, duration) => sum + duration, 0)).toBe(30);
+    expect(editorSnapshot.shots.map((shot) => shot.videoAsset)).toEqual([
+      "actualVideo1",
+      "actualVideo1",
+      "actualVideo1",
+      "actualVideo2",
+      "actualVideo2",
+      "actualVideo2",
+    ]);
     expect(editorSnapshot.hotspots.map((hotspot) => hotspot.name)).toEqual([
-      "Vitamin C Serum",
+      "AHA BHA PHA Serum",
       "Dropper Detail",
-      "Glow Result",
+      "Label Proof",
     ]);
   });
 
@@ -75,8 +83,8 @@ describe("editorSnapshot", () => {
   it("creates timeline markers at deterministic positions", () => {
     expect(buildTimelineMarkers(editorSnapshot.timelineEvents).slice(0, 3)).toEqual([
       { id: "m-1", kind: "hook", left: "0.0%" },
-      { id: "m-2", kind: "product", left: "5.6%" },
-      { id: "m-3", kind: "benefit", left: "16.7%" },
+      { id: "m-2", kind: "product", left: "6.7%" },
+      { id: "m-3", kind: "benefit", left: "20.0%" },
     ]);
   });
 
@@ -86,7 +94,7 @@ describe("editorSnapshot", () => {
     expect(formatSeconds(12)).toBe("00:12");
 
     expect(getShotAtTime(editorSnapshot.shots, 12).id).toBe("shot-3");
-    expect(getShotAtTime(editorSnapshot.shots, 36).id).toBe("shot-6");
+    expect(getShotAtTime(editorSnapshot.shots, 30).id).toBe("shot-6");
     expect(getShotAtTime(editorSnapshot.shots, -2).id).toBe("shot-1");
   });
 
@@ -98,8 +106,8 @@ describe("editorSnapshot", () => {
     expect(generatedShot).toMatchObject({
       id: "shot-7",
       number: 7,
-      start: "0:36",
-      startSeconds: 36,
+      start: "0:30",
+      startSeconds: 30,
       durationSeconds: 4,
       title: "AI generated proof frame",
       prompt: "Macro texture pour with bold price overlay",
@@ -156,8 +164,8 @@ describe("editorSnapshot", () => {
       expect.objectContaining({
         id: "shot-7",
         number: 7,
-        start: "0:36",
-        startSeconds: 36,
+        start: "0:30",
+        startSeconds: 30,
         durationSeconds: 30,
         title: "AI UGC Proof sample 1",
         variantLabel: "Sample 1/3",
@@ -165,8 +173,8 @@ describe("editorSnapshot", () => {
       expect.objectContaining({
         id: "shot-8",
         number: 8,
-        start: "1:06",
-        startSeconds: 66,
+        start: "1:00",
+        startSeconds: 60,
         durationSeconds: 30,
         title: "AI UGC Proof sample 2",
         variantLabel: "Sample 2/3",
@@ -174,8 +182,8 @@ describe("editorSnapshot", () => {
       expect.objectContaining({
         id: "shot-9",
         number: 9,
-        start: "1:36",
-        startSeconds: 96,
+        start: "1:30",
+        startSeconds: 90,
         durationSeconds: 30,
         title: "AI UGC Proof sample 3",
         variantLabel: "Sample 3/3",
@@ -192,8 +200,8 @@ describe("editorSnapshot", () => {
     expect(auditionShot).toMatchObject({
       id: "shot-7",
       number: 7,
-      start: "0:36",
-      startSeconds: 36,
+      start: "0:30",
+      startSeconds: 30,
       durationSeconds: 12,
       title: "Daniel Ong audition",
       asset: "creatorDaniel",
@@ -230,7 +238,7 @@ describe("editorSnapshot", () => {
 
   it("defines switchable commerce projects for the current project card", () => {
     expect(editorSnapshot.projects.map((project) => project.title)).toEqual([
-      "Summer Glow Vitamin C Serum Launch",
+      "AHA BHA PHA 30 Days Miracle Serum Launch",
       "Cloud Bounce Moisturizer Campaign",
       "Fresh Reset Toner Flash Sale",
     ]);

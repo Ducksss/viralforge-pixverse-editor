@@ -18,8 +18,24 @@ import neutrogenaBoost from "./assets/neutrogena-boost.png";
 import centellaAmpoule from "./assets/centella-ampoule.png";
 import lrpHyaluB5 from "./assets/lrp-hyalu-b5.png";
 import vichyMineral89 from "./assets/vichy-mineral-89.png";
+import actualVideo1 from "./assets/video/video-1.mp4";
+import actualVideo2 from "./assets/video/video-2.mp4";
+import actualShot1 from "./assets/video/posters/actual-shot-1.jpg";
+import actualShot2 from "./assets/video/posters/actual-shot-2.jpg";
+import actualShot3 from "./assets/video/posters/actual-shot-3.jpg";
+import actualShot4 from "./assets/video/posters/actual-shot-4.jpg";
+import actualShot5 from "./assets/video/posters/actual-shot-5.jpg";
+import actualShot6 from "./assets/video/posters/actual-shot-6.jpg";
 
 export const assets = {
+  actualShot1,
+  actualShot2,
+  actualShot3,
+  actualShot4,
+  actualShot5,
+  actualShot6,
+  actualVideo1,
+  actualVideo2,
   creatorDaniel,
   creatorJordan,
   creatorMaya,
@@ -40,4 +56,19 @@ export const assets = {
   centellaAmpoule,
   lrpHyaluB5,
   vichyMineral89,
+};
+
+export const campaignVideoSources = {
+  actualVideo1: {
+    src: actualVideo1,
+    durationSeconds: 15.04,
+    height: 1280,
+    width: 624,
+  },
+  actualVideo2: {
+    src: actualVideo2,
+    durationSeconds: 15.04,
+    height: 1280,
+    width: 624,
+  },
 };
