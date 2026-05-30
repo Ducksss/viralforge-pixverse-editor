@@ -1,7 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import App from "./App.jsx";
+import SetupWizard from "./SetupWizard.jsx";
+
 
 describe("ViralForge editor", () => {
   it("renders the AI People workspace and keeps the PixVerse editor reachable", async () => {
@@ -145,5 +147,65 @@ describe("ViralForge editor", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Listing assets regenerated");
     await user.click(screen.getByRole("button", { name: /copy listing assets/i }));
     expect(screen.getByRole("status")).toHaveTextContent("Listing assets copied");
+  });
+
+  it("supports the full onboarding wizard flow and returns configuration", async () => {
+    const user = userEvent.setup();
+    const handleComplete = vi.fn();
+    render(<SetupWizard onComplete={handleComplete} />);
+
+    // Screen 1: Login
+    expect(screen.getByText("Welcome to ViralForge")).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/email address/i), "seller@brand.com");
+    await user.type(screen.getByLabelText(/password/i), "password123");
+    await user.click(screen.getByRole("button", { name: /sign in with tiktok shop/i }));
+
+
+    // Screen 2: Connecting loader
+    expect(screen.getByText("Connecting to TikTok Shop…")).toBeInTheDocument();
+
+    // Wait for the loader to finish (1.5s delay)
+    await waitFor(() => {
+      expect(screen.getByText("Select your product")).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    // Click on a product card to select it (e.g. Matte Finish Setting Spray)
+    const productCard = screen.getByRole("button", { name: /matte finish setting spray/i });
+    await user.click(productCard);
+
+    // Click Create Campaign
+    await user.click(screen.getByRole("button", { name: /create campaign/i }));
+
+    // Screen 3: Product Story
+    expect(screen.getByText("What's your product story?")).toBeInTheDocument();
+    
+    // Choose tone pill
+    await user.click(screen.getByRole("button", { name: "Funny" }));
+
+    // Click trending hook suggestion chip
+    await user.click(screen.getByRole("button", { name: /skincare gatekeepers/i }));
+
+    // Textarea should contain hook text
+    const textarea = screen.getByLabelText(/product description/i);
+    expect(textarea).toHaveValue("Skincare gatekeepers are going to be so mad at this");
+
+    // Click Build my video
+    await user.click(screen.getByRole("button", { name: /build my video/i }));
+
+    // Screen 4: Choose Character
+    expect(screen.getByText("Who's telling your story?")).toBeInTheDocument();
+
+    // Select avatar card (e.g., Zoe)
+    await user.click(screen.getByRole("button", { name: /zoe/i }));
+
+    // Click Generate video
+    await user.click(screen.getByRole("button", { name: /generate video/i }));
+
+    expect(handleComplete).toHaveBeenCalledWith(expect.objectContaining({
+      product: expect.objectContaining({ name: "Matte Finish Setting Spray" }),
+      story: "Skincare gatekeepers are going to be so mad at this",
+      tone: "Funny",
+      character: expect.objectContaining({ name: "Zoe" })
+    }));
   });
 });

@@ -59,6 +59,12 @@ import {
   getShotAtTime,
   getVideoDuration,
 } from "./editorData.js";
+import SetupWizard from "./SetupWizard.jsx";
+
+const isTestEnv =
+  typeof process !== "undefined" &&
+  (process.env.NODE_ENV === "test" || process.env.VITEST === "true");
+
 
 const navIcons = {
   trend: CircleDot,
@@ -97,7 +103,7 @@ function DropdownMenu({ children, open }) {
   );
 }
 
-function Sidebar({ activePage, balance, onNavigate }) {
+function Sidebar({ activePage, balance, onNavigate, selectedProduct }) {
   return (
     <aside className="sidebar">
       <div className="brand-row">
@@ -141,14 +147,15 @@ function Sidebar({ activePage, balance, onNavigate }) {
       <div className="sidebar-card current-project">
         <p className="card-kicker">Current Project</p>
         <div className="project-row">
-          <img src={assets.projectThumb} alt="Summer Glow serum bottle" />
+          <img src={selectedProduct ? assets[selectedProduct.asset] : assets.projectThumb} alt={selectedProduct ? selectedProduct.name : "Summer Glow serum bottle"} />
           <div>
-            <strong>Summer Glow<br />Vitamin C Serum</strong>
+            <strong>{selectedProduct ? selectedProduct.name : <>Summer Glow<br />Vitamin C Serum</>}</strong>
             <small>{editorSnapshot.project.channels}</small>
           </div>
         </div>
         <button className="dark-outline-button" type="button">Change</button>
       </div>
+
 
       <div className="sidebar-card balance-card">
         <p className="card-kicker">PixVerse Balance</p>
@@ -1015,7 +1022,7 @@ function GenderPanel({ selectedGender, onSelectGender }) {
   );
 }
 
-function CreatorCasting({ selectedPersonId, onSelectPerson }) {
+function CreatorCasting({ selectedPersonId, onSelectPerson, creatorProfiles }) {
   return (
     <Panel className="creator-casting-panel">
       <div className="people-panel-heading">
@@ -1026,7 +1033,7 @@ function CreatorCasting({ selectedPersonId, onSelectPerson }) {
         <button className="compact-action" type="button"><Sparkles size={14} />Generate audition</button>
       </div>
       <div className="creator-grid">
-        {editorSnapshot.aiPeople.creatorProfiles.map((person) => {
+        {creatorProfiles.map((person) => {
           const selected = person.id === selectedPersonId;
 
           return (
@@ -1193,12 +1200,13 @@ function PeopleWorkspace({
   onSelectGender,
   onSelectPerson,
   onUploadReference,
+  creatorProfiles,
 }) {
   const selectedPerson = useMemo(
     () =>
-      editorSnapshot.aiPeople.creatorProfiles.find((person) => person.id === selectedPersonId) ||
-      editorSnapshot.aiPeople.creatorProfiles[0],
-    [selectedPersonId],
+      creatorProfiles.find((person) => person.id === selectedPersonId) ||
+      creatorProfiles[0],
+    [selectedPersonId, creatorProfiles],
   );
 
   return (
@@ -1213,9 +1221,10 @@ function PeopleWorkspace({
           />
           <GenderPanel selectedGender={selectedGender} onSelectGender={onSelectGender} />
         </div>
-        <CreatorCasting selectedPersonId={selectedPersonId} onSelectPerson={onSelectPerson} />
+        <CreatorCasting selectedPersonId={selectedPersonId} onSelectPerson={onSelectPerson} creatorProfiles={creatorProfiles} />
         <GenerationSettingsPanel />
       </section>
+
       <aside className="people-right-rail">
         <SelectedPersonPanel selectedPerson={selectedPerson} />
         <ReadinessPanel referenceUploaded={Boolean(uploadedModelName)} />
@@ -1386,11 +1395,16 @@ function MainEditor({
 }
 
 export default function App() {
+  const [wizardComplete, setWizardComplete] = useState(true); // Set to true to bypass wizard for development; change to false or isTestEnv for demo
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [creatorProfiles, setCreatorProfiles] = useState(editorSnapshot.aiPeople.creatorProfiles);
+  
   const [activePresetId, setActivePresetId] = useState(editorSnapshot.generationPresets[0].id);
   const [activePage, setActivePage] = useState(editorSnapshot.defaultPage);
   const [activeTab, setActiveTab] = useState("editor");
   const [aspectRatio, setAspectRatio] = useState(editorSnapshot.video.aspectRatio);
   const [balance, setBalance] = useState(editorSnapshot.video.balance);
+
   const [captionsEnabled, setCaptionsEnabled] = useState(false);
   const [checklist, setChecklist] = useState(editorSnapshot.propsChecklist);
   const [compareEnabled, setCompareEnabled] = useState(false);
@@ -1546,9 +1560,39 @@ export default function App() {
     }
   }
 
+  if (!wizardComplete) {
+    return (
+      <SetupWizard
+        onComplete={(data) => {
+          setSelectedProduct(data.product);
+          setProjectTitle(`${data.product.name} - PixVerse Campaign`);
+          
+          const newProfile = {
+            id: data.character.id,
+            name: data.character.name,
+            gender: data.character.gender === "Female" ? "Woman" : "Man",
+            role: `${data.character.style} Spokesperson`,
+            locale: "Singapore",
+            language: "English",
+            fitScore: 95,
+            consent: "Model release signed",
+            asset: data.character.gender === "Female" ? "shotModel" : "shotSocial",
+            look: `${data.character.style} style, natural window light`,
+            voice: `${data.character.style} UGC voice`
+          };
+
+          setCreatorProfiles([newProfile, ...editorSnapshot.aiPeople.creatorProfiles]);
+          setSelectedPersonId(newProfile.id);
+          setSelectedGender(newProfile.gender);
+          setWizardComplete(true);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar activePage={activePage} balance={balance} onNavigate={navigateWorkspace} />
+      <Sidebar activePage={activePage} balance={balance} onNavigate={navigateWorkspace} selectedProduct={selectedProduct} />
       <div className="workspace">
         <Topbar
           aspectRatio={aspectRatio}
@@ -1581,7 +1625,9 @@ export default function App() {
               selectedGender={selectedGender}
               selectedPersonId={selectedPersonId}
               uploadedModelName={uploadedModelName}
+              creatorProfiles={creatorProfiles}
             />
+
           ) : (
             <>
               <MainEditor
