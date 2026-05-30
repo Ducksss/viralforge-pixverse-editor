@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { buildTimelineMarkers, editorSnapshot, getChecklistProgress } from "./editorData.js";
+import {
+  buildTimelineMarkers,
+  createGeneratedShot,
+  createHotspot,
+  createTimelineEvent,
+  editorSnapshot,
+  formatSeconds,
+  getChecklistProgress,
+  getShotAtTime,
+} from "./editorData.js";
 
 describe("editorSnapshot", () => {
   it("models the PixVerse campaign editor with a 36 second assembled video", () => {
@@ -28,5 +37,49 @@ describe("editorSnapshot", () => {
       { id: "m-2", kind: "product", left: "5.6%" },
       { id: "m-3", kind: "benefit", left: "16.7%" },
     ]);
+  });
+
+  it("formats seconds and resolves the active shot from the playhead", () => {
+    expect(formatSeconds(0)).toBe("00:00");
+    expect(formatSeconds(75)).toBe("01:15");
+    expect(formatSeconds(12)).toBe("00:12");
+
+    expect(getShotAtTime(editorSnapshot.shots, 12).id).toBe("shot-3");
+    expect(getShotAtTime(editorSnapshot.shots, 36).id).toBe("shot-6");
+    expect(getShotAtTime(editorSnapshot.shots, -2).id).toBe("shot-1");
+  });
+
+  it("creates deterministic generated shots, timeline events, and hotspots", () => {
+    const generatedShot = createGeneratedShot(
+      editorSnapshot.shots,
+      "Macro texture pour with bold price overlay",
+    );
+    expect(generatedShot).toMatchObject({
+      id: "shot-7",
+      number: 7,
+      start: "0:36",
+      startSeconds: 36,
+      durationSeconds: 4,
+      title: "AI generated proof frame",
+      prompt: "Macro texture pour with bold price overlay",
+    });
+
+    const event = createTimelineEvent(editorSnapshot.timelineEvents, 12, "cta");
+    expect(event).toEqual({
+      id: "m-11",
+      atSeconds: 12,
+      kind: "cta",
+      label: "CTA",
+    });
+
+    const hotspot = createHotspot(editorSnapshot.hotspots, 12);
+    expect(hotspot).toEqual({
+      id: "hotspot-4",
+      number: 4,
+      name: "Shop CTA",
+      range: "00:12 - 00:16",
+      x: 67,
+      y: 58,
+    });
   });
 });
