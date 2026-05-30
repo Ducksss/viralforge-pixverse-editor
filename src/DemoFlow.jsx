@@ -9,8 +9,7 @@ const SHOT_THUMBS = [
   { label: "Shot 2: Texture dropper", asset: "shotDropper" },
   { label: "Shot 3: Spokesperson hold", asset: "shotModel" },
   { label: "Shot 4: Science bubbles", asset: "shotBubbles" },
-  { label: "Shot 5: Before / After glow", asset: "shotSocial" },
-  { label: "Shot 6: Final bottle CTA", asset: "shotBottle" }
+  { label: "Shot 5: Before / After glow", asset: "shotSocial" }
 ];
 
 export default function DemoFlow({ data, onReset }) {
@@ -50,22 +49,20 @@ export default function DemoFlow({ data, onReset }) {
       const pct = Math.min(100, (elapsed / duration) * 100);
       setProgress(pct);
 
-      if (pct < 11.1) {
+      if (pct < 12.5) {
         setLoadingText("Analysing your product…");
-      } else if (pct < 22.2) {
+      } else if (pct < 25.0) {
         setLoadingText("Writing the shot list…");
-      } else if (pct < 33.3) {
-        setLoadingText("Generating shot 1 of 6…");
-      } else if (pct < 44.4) {
-        setLoadingText("Generating shot 2 of 6…");
-      } else if (pct < 55.5) {
-        setLoadingText("Generating shot 3 of 6…");
-      } else if (pct < 66.6) {
-        setLoadingText("Generating shot 4 of 6…");
-      } else if (pct < 77.7) {
-        setLoadingText("Generating shot 5 of 6…");
-      } else if (pct < 88.8) {
-        setLoadingText("Generating shot 6 of 6…");
+      } else if (pct < 37.5) {
+        setLoadingText("Generating shot 1 of 5…");
+      } else if (pct < 50.0) {
+        setLoadingText("Generating shot 2 of 5…");
+      } else if (pct < 62.5) {
+        setLoadingText("Generating shot 3 of 5…");
+      } else if (pct < 75.0) {
+        setLoadingText("Generating shot 4 of 5…");
+      } else if (pct < 87.5) {
+        setLoadingText("Generating shot 5 of 5…");
       } else {
         setLoadingText("Finishing up…");
       }
@@ -117,6 +114,12 @@ export default function DemoFlow({ data, onReset }) {
   const handleRegenerate = (e) => {
     e.preventDefault();
     setRepromptOpen(false);
+    setView("generating");
+  };
+
+  const handleExtend = (e) => {
+    e.preventDefault();
+    setRepromptOpen(false);
     setHasReprompted(true);
     setView("generating");
   };
@@ -129,7 +132,7 @@ export default function DemoFlow({ data, onReset }) {
     if (isExtended) {
       if (currentVideoSrc === video1) {
         setCurrentVideoSrc(video2);
-        setSelectedShotIndex(6); // Show the 7th shot
+        setSelectedShotIndex(4); // Show the 5th shot (represents the extension outro)
       } else {
         setCurrentVideoSrc(video1);
         setSelectedShotIndex(0); // Loop back
@@ -175,36 +178,37 @@ export default function DemoFlow({ data, onReset }) {
     setSelectedShotIndex(idx);
     
     // Seek logic to make it feel like a real editor
-    if (isExtended && idx === 6) {
-      if (currentVideoSrc !== video2) {
-        setCurrentVideoSrc(video2);
-      }
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.currentTime = 0;
-          videoRef.current.play().catch(() => {});
-        }
-        if (socialVideoRef.current) {
-          socialVideoRef.current.currentTime = 0;
-          socialVideoRef.current.play().catch(() => {});
-        }
-      }, 50);
-    } else {
-      if (currentVideoSrc !== video1) {
-        setCurrentVideoSrc(video1);
-      }
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.currentTime = idx * 4;
-          videoRef.current.play().catch(() => {});
-        }
-        if (socialVideoRef.current) {
-          socialVideoRef.current.currentTime = idx * 4;
-          socialVideoRef.current.play().catch(() => {});
-        }
-      }, 50);
+    if (currentVideoSrc !== video1) {
+      setCurrentVideoSrc(video1);
     }
+    setTimeout(() => {
+      const shotStarts = [0, 5, 11, 17, 23];
+      if (videoRef.current) {
+        videoRef.current.currentTime = shotStarts[idx];
+        videoRef.current.play().catch(() => {});
+      }
+      if (socialVideoRef.current) {
+        socialVideoRef.current.currentTime = shotStarts[idx];
+        socialVideoRef.current.play().catch(() => {});
+      }
+    }, 50);
     setIsPlaying(true);
+  };
+
+  const handleTimeUpdate = (e) => {
+    const time = e.target.currentTime;
+    if (currentVideoSrc === video2) {
+      setSelectedShotIndex(4);
+    } else {
+      const shotStarts = [0, 5, 11, 17, 23];
+      let activeIdx = 0;
+      for (let i = 0; i < shotStarts.length; i++) {
+        if (time >= shotStarts[i]) {
+          activeIdx = i;
+        }
+      }
+      setSelectedShotIndex(activeIdx);
+    }
   };
 
   // Get active hook
@@ -221,19 +225,16 @@ export default function DemoFlow({ data, onReset }) {
       case 3:
         return `Shot 4: Core Ingredients - Formulated with 10% Pure Vitamin C`;
       case 4:
+        if (isExtended && currentVideoSrc === video2) {
+          return `Shot 5: Extended CTA - Limited time discount, buy one get one free!`;
+        }
         return `Shot 5: Before / After Glow - Visible brightness in 5 seconds`;
-      case 5:
-        return `Shot 6: Outro CTA - Buy ${data.product.name} on TikTok Shop below!`;
-      case 6:
-        return `Shot 7: Extended CTA - Limited time discount, buy one get one free!`;
       default:
         return "";
     }
   };
 
-  const activeShots = isExtended 
-    ? [...SHOT_THUMBS, { label: "Shot 7: Extended Offer CTA", asset: "shotBottle" }]
-    : SHOT_THUMBS;
+  const activeShots = SHOT_THUMBS;
 
   return (
     <div style={{ width: "100%", height: "100%", boxSizing: "border-box" }}>
@@ -266,7 +267,9 @@ export default function DemoFlow({ data, onReset }) {
         <div className="demo-editor-container">
           <header className="demo-editor-header">
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div className="wizard-logo-mark" style={{ width: "36px", height: "20px" }} />
+              <div style={{ width: "36px", height: "20px", display: "flex", alignItems: "center", overflow: "visible" }}>
+                <div className="wizard-logo-mark" style={{ transform: "scale(0.7)", transformOrigin: "left center" }} />
+              </div>
               <strong style={{ fontSize: "16px", color: "var(--ink)" }}>ViralForge Campaign Studio</strong>
             </div>
             <div className="demo-editor-title">
@@ -287,7 +290,8 @@ export default function DemoFlow({ data, onReset }) {
                   playsInline
                   onEnded={handleVideoEnded}
                   onClick={handleTogglePlay}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  onTimeUpdate={handleTimeUpdate}
+                  style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
                 />
                 
                 {/* Control Badge */}
@@ -367,9 +371,12 @@ export default function DemoFlow({ data, onReset }) {
                       type="button"
                     >
                       <div className="demo-shot-thumb">
-                        <img
-                          src={idx === 2 ? data.character.image : assets[thumb.asset] || data.character.image}
-                          alt={thumb.label}
+                        <video
+                          src={`${video1}#t=${[0.1, 5, 11, 17, 23][idx]}`}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }}
+                          preload="metadata"
+                          muted
+                          playsInline
                         />
                         <span className="demo-shot-num">{idx + 1}</span>
                       </div>
@@ -466,9 +473,12 @@ export default function DemoFlow({ data, onReset }) {
                       ))}
                     </div>
                   </div>
-                  <div className="modal-actions">
+                  <div className="modal-actions" style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                     <button className="btn-secondary" onClick={() => setRepromptOpen(false)} type="button">
                       Cancel
+                    </button>
+                    <button className="btn-secondary" onClick={handleExtend} type="button">
+                      Extend
                     </button>
                     <button className="btn-primary btn-teal" type="submit">
                       Regenerate <RefreshCw size={14} style={{ marginLeft: "6px" }} />
