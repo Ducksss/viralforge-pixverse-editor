@@ -14,6 +14,10 @@ import shotSocial from "./assets/shot-social.png";
 import socialPhoneFrame from "./assets/social-phone-frame.png";
 import mainFrame from "./assets/viralforge-main-frame.png";
 import sunbymeSerum from "./assets/sunbyme-serum.png";
+import neutrogenaBoost from "./assets/neutrogena-boost.png";
+import centellaAmpoule from "./assets/centella-ampoule.png";
+import lrpHyaluB5 from "./assets/lrp-hyalu-b5.png";
+import vichyMineral89 from "./assets/vichy-mineral-89.png";
 
 export const assets = {
   creatorDaniel,
@@ -32,4 +36,8 @@ export const assets = {
   shotSocial,
   socialPhoneFrame,
   sunbymeSerum,
+  neutrogenaBoost,
+  centellaAmpoule,
+  lrpHyaluB5,
+  vichyMineral89,
 };

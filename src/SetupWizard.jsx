@@ -38,13 +38,12 @@ import m16 from "./assets/ugc/male/m16-korean.png";
 import m17 from "./assets/ugc/male/m17-korean.png";
 
 const PRODUCTS = [
-  { id: "prod-1", name: "Summer Glow Vitamin C Serum", price: "$19.99", category: "Skincare", asset: "projectThumb" },
-  { id: "prod-2", name: "Hydrating Hyaluronic Gel", price: "$24.50", category: "Skincare", asset: "shotDropper" },
-  { id: "prod-3", name: "Matte Finish Setting Spray", price: "$15.00", category: "Cosmetics", asset: "shotSocial" },
-  { id: "prod-4", name: "Rosewater Facial Mist", price: "$12.00", category: "Skincare", asset: "shotProduct" },
-  { id: "prod-5", name: "Organic Avocado Eye Cream", price: "$29.99", category: "Skincare", asset: "shotBottle" },
-  { id: "prod-6", name: "Ultra-Defending Daily Sunscreen", price: "$18.50", category: "Skincare", asset: "shotBubbles" },
-  { id: "prod-7", name: "Sunbyme Miracle Serum", price: "$22.00", category: "Skincare", asset: "sunbymeSerum" }
+  { id: "prod-7", name: "Sunbyme Miracle Serum", price: "$22.00", category: "Skincare", asset: "sunbymeSerum" },
+  { id: "prod-1", name: "Summer Glow Vitamin C Serum", price: "$19.99", category: "Skincare", asset: "neutrogenaBoost" },
+  { id: "prod-2", name: "Hydrating Hyaluronic Gel", price: "$24.50", category: "Skincare", asset: "centellaAmpoule" },
+  { id: "prod-3", name: "Matte Finish Setting Spray", price: "$15.00", category: "Cosmetics", asset: "lrpHyaluB5" },
+  { id: "prod-4", name: "Rosewater Facial Mist", price: "$12.00", category: "Skincare", asset: "vichyMineral89" },
+  { id: "prod-5", name: "Organic Avocado Eye Cream", price: "$29.99", category: "Skincare", asset: "centellaAmpoule" }
 ];
 
 const TONES = ["Authentic", "Funny", "Urgent", "Soft Sell"];
