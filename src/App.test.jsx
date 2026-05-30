@@ -37,8 +37,14 @@ describe("ViralForge campaign workspace", () => {
     await user.click(screen.getByRole("button", { name: /ai people models & consent/i }));
 
     expect(screen.getByRole("heading", { name: "UGC AI People" })).toBeInTheDocument();
+    expect(screen.getByText(/Pick a licensed AI creator/i)).toBeInTheDocument();
     expect(screen.getByLabelText("Upload model reference")).toBeInTheDocument();
+    expect(screen.getByText("Using selected creator reference")).toBeInTheDocument();
+    expect(screen.getByText("Profile ready")).toBeInTheDocument();
+    expect(screen.getAllByText("Creator reference selected")).toHaveLength(2);
+    expect(screen.getByText("5/5")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Creator Casting" })).toBeInTheDocument();
+    expect(screen.getByText("Reusable licensed AI creators for UGC campaign variants")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Generation Readiness" })).toBeInTheDocument();
   });
 
@@ -56,6 +62,8 @@ describe("ViralForge campaign workspace", () => {
     await user.click(screen.getByRole("button", { name: "Use Daniel Ong" }));
 
     expect(screen.getByText("maya-reference.webp")).toBeInTheDocument();
+    expect(screen.getByText("Custom reference ready")).toBeInTheDocument();
+    expect(screen.getByText("Uploaded")).toBeInTheDocument();
     expect(screen.getByText("Gender intent: Man")).toBeInTheDocument();
     expect(screen.getByTestId("selected-person-name")).toHaveTextContent("Daniel Ong");
     expect(screen.getByText("5/5")).toBeInTheDocument();

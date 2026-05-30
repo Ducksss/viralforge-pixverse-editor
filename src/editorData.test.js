@@ -44,7 +44,7 @@ describe("editorSnapshot", () => {
     });
   });
 
-  it("models reusable AI people with upload readiness", () => {
+  it("models reusable AI people with selected-profile readiness", () => {
     expect(editorSnapshot.defaultPage).toBe("editor");
     expect(editorSnapshot.aiPeople.defaultGender).toBe("Woman");
     expect(editorSnapshot.aiPeople.creatorProfiles.map((person) => person.name)).toEqual([
@@ -68,10 +68,16 @@ describe("editorSnapshot", () => {
         (person) => person.id === editorSnapshot.aiPeople.defaultPersonId,
       )?.gender,
     ).toBe(editorSnapshot.aiPeople.defaultGender);
+    expect(editorSnapshot.aiPeople.uploadRequirements).toContain("No minors or private likeness");
+    expect(editorSnapshot.aiPeople.readinessChecklist[0]).toMatchObject({
+      id: "reference",
+      label: "Creator reference selected",
+      done: true,
+    });
     expect(getPeopleReadiness(editorSnapshot.aiPeople)).toEqual({
-      completed: 4,
+      completed: 5,
       total: 5,
-      label: "4/5",
+      label: "5/5",
     });
     expect(getPeopleReadiness(editorSnapshot.aiPeople, { referenceUploaded: true })).toEqual({
       completed: 5,

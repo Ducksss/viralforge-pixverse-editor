@@ -83,10 +83,10 @@ export const editorSnapshot = {
     defaultPersonId: "maya-chen",
     defaultGender: "Woman",
     uploadRequirements: [
-      "Clear face reference",
-      "Signed model release",
+      "Creator reference selected",
+      "Usage release attached",
       "Neutral expression pass",
-      "No minors or private identity",
+      "No minors or private likeness",
     ],
     genderOptions: [
       {
@@ -162,7 +162,7 @@ export const editorSnapshot = {
       },
     ],
     readinessChecklist: [
-      { id: "reference", label: "People reference uploaded", done: false },
+      { id: "reference", label: "Creator reference selected", done: true },
       { id: "release", label: "Usage release attached", done: true },
       { id: "gender", label: "Gender intent selected", done: true },
       { id: "voice", label: "Voice and language locked", done: true },
@@ -194,7 +194,7 @@ export const editorSnapshot = {
       },
     ],
     guardrails: [
-      "Use only uploaded or licensed likeness references.",
+      "Use only selected profiles or uploaded licensed likeness references.",
       "Keep AI creator disclosure on every exported UGC cut.",
       "Block age-down prompts and private-person impersonation.",
       "Require brand-safe wardrobe before PixVerse generation.",

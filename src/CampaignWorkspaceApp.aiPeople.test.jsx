@@ -36,10 +36,18 @@ describe("CampaignWorkspaceApp AI People page", () => {
     ];
 
     expect(new Set(creatorFrames.map((image) => image.getAttribute("src"))).size).toBe(3);
+    creatorFrames.forEach((image) => {
+      expect(image).toHaveAttribute("src", expect.stringMatching(/creator-[a-z-]+\.png$/));
+      expect(image).not.toHaveAttribute("src", expect.stringContaining(".svg"));
+    });
 
     await user.click(screen.getByRole("button", { name: "Use Jordan Lee" }));
 
     expect(screen.getByTestId("selected-person-name")).toHaveTextContent("Jordan Lee");
+    expect(screen.getByRole("img", { name: "Jordan Lee selected creator" })).toHaveAttribute(
+      "src",
+      expect.stringMatching(/creator-jordan\.png$/),
+    );
     expect(screen.getByText("Creator gender: Non-binary")).toBeInTheDocument();
     expect(screen.getByText("Gender intent: Non-binary")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Non-binary" })).toHaveAttribute("aria-pressed", "true");

@@ -187,6 +187,10 @@ Coverage expectations:
   successful MP4 blob result.
 - UI: real media import/add, reorder, trim, music selection, CTA editing,
   persistence/reload, upload reselect placeholder, and export status.
+- AI People data: creator profiles, gender options, selected-profile readiness,
+  and optional custom reference override behavior.
+- AI People UI: upload override, casting, readiness, guardrails, gender/creator
+  selection, and real creator portrait assets.
 - Legacy campaign workspace: preserved `/campaign` behavior.
 
 ## 10. Risks and Follow-Ups
