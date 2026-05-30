@@ -2,6 +2,41 @@ import React, { useState, useEffect } from "react";
 import { ChevronRight, ChevronLeft, Sparkles, Check, Info } from "lucide-react";
 import { assets } from "./assetMap.js";
 
+// Female portraits
+import f01 from "./assets/ugc/female/f01-young-east-asian.png";
+import f02 from "./assets/ugc/female/f02-young-black.png";
+import f03 from "./assets/ugc/female/f03-young-white.png";
+import f04 from "./assets/ugc/female/f04-middle-south-asian.png";
+import f05 from "./assets/ugc/female/f05-middle-latina.png";
+import f06 from "./assets/ugc/female/f06-middle-middle-eastern.png";
+import f07 from "./assets/ugc/female/f07-old-white.png";
+import f08 from "./assets/ugc/female/f08-old-east-asian.png";
+import f09 from "./assets/ugc/female/f09-old-black.png";
+import f10 from "./assets/ugc/female/f10-young-southeast-asian.png";
+import f15 from "./assets/ugc/female/f15-korean.png";
+import f16 from "./assets/ugc/female/f16-korean.png";
+import f17 from "./assets/ugc/female/f17-korean.png";
+import f18 from "./assets/ugc/female/f18-korean-young-wavy.png";
+import f19 from "./assets/ugc/female/f19-korean-young-bob.png";
+import f20 from "./assets/ugc/female/f20-korean-young-bangs.png";
+import f21 from "./assets/ugc/female/f21-korean-young-sporty.png";
+import f22 from "./assets/ugc/female/f22-korean-young-elegant.png";
+
+// Male portraits
+import m01 from "./assets/ugc/male/m01-young-east-asian.png";
+import m02 from "./assets/ugc/male/m02-young-black.png";
+import m03 from "./assets/ugc/male/m03-young-south-asian.png";
+import m04 from "./assets/ugc/male/m04-middle-white.png";
+import m05 from "./assets/ugc/male/m05-middle-latino.png";
+import m06 from "./assets/ugc/male/m06-middle-middle-eastern.png";
+import m07 from "./assets/ugc/male/m07-old-white.png";
+import m08 from "./assets/ugc/male/m08-old-east-asian.png";
+import m09 from "./assets/ugc/male/m09-old-black.png";
+import m10 from "./assets/ugc/male/m10-young-southeast-asian.png";
+import m15 from "./assets/ugc/male/m15-korean.png";
+import m16 from "./assets/ugc/male/m16-korean.png";
+import m17 from "./assets/ugc/male/m17-korean.png";
+
 const PRODUCTS = [
   { id: "prod-1", name: "Summer Glow Vitamin C Serum", price: "$19.99", category: "Skincare", asset: "projectThumb" },
   { id: "prod-2", name: "Hydrating Hyaluronic Gel", price: "$24.50", category: "Skincare", asset: "shotDropper" },
@@ -20,28 +55,39 @@ const HOOKS = [
 ];
 
 const AVATARS = [
-  // 10 Female
-  { id: "sarah", name: "Sarah", gender: "Female", style: "Relatable", initials: "SA", gradient: "linear-gradient(135deg, #4f46e5, #06b6d4)" },
-  { id: "chloe", name: "Chloe", gender: "Female", style: "Aspirational", initials: "CH", gradient: "linear-gradient(135deg, #f43f5e, #fb7185)" },
-  { id: "elena", name: "Elena", gender: "Female", style: "Edgy", initials: "EL", gradient: "linear-gradient(135deg, #ec4899, #f472b6)" },
-  { id: "mia", name: "Mia", gender: "Female", style: "Minimal", initials: "MI", gradient: "linear-gradient(135deg, #64748b, #94a3b8)" },
-  { id: "jessica", name: "Jessica", gender: "Female", style: "Relatable", initials: "JE", gradient: "linear-gradient(135deg, #0d9488, #2dd4bf)" },
-  { id: "sophia", name: "Sophia", gender: "Female", style: "Aspirational", initials: "SO", gradient: "linear-gradient(135deg, #8b5cf6, #a78bfa)" },
-  { id: "zoe", name: "Zoe", gender: "Female", style: "Edgy", initials: "ZO", gradient: "linear-gradient(135deg, #d97706, #fbbf24)" },
-  { id: "lily", name: "Lily", gender: "Female", style: "Minimal", initials: "LI", gradient: "linear-gradient(135deg, #0ea5e9, #38bdf8)" },
-  { id: "grace", name: "Grace", gender: "Female", style: "Relatable", initials: "GR", gradient: "linear-gradient(135deg, #4f46e5, #818cf8)" },
-  { id: "emma", name: "Emma", gender: "Female", style: "Aspirational", initials: "EM", gradient: "linear-gradient(135deg, #db2777, #f472b6)" },
-  // 10 Male
-  { id: "alex", name: "Alex", gender: "Male", style: "Relatable", initials: "AL", gradient: "linear-gradient(135deg, #2563eb, #60a5fa)" },
-  { id: "marcus", name: "Marcus", gender: "Male", style: "Aspirational", initials: "MA", gradient: "linear-gradient(135deg, #ea580c, #f97316)" },
-  { id: "jordan", name: "Jordan", gender: "Male", style: "Edgy", initials: "JO", gradient: "linear-gradient(135deg, #dc2626, #f87171)" },
-  { id: "leo", name: "Leo", gender: "Male", style: "Minimal", initials: "LE", gradient: "linear-gradient(135deg, #475569, #64748b)" },
-  { id: "ethan", name: "Ethan", gender: "Male", style: "Relatable", initials: "ET", gradient: "linear-gradient(135deg, #16a34a, #4ade80)" },
-  { id: "tyler", name: "Tyler", gender: "Male", style: "Aspirational", initials: "TY", gradient: "linear-gradient(135deg, #ca8a04, #fde047)" },
-  { id: "ryan", name: "Ryan", gender: "Male", style: "Edgy", initials: "RY", gradient: "linear-gradient(135deg, #be185d, #f472b6)" },
-  { id: "cole", name: "Cole", gender: "Male", style: "Minimal", initials: "CO", gradient: "linear-gradient(135deg, #3f3f46, #71717a)" },
-  { id: "justin", name: "Justin", gender: "Male", style: "Relatable", initials: "JU", gradient: "linear-gradient(135deg, #0284c7, #38bdf8)" },
-  { id: "david", name: "David", gender: "Male", style: "Aspirational", initials: "DA", gradient: "linear-gradient(135deg, #6366f1, #c7d2fe)" }
+  // 18 Female
+  { id: "f01", name: "Sarah", gender: "Female", style: "Relatable", image: f01 },
+  { id: "f02", name: "Chloe", gender: "Female", style: "Aspirational", image: f02 },
+  { id: "f03", name: "Elena", gender: "Female", style: "Edgy", image: f03 },
+  { id: "f04", name: "Amara", gender: "Female", style: "Minimal", image: f04 },
+  { id: "f05", name: "Sofia", gender: "Female", style: "Relatable", image: f05 },
+  { id: "f06", name: "Layla", gender: "Female", style: "Aspirational", image: f06 },
+  { id: "f07", name: "Zoe", gender: "Female", style: "Edgy", image: f07 },
+  { id: "f08", name: "Mei", gender: "Female", style: "Minimal", image: f08 },
+  { id: "f09", name: "Evelyn", gender: "Female", style: "Relatable", image: f09 },
+  { id: "f10", name: "Jessica", gender: "Female", style: "Aspirational", image: f10 },
+  { id: "f15", name: "Minju", gender: "Female", style: "Edgy", image: f15 },
+  { id: "f16", name: "Jiwon", gender: "Female", style: "Minimal", image: f16 },
+  { id: "f17", name: "Hyeshin", gender: "Female", style: "Relatable", image: f17 },
+  { id: "f18", name: "Hana", gender: "Female", style: "Aspirational", image: f18 },
+  { id: "f19", name: "Yeji", gender: "Female", style: "Edgy", image: f19 },
+  { id: "f20", name: "Chaewon", gender: "Female", style: "Minimal", image: f20 },
+  { id: "f21", name: "Yujin", gender: "Female", style: "Relatable", image: f21 },
+  { id: "f22", name: "Seoyeon", gender: "Female", style: "Aspirational", image: f22 },
+  // 13 Male
+  { id: "m01", name: "Alex", gender: "Male", style: "Relatable", image: m01 },
+  { id: "m02", name: "Marcus", gender: "Male", style: "Aspirational", image: m02 },
+  { id: "m03", name: "Jordan", gender: "Male", style: "Edgy", image: m03 },
+  { id: "m04", name: "Leo", gender: "Male", style: "Minimal", image: m04 },
+  { id: "m05", name: "Ethan", gender: "Male", style: "Relatable", image: m05 },
+  { id: "m06", name: "Tyler", gender: "Male", style: "Aspirational", image: m06 },
+  { id: "m07", name: "Ryan", gender: "Male", style: "Edgy", image: m07 },
+  { id: "m08", name: "Cole", gender: "Male", style: "Minimal", image: m08 },
+  { id: "m09", name: "Justin", gender: "Male", style: "Relatable", image: m09 },
+  { id: "m10", name: "David", gender: "Male", style: "Aspirational", image: m10 },
+  { id: "m15", name: "Woojin", gender: "Male", style: "Edgy", image: m15 },
+  { id: "m16", name: "Minho", gender: "Male", style: "Minimal", image: m16 },
+  { id: "m17", name: "Sangwoo", gender: "Male", style: "Relatable", image: m17 }
 ];
 
 export default function SetupWizard({ onComplete }) {
@@ -104,7 +150,6 @@ export default function SetupWizard({ onComplete }) {
       character: selectedCharacter
     });
   };
-
 
   const filteredAvatars = AVATARS.filter((avatar) => {
     if (genderFilter === "All") return true;
@@ -328,11 +373,13 @@ export default function SetupWizard({ onComplete }) {
                 className={`character-card ${selectedCharacter?.id === char.id ? "selected" : ""}`}
                 onClick={() => handleCharacterSelect(char)}
                 type="button"
-
               >
-                <div className="avatar-circle" style={{ background: char.gradient }}>
-                  {char.initials}
-                </div>
+                <img
+                  src={char.image}
+                  className="avatar-circle"
+                  style={{ objectFit: "cover" }}
+                  alt={char.name}
+                />
                 <h3 className="character-name">{char.name}</h3>
                 <span className="character-tag">{char.style}</span>
               </button>

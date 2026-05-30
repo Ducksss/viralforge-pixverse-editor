@@ -60,10 +60,12 @@ import {
   getVideoDuration,
 } from "./editorData.js";
 import SetupWizard from "./SetupWizard.jsx";
+import DemoFlow from "./DemoFlow.jsx";
 
 const isTestEnv =
   typeof process !== "undefined" &&
   (process.env.NODE_ENV === "test" || process.env.VITEST === "true");
+
 
 
 const navIcons = {
@@ -1398,6 +1400,8 @@ export default function App() {
   const [wizardComplete, setWizardComplete] = useState(isTestEnv);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [creatorProfiles, setCreatorProfiles] = useState(editorSnapshot.aiPeople.creatorProfiles);
+  const [wizardData, setWizardData] = useState(null);
+
   
   const [activePresetId, setActivePresetId] = useState(editorSnapshot.generationPresets[0].id);
   const [activePage, setActivePage] = useState(editorSnapshot.defaultPage);
@@ -1560,6 +1564,26 @@ export default function App() {
     }
   }
 
+  if (!isTestEnv) {
+    if (!wizardData) {
+      return (
+        <SetupWizard
+          onComplete={(data) => {
+            setWizardData(data);
+          }}
+        />
+      );
+    }
+    return (
+      <DemoFlow
+        data={wizardData}
+        onReset={() => {
+          setWizardData(null);
+        }}
+      />
+    );
+  }
+
   if (!wizardComplete) {
     return (
       <SetupWizard
@@ -1576,10 +1600,13 @@ export default function App() {
             language: "English",
             fitScore: 95,
             consent: "Model release signed",
-            asset: data.character.gender === "Female" ? "shotModel" : "shotSocial",
+            asset: data.character.id,
             look: `${data.character.style} style, natural window light`,
             voice: `${data.character.style} UGC voice`
           };
+
+          // Register character image in assets map dynamically
+          assets[data.character.id] = data.character.image;
 
           setCreatorProfiles([newProfile, ...editorSnapshot.aiPeople.creatorProfiles]);
           setSelectedPersonId(newProfile.id);
@@ -1589,6 +1616,7 @@ export default function App() {
       />
     );
   }
+
 
   return (
     <div className="app-shell">
