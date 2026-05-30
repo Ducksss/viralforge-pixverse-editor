@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Player } from "@remotion/player";
 import {
   Download,
@@ -302,7 +302,9 @@ function TimelineDropTrack({ children, isOver, onDropPayload }) {
 }
 
 export function CampaignNleBay({
-  currentSeconds,
+  onPlaybackChange,
+  onPlayheadChange,
+  onProjectChange,
   onSelectShot,
   onStatus,
   projectTitle,
@@ -314,6 +316,8 @@ export function CampaignNleBay({
     () => createCampaignProject({ projectTitle, selectedShotId, shots, timelineEvents }),
     [projectTitle, selectedShotId, shots, timelineEvents],
   );
+  const playerRef = useRef(null);
+  const callbacksRef = useRef({ onPlaybackChange, onPlayheadChange, onProjectChange });
   const [project, setProject] = useState(() => restoreProject(fallbackProject));
   const [activeDrag, setActiveDrag] = useState(null);
   const [exportJob, setExportJob] = useState({ status: "idle", progress: 0, message: "Ready" });
@@ -327,6 +331,10 @@ export function CampaignNleBay({
   const selectedOverlay = project.textOverlays[0];
 
   useEffect(() => {
+    callbacksRef.current = { onPlaybackChange, onPlayheadChange, onProjectChange };
+  }, [onPlaybackChange, onPlayheadChange, onProjectChange]);
+
+  useEffect(() => {
     setProject((currentProject) => mergeCampaignShots(currentProject, fallbackProject));
   }, [fallbackProject]);
 
@@ -335,8 +343,54 @@ export function CampaignNleBay({
   }, [project]);
 
   useEffect(() => {
-    setProject((currentProject) => setPlayhead(currentProject, Math.min(currentSeconds, computeTimelineDuration(currentProject))));
-  }, [currentSeconds]);
+    callbacksRef.current.onProjectChange?.(project);
+    callbacksRef.current.onPlayheadChange?.(project.playheadSeconds);
+  }, [project]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) {
+      return undefined;
+    }
+
+    const syncFrameToProject = (event) => {
+      const frame = Number(event.detail?.frame);
+      if (!Number.isFinite(frame)) {
+        return;
+      }
+
+      setProject((currentProject) => setPlayhead(currentProject, frame / currentProject.fps));
+    };
+    const markPlaying = () => callbacksRef.current.onPlaybackChange?.(true);
+    const markPaused = () => callbacksRef.current.onPlaybackChange?.(false);
+
+    player.addEventListener("frameupdate", syncFrameToProject);
+    player.addEventListener("seeked", syncFrameToProject);
+    player.addEventListener("play", markPlaying);
+    player.addEventListener("pause", markPaused);
+    player.addEventListener("ended", markPaused);
+
+    return () => {
+      player.removeEventListener("frameupdate", syncFrameToProject);
+      player.removeEventListener("seeked", syncFrameToProject);
+      player.removeEventListener("play", markPlaying);
+      player.removeEventListener("pause", markPaused);
+      player.removeEventListener("ended", markPaused);
+    };
+  }, []);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) {
+      return;
+    }
+
+    const targetFrame = Math.round(project.playheadSeconds * project.fps);
+    const currentFrame = player.getCurrentFrame?.() ?? 0;
+    if (Math.abs(currentFrame - targetFrame) > 1) {
+      player.seekTo(targetFrame);
+    }
+  }, [project.fps, project.playheadSeconds]);
 
   function commitProject(updater) {
     setProject((currentProject) => {
@@ -508,8 +562,11 @@ export function CampaignNleBay({
                 controls
                 durationInFrames={Math.max(1, Math.ceil(durationSeconds * project.fps))}
                 fps={project.fps}
+                initialFrame={Math.round(project.playheadSeconds * project.fps)}
                 inputProps={{ project }}
-                loop
+                loop={false}
+                moveToBeginningWhenEnded={false}
+                ref={playerRef}
                 style={{
                   aspectRatio: `${project.width} / ${project.height}`,
                   height: "auto",

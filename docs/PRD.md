@@ -3,9 +3,9 @@
 ## 1. Product Overview
 
 ViralForge is now a browser-local video editor for commerce sellers assembling
-short-form product videos. The primary workspace is a DaVinci Resolve-inspired
-edit page with a media pool, Remotion preview monitor, inspector, and custom
-multitrack timeline.
+short-form product videos. The primary workspace is the ViralForge campaign
+shell with a Local NLE at the center: media pool, Remotion preview monitor,
+inspector, and custom multitrack timeline.
 
 The commerce layer remains in the product, but it acts as assistant context
 inside the editor: trend beats, filming review, CTA/listing metadata, and
@@ -28,8 +28,8 @@ or server rendering in v1.
   CTA overlay, preview, persistence, and export.
 - Keep all state in one timeline model so preview and export cannot drift.
 - Keep v1 fully browser-local and transparent about persistence limits.
-- Preserve the older campaign workspace at `/campaign` for regression and
-  related ViralForge commerce workflows.
+- Keep the campaign workspace and TikTok preview synchronized from one timeline
+  playhead so the phone preview, selected shot, and local editor cannot drift.
 
 ## 4. Non-Goals
 
@@ -43,13 +43,13 @@ or server rendering in v1.
 
 ## 5. Core User Flow
 
-1. Seller opens the editor at `/`.
-2. Seller picks bundled real MP4 cuts from `src/assets/video/` or imports local video/audio.
+1. Seller opens the campaign editor at `/`.
+2. Seller picks bundled real MP4 cuts from `src/assets/video/` or imports local video/audio in the Local NLE.
 3. Seller drags clips from the media pool into the timeline.
 4. Seller reorders clips, selects clips, and trims source in/out.
 5. Seller chooses a music bed and edits music volume/start.
 6. Seller edits the CTA overlay.
-7. Seller previews through Remotion Player.
+7. Seller previews through Remotion Player while the TikTok-style Social Preview follows the same playhead.
 8. Seller exports a 9:16 MP4 through Mediabunny.
 9. Seller downloads the resulting blob locally.
 
@@ -58,10 +58,12 @@ or server rendering in v1.
 ### Campaign Workspace
 
 - Preserve the ViralForge Commerce shell as the default route.
-- Keep sidebar modules, topbar actions, AI People, product hotspots, filming
-  review, props, trend guidance, and listing assets visible around the editor.
-- Splice the local NLE into the editor page instead of replacing the commerce
-  workspace.
+- Keep sidebar modules, topbar actions, AI People, filming review, props, trend
+  guidance, and listing assets visible around the editor.
+- Use the Local NLE as the primary editor surface and remove the legacy top
+  preview, shot strip, and AI Generate editor tab from the main canvas.
+- Keep the TikTok-style Social Preview synced to the Local NLE timeline project
+  and playhead.
 - Keep the standalone DaVinci-style editor available at `/local-editor` for
   focused testing and regression.
 
@@ -107,6 +109,11 @@ or server rendering in v1.
 
 - Use `@remotion/player` for in-browser preview.
 - Render the same project state used by export.
+- Publish Remotion Player frame changes back into `TimelineProject.playheadSeconds`.
+- Disable looping in the embedded campaign NLE player so playback does not
+  restart on the first source segment.
+- Drive the TikTok-style Social Preview from the active timeline clip whenever
+  a timeline project is available.
 - Show real media poster frames, video playback, or upload placeholders.
 - Render safe zones and CTA overlay.
 - Respect project aspect dimensions.

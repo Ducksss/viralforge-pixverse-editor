@@ -730,6 +730,10 @@ img {
   gap: 10px;
 }
 
+.left-canvas.is-nle-primary {
+  grid-template-rows: minmax(0, 1fr);
+}
+
 .left-canvas.is-generating {
   grid-template-rows: 34px minmax(430px, 1fr) 180px;
 }
@@ -742,6 +746,10 @@ img {
 .middle-column {
   display: grid;
   grid-template-rows: 34px auto 1fr;
+}
+
+.middle-column.is-nle-primary {
+  grid-template-rows: auto 1fr;
 }
 
 .middle-spacer {
@@ -1281,6 +1289,11 @@ img {
   display: grid;
   gap: 9px;
   padding: 10px;
+}
+
+.left-canvas.is-nle-primary .campaign-nle-bay {
+  align-content: start;
+  min-height: 0;
 }
 
 .campaign-nle-head,

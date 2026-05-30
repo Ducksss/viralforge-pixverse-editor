@@ -20,16 +20,18 @@ describe("ViralForge campaign workspace", () => {
 
     render(<App />);
 
-    expect(screen.getByText("Preview 30s")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Remotion Timeline" })).toBeInTheDocument();
     expect(screen.getByTestId("social-preview-title")).toHaveTextContent("Social Preview");
+    expect(screen.queryByText("Preview 30s")).not.toBeInTheDocument();
+    expect(screen.queryByText("AI Generate")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Filming Tips/i })).toBeInTheDocument();
     expect(screen.getByText("Shot readiness")).toBeInTheDocument();
-    expect(screen.getByText("Shot 3 - 00:10 to 00:15")).toBeInTheDocument();
-    expect(screen.getByText("Medium priority")).toBeInTheDocument();
-    expect(screen.getByText("Safe crop")).toBeInTheDocument();
+    expect(screen.getByText("Shot 1 - 00:00 to 00:05")).toBeInTheDocument();
+    expect(screen.getByText("Low priority")).toBeInTheDocument();
+    expect(screen.getByText("Clean product opener")).toBeInTheDocument();
     expect(screen.getByText("Priority fixes")).toBeInTheDocument();
-    expect(screen.getByText("Lower camera angle")).toBeInTheDocument();
-    expect(screen.getByText("Open the crop")).toBeInTheDocument();
+    expect(screen.getByText("Lock the label")).toBeInTheDocument();
+    expect(screen.getByText("Reduce prop noise")).toBeInTheDocument();
     expect(screen.getByText("Next setup")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /ai people models & consent/i }));
@@ -59,7 +61,7 @@ describe("ViralForge campaign workspace", () => {
     expect(screen.getByText("5/5")).toBeInTheDocument();
   });
 
-  it("generates a selected creator audition into the editor shot strip", async () => {
+  it("generates a selected creator audition into the local NLE timeline", async () => {
     const user = userEvent.setup();
 
     render(<App />);
@@ -69,46 +71,26 @@ describe("ViralForge campaign workspace", () => {
     await user.click(screen.getByRole("button", { name: "Generate audition" }));
 
     expect(screen.getByRole("status")).toHaveTextContent("Audition generated: Daniel Ong (12s)");
-    expect(screen.getByText("Shots (7)")).toBeInTheDocument();
-    expect(screen.getByText("42.0s")).toBeInTheDocument();
+    expect(screen.queryByText("Shots (7)")).not.toBeInTheDocument();
 
-    const shotStrip = screen.getByText("Shots (7)").closest("section");
-    expect(shotStrip).not.toBeNull();
-    expect(within(shotStrip).getByText("Daniel Ong audition")).toBeInTheDocument();
+    const nle = screen.getByTestId("campaign-nle-bay");
+    expect(within(nle).getAllByText("Daniel Ong audition").length).toBeGreaterThan(0);
+    expect(within(nle).getByText("0:42")).toBeInTheDocument();
   });
 
-  it("guides AI generation and appends 30-second sample clips", async () => {
+  it("adds campaign media directly inside the primary local NLE", async () => {
     const user = userEvent.setup();
 
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "AI Generate" }));
+    const nle = screen.getByTestId("campaign-nle-bay");
+    const ingredientAssetCard = within(nle).getAllByText(/Ingredient close read/i)[0].closest(".campaign-nle-asset");
+    expect(ingredientAssetCard).not.toBeNull();
+    await user.click(within(ingredientAssetCard).getAllByRole("button")[0]);
 
-    expect(screen.getByRole("heading", { name: "AI Generate Studio" })).toBeInTheDocument();
-    expect(screen.getByText("2 samples x 30s")).toBeInTheDocument();
-    expect(screen.getByText("480 credits total")).toBeInTheDocument();
-    expect(screen.getByText("Checks run before each sample enters the shot strip.")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "3 samples" }));
-    expect(screen.getByText("720 credits total")).toBeInTheDocument();
-
-    await user.type(
-      screen.getByLabelText(/generation prompt/i),
-      "Macro texture pour with bold price overlay",
-    );
-    await user.click(screen.getByRole("button", { name: /macro serum texture pour/i }));
-    await user.click(screen.getByRole("button", { name: "Generate samples" }));
-
-    expect(screen.getByRole("status")).toHaveTextContent("Generation queued: 3 samples x 30s");
-    expect(screen.getByText("Shots (9)")).toBeInTheDocument();
-    expect(screen.getByText("120.0s")).toBeInTheDocument();
-    expect(screen.getByText("1,730")).toBeInTheDocument();
-
-    const shotStrip = screen.getByText("Shots (9)").closest("section");
-    expect(shotStrip).not.toBeNull();
-    expect(within(shotStrip).getByText("AI UGC Proof sample 1")).toBeInTheDocument();
-    expect(within(shotStrip).getByText("AI UGC Proof sample 2")).toBeInTheDocument();
-    expect(within(shotStrip).getByText("AI UGC Proof sample 3")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/Ingredient close read added to local timeline/i);
+    expect(within(nle).getAllByText(/Ingredient close read/i).length).toBeGreaterThan(2);
+    expect(within(nle).getByText("0:35")).toBeInTheDocument();
   });
 
   it("renders the trend translator as a compact trend brief", async () => {

@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import { assets } from "./assetMap.js";
 import { CampaignNleBay } from "./CampaignNleBay.jsx";
+import { getClipAtPlayhead } from "./editor/timeline.js";
 import {
   buildTimelineMarkers,
   createAuditionShot,
@@ -647,6 +648,69 @@ function CampaignVideoFrame({ activeShot, currentSeconds, isMuted, isPlaying, lo
   );
 }
 
+function TimelineProjectFrame({ currentSeconds, isMuted, isPlaying, project }) {
+  const videoRef = useRef(null);
+  const clip = getClipAtPlayhead(project, currentSeconds);
+  const asset = project.mediaAssets.find((item) => item.id === clip?.assetId);
+  const mediaSrc = asset?.objectUrl || asset?.src;
+  const posterSrc = asset?.posterSrc || (asset?.assetKey ? assets[asset.assetKey] : assets.mainFrame);
+  const sourceSeconds = Math.max(
+    0,
+    (clip?.sourceInSeconds || 0) + (currentSeconds - (clip?.startSeconds || 0)),
+  );
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) {
+      return;
+    }
+
+    try {
+      if (Number.isFinite(sourceSeconds) && Math.abs((video.currentTime || 0) - sourceSeconds) > 0.2) {
+        video.currentTime = sourceSeconds;
+      }
+    } catch {
+      // Browser media seeking can be temporarily unavailable before metadata loads.
+    }
+  }, [sourceSeconds, mediaSrc]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) {
+      return;
+    }
+
+    try {
+      if (isPlaying) {
+        const playResult = video.play?.();
+        playResult?.catch?.(() => {});
+      } else {
+        video.pause?.();
+      }
+    } catch {
+      // jsdom and autoplay policies may reject media methods; the current frame still renders.
+    }
+  }, [isPlaying, mediaSrc]);
+
+  if (mediaSrc && asset?.kind === "video" && clip) {
+    return (
+      <video
+        key={`${clip.id}-${mediaSrc}`}
+        ref={videoRef}
+        aria-label={`${clip.title} TikTok synced preview video`}
+        loop={false}
+        muted={isMuted}
+        playsInline
+        poster={posterSrc}
+        preload="metadata"
+        src={mediaSrc}
+      />
+    );
+  }
+
+  return <img src={posterSrc} alt={`${clip?.title || "Timeline"} TikTok synced preview frame`} />;
+}
+
 function ShotMedia({ shot }) {
   const posterSrc = assets[shot.asset];
   const videoSrc = shot.videoAsset ? assets[shot.videoAsset] : null;
@@ -667,7 +731,7 @@ function ShotMedia({ shot }) {
   );
 }
 
-function SocialPreview({ aspectRatio, currentSeconds, isMuted, isPlaying, loopEnabled, shots }) {
+function SocialPreview({ aspectRatio, currentSeconds, isMuted, isPlaying, loopEnabled, shots, timelineProject }) {
   const activeShot = getShotAtTime(shots, currentSeconds);
 
   return (
@@ -677,13 +741,22 @@ function SocialPreview({ aspectRatio, currentSeconds, isMuted, isPlaying, loopEn
         <span>({aspectRatio === "16:9" ? "9:16" : aspectRatio})</span>
       </div>
       <div className="phone-frame">
-        <CampaignVideoFrame
-          activeShot={activeShot}
-          currentSeconds={currentSeconds}
-          isMuted={isMuted}
-          isPlaying={isPlaying}
-          loopEnabled={loopEnabled}
-        />
+        {timelineProject ? (
+          <TimelineProjectFrame
+            currentSeconds={timelineProject.playheadSeconds}
+            isMuted={isMuted}
+            isPlaying={isPlaying}
+            project={timelineProject}
+          />
+        ) : (
+          <CampaignVideoFrame
+            activeShot={activeShot}
+            currentSeconds={currentSeconds}
+            isMuted={isMuted}
+            isPlaying={isPlaying}
+            loopEnabled={loopEnabled}
+          />
+        )}
         <div className="phone-nav">
           <span><Home size={11} />Home</span>
           <span><Search size={11} />Discover</span>
@@ -1758,122 +1831,29 @@ function RightRail({
 }
 
 function MainEditor({
-  activePresetId,
-  activeTab,
   aspectRatio,
-  balance,
-  captionsEnabled,
-  compareEnabled,
   currentSeconds,
-  duration,
-  editingHotspotId,
-  fullscreen,
-  generationDuration,
-  generationEstimate,
-  generationPrompt,
-  hotspotDraft,
-  hotspots,
   isMuted,
   isPlaying,
   loopEnabled,
-  model,
-  onAddHotspot,
-  onAddTimelineEvent,
-  onDeleteHotspot,
-  onEditHotspot,
-  onGenerate,
-  onModelChange,
-  onQualityChange,
-  onSafeToggle,
-  onSaveHotspot,
-  onScrub,
+  nlePreviewProject,
+  onNlePlaybackChange,
+  onNlePlayheadChange,
+  onNleProjectChange,
   onSelectShot,
-  onSkip,
   onNleStatus,
-  onToggleCaptions,
-  onToggleCompare,
-  onToggleFullscreen,
-  onToggleLoop,
-  onToggleMute,
-  onTogglePlay,
-  openMenu,
   projectTitle,
-  quality,
-  safeEnabled,
-  sampleCount,
-  selectedShot,
   selectedShotId,
-  setActivePresetId,
-  setActiveTab,
-  setGenerationDuration,
-  setGenerationPrompt,
-  setHotspotDraft,
-  setOpenMenu,
-  setSampleCount,
   shots,
   timelineEvents,
 }) {
   return (
     <main className="editor-grid">
-      <section className={`left-canvas ${activeTab === "generate" ? "is-generating" : ""}`}>
-        <EditorToolbar
-          activeTab={activeTab}
-          model={model}
-          onModelChange={onModelChange}
-          onQualityChange={onQualityChange}
-          onSafeToggle={onSafeToggle}
-          openMenu={openMenu}
-          quality={quality}
-          safeEnabled={safeEnabled}
-          setActiveTab={setActiveTab}
-          setOpenMenu={setOpenMenu}
-        />
-        {activeTab === "generate" ? (
-          <AIGenerateStudio
-            activePresetId={activePresetId}
-            balance={balance}
-            generationDuration={generationDuration}
-            generationEstimate={generationEstimate}
-            generationPrompt={generationPrompt}
-            onGenerate={onGenerate}
-            sampleCount={sampleCount}
-            setActivePresetId={setActivePresetId}
-            setGenerationDuration={setGenerationDuration}
-            setGenerationPrompt={setGenerationPrompt}
-            setSampleCount={setSampleCount}
-            safeEnabled={safeEnabled}
-          />
-        ) : (
-          <VideoPreview
-            aspectRatio={aspectRatio}
-            captionsEnabled={captionsEnabled}
-            currentSeconds={currentSeconds}
-            duration={duration}
-            fullscreen={fullscreen}
-            isMuted={isMuted}
-            isPlaying={isPlaying}
-            loopEnabled={loopEnabled}
-            onScrub={onScrub}
-            onSkip={onSkip}
-            onToggleCaptions={onToggleCaptions}
-            onToggleFullscreen={onToggleFullscreen}
-            onToggleLoop={onToggleLoop}
-            onToggleMute={onToggleMute}
-            onTogglePlay={onTogglePlay}
-            shots={shots}
-          />
-        )}
-        <ShotStrip
-          currentSeconds={currentSeconds}
-          duration={duration}
-          onAddTimelineEvent={onAddTimelineEvent}
-          onSelectShot={onSelectShot}
-          selectedShotId={selectedShotId}
-          shots={shots}
-          timelineEvents={timelineEvents}
-        />
+      <section className="left-canvas is-nle-primary">
         <CampaignNleBay
-          currentSeconds={currentSeconds}
+          onPlaybackChange={onNlePlaybackChange}
+          onPlayheadChange={onNlePlayheadChange}
+          onProjectChange={onNleProjectChange}
           onSelectShot={onSelectShot}
           onStatus={onNleStatus}
           projectTitle={projectTitle}
@@ -1881,26 +1861,8 @@ function MainEditor({
           shots={shots}
           timelineEvents={timelineEvents}
         />
-        <div className="lower-grid">
-          <ProductHotspots
-            editingHotspotId={editingHotspotId}
-            hotspotDraft={hotspotDraft}
-            hotspots={hotspots}
-            onAddHotspot={onAddHotspot}
-            onDeleteHotspot={onDeleteHotspot}
-            onEditHotspot={onEditHotspot}
-            onSaveHotspot={onSaveHotspot}
-            setHotspotDraft={setHotspotDraft}
-          />
-          <FrameFeedback
-            compareEnabled={compareEnabled}
-            onToggleCompare={onToggleCompare}
-            selectedShot={selectedShot}
-          />
-        </div>
       </section>
-      <section className="middle-column">
-        <div className="middle-spacer" />
+      <section className="middle-column is-nle-primary">
         <SocialPreview
           aspectRatio={aspectRatio}
           currentSeconds={currentSeconds}
@@ -1908,6 +1870,7 @@ function MainEditor({
           isPlaying={isPlaying}
           loopEnabled={loopEnabled}
           shots={shots}
+          timelineProject={nlePreviewProject}
         />
       </section>
     </main>
@@ -1939,6 +1902,7 @@ export default function App({ wizardData, activeDemoStep, onRepromptClick, onPub
   const [listingVersion, setListingVersion] = useState(1);
   const [loopEnabled, setLoopEnabled] = useState(false);
   const [model, setModel] = useState(editorSnapshot.video.model);
+  const [nlePreviewProject, setNlePreviewProject] = useState(null);
   const [openMenu, setOpenMenu] = useState(null);
   const [currentProjectId, setCurrentProjectId] = useState(editorSnapshot.projects[0].id);
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
@@ -2075,6 +2039,16 @@ export default function App({ wizardData, activeDemoStep, onRepromptClick, onPub
   function scrubTo(seconds) {
     const nextSeconds = Math.min(duration, Math.max(0, seconds));
     const shot = getShotAtTime(shots, nextSeconds);
+    setCurrentSeconds(nextSeconds);
+    if (shot) {
+      setSelectedShotId(shot.id);
+    }
+  }
+
+  function syncFromNlePlayhead(seconds) {
+    const nextSeconds = Math.max(0, Number(seconds) || 0);
+    const shot = getShotAtTime(shots, nextSeconds);
+
     setCurrentSeconds(nextSeconds);
     if (shot) {
       setSelectedShotId(shot.id);
@@ -2304,6 +2278,7 @@ export default function App({ wizardData, activeDemoStep, onRepromptClick, onPub
                 isPlaying={isPlaying}
                 loopEnabled={loopEnabled}
                 model={model}
+                nlePreviewProject={nlePreviewProject}
                 onAddHotspot={addHotspot}
                 onAddTimelineEvent={addTimelineEvent}
                 onDeleteHotspot={deleteHotspot}
@@ -2325,6 +2300,9 @@ export default function App({ wizardData, activeDemoStep, onRepromptClick, onPub
                 }}
                 onSaveHotspot={saveHotspot}
                 onScrub={scrubTo}
+                onNlePlaybackChange={setIsPlaying}
+                onNlePlayheadChange={syncFromNlePlayhead}
+                onNleProjectChange={setNlePreviewProject}
                 onSelectShot={selectShot}
                 onSkip={skipToNextShot}
                 onNleStatus={setSavedMessage}

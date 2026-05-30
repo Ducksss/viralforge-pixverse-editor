@@ -28,9 +28,16 @@
   </p>
 </div>
 
-The default workspace is the ViralForge Commerce campaign editor: sidebar navigation, PixVerse campaign preview, social preview, shot strip, commerce assistant rails, product hotspots, frame feedback, props, and listing assets stay on the main screen.
+The default workspace is the ViralForge Commerce campaign editor with the Local
+NLE as the primary editing surface. Sidebar navigation, TikTok-style social
+preview, commerce assistant rails, filming guidance, props, and listing assets
+stay on the main screen while the legacy top preview and shot strip are removed.
 
-The local NLE is spliced into that existing editor page as a compact Remotion Timeline bay. It uses the real MP4 footage in `src/assets/video/` as the campaign media pool, supports drag/drop and reorder, exposes trim/music/CTA controls, previews through Remotion Player, persists metadata locally, and exports a downloadable 9:16 MP4 through Mediabunny.
+The Local NLE uses the real MP4 footage in `src/assets/video/` as the campaign
+media pool, supports drag/drop and reorder, exposes trim/music/CTA controls,
+previews through Remotion Player, syncs the TikTok preview from the same
+timeline clock, persists metadata locally, and exports a downloadable 9:16 MP4
+through Mediabunny.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -59,13 +66,12 @@ The local NLE is spliced into that existing editor page as a compact Remotion Ti
 Core editor flow:
 
 1. Open the default ViralForge campaign workspace at `/`.
-2. Keep using the existing preview, social preview, shot strip, right-rail assistant, hotspots, frame feedback, props, and listing panels.
-3. Scrub the 30-second assembled source cut built from `src/assets/video/video-1.mp4` and `src/assets/video/video-2.mp4`.
-4. Use the embedded Remotion Timeline bay to drag campaign shots or imported media into the local timeline.
-5. Reorder clips, select a clip, and trim source in/out.
-6. Select a music bed, adjust volume, and edit the CTA overlay shared by preview and export.
-7. Preview the local social cut through Remotion Player.
-8. Export a downloadable 9:16 MP4 through the Mediabunny orchestration layer.
+2. Use the Local NLE Remotion Timeline as the main editor surface.
+3. Add campaign shots or imported media into the local timeline.
+4. Reorder clips, select a clip, and trim source in/out.
+5. Select a music bed, adjust volume, and edit the CTA overlay shared by preview and export.
+6. Scrub or play the Remotion Timeline and watch the TikTok-style Social Preview stay synced to the same playhead.
+7. Export a downloadable 9:16 MP4 through the Mediabunny orchestration layer.
 
 The standalone DaVinci-style local editor remains available at `/local-editor` or `/?workspace=local-nle` for focused NLE regression testing.
 
@@ -114,12 +120,13 @@ npm run build
 
 ## Usage
 
-- Use the old ViralForge campaign editor as the primary UI.
+- Use the Local NLE as the primary editor inside the ViralForge campaign workspace.
 - The bundled campaign uses two real MP4s from `src/assets/video/`, split into six 5-second shot cards with generated poster frames under `src/assets/video/posters/`.
-- Import local video/audio files into the embedded NLE media pool (metadata is probed with Mediabunny when possible).
+- Import local video/audio files into the NLE media pool (metadata is probed with Mediabunny when possible).
 - Drag campaign shots or uploaded clips into the local timeline; reorder with drag-and-drop.
 - Trim clip source in/out, select a music bed, adjust volume, and edit the CTA overlay.
-- Export a 9:16 MP4 from the embedded timeline without leaving the campaign workspace.
+- Scrub or play the NLE timeline to drive the TikTok-style Social Preview.
+- Export a 9:16 MP4 from the timeline without leaving the campaign workspace.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -139,6 +146,7 @@ npm run build
 - [AI Generate Studio legacy workflow](docs/AI_GENERATE_STUDIO.md)
 - [UGC AI People legacy workflow](docs/UGC_AI_PEOPLE.md)
 - [Filming review panel notes](docs/filming-review-panel.md)
+- [Local NLE and TikTok preview sync](docs/local-nle-sync.md)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
