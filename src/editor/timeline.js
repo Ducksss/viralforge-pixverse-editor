@@ -36,6 +36,19 @@ export const OUTPUT_FPS = 30;
  */
 
 /**
+ * @typedef {Object} AudioClip
+ * @property {string} id
+ * @property {string} assetId
+ * @property {string} trackId
+ * @property {string} title
+ * @property {boolean} enabled
+ * @property {number} startSeconds
+ * @property {number} trimStartSeconds
+ * @property {number} durationSeconds
+ * @property {number} volume
+ */
+
+/**
  * @typedef {Object} MusicTrack
  * @property {string} assetId
  * @property {boolean} enabled
@@ -62,10 +75,12 @@ export const OUTPUT_FPS = 30;
  * @property {number} fps
  * @property {MediaAsset[]} mediaAssets
  * @property {TimelineClip[]} timelineClips
+ * @property {AudioClip[]} audioClips
  * @property {MusicTrack} musicTrack
  * @property {TextOverlay[]} textOverlays
  * @property {Array<{id: string, atSeconds: number, label: string, kind: string}>} commerceMarkers
  * @property {string} selectedClipId
+ * @property {string} selectedAudioClipId
  * @property {number} playheadSeconds
  */
 
@@ -206,6 +221,22 @@ function getAsset(project, assetId) {
   return project.mediaAssets.find((asset) => asset.id === assetId);
 }
 
+function computePlacedClipEnd(clips) {
+  return clips.reduce(
+    (max, clip) => Math.max(max, (clip.startSeconds || 0) + (clip.durationSeconds || 0)),
+    0,
+  );
+}
+
+function computeVisualTimelineDuration(project) {
+  const clipEnd = computePlacedClipEnd(project.timelineClips || []);
+  const overlayEnd = (project.textOverlays || []).reduce(
+    (max, overlay) => Math.max(max, (overlay.startSeconds || 0) + (overlay.durationSeconds || 0)),
+    0,
+  );
+  return roundSeconds(Math.max(clipEnd, overlayEnd));
+}
+
 function sequenceClips(clips) {
   let cursor = 0;
   return clips.map((clip) => {
@@ -260,12 +291,175 @@ function createClipFromAsset(asset, existingClips, overrides = {}) {
   };
 }
 
+function createAudioClipFromAsset(asset, existingAudioClips, project, overrides = {}) {
+  const sourceDurationSeconds = Math.max(0.5, asset.durationSeconds || 20);
+  const visualDuration = Math.max(0.5, computeVisualTimelineDuration(project) || 20);
+  const latestAudioEnd = computePlacedClipEnd(existingAudioClips);
+  const startSeconds = roundSeconds(Math.max(0, overrides.startSeconds ?? latestAudioEnd));
+  const trimStartSeconds = roundSeconds(Math.min(
+    Math.max(0, overrides.trimStartSeconds ?? asset.defaultSourceInSeconds ?? 0),
+    Math.max(0, sourceDurationSeconds - 0.5),
+  ));
+  const defaultDuration = startSeconds < visualDuration
+    ? Math.max(0.5, visualDuration - startSeconds)
+    : visualDuration;
+  const durationSeconds = roundSeconds(Math.min(
+    Math.max(0.5, overrides.durationSeconds ?? defaultDuration),
+    Math.max(0.5, sourceDurationSeconds - trimStartSeconds),
+  ));
+  const baseId = `audio-${slugify(asset.name)}`;
+  const existingIds = new Set(existingAudioClips.map((clip) => clip.id));
+  let id = overrides.id || baseId;
+  let copy = 2;
+
+  while (existingIds.has(id)) {
+    id = `${baseId}-${copy}`;
+    copy += 1;
+  }
+
+  return {
+    id,
+    assetId: asset.id,
+    trackId: "A1",
+    title: asset.name,
+    enabled: overrides.enabled ?? true,
+    startSeconds,
+    trimStartSeconds,
+    durationSeconds,
+    volume: Math.min(1, Math.max(0, overrides.volume ?? project.musicTrack?.volume ?? 0.42)),
+  };
+}
+
+function createLegacyAudioClip(project) {
+  const musicTrack = project.musicTrack;
+  const asset = musicTrack?.assetId ? getAsset(project, musicTrack.assetId) : null;
+  if (!asset || asset.kind !== "audio" || musicTrack.enabled === false) {
+    return [];
+  }
+
+  return [
+    createAudioClipFromAsset(asset, [], project, {
+      id: `audio-${slugify(asset.name)}`,
+      durationSeconds: computeVisualTimelineDuration(project) || asset.durationSeconds || 20,
+      enabled: musicTrack.enabled,
+      startSeconds: 0,
+      trimStartSeconds: musicTrack.trimStartSeconds || 0,
+      volume: musicTrack.volume,
+    }),
+  ];
+}
+
+function normalizeAudioClip(project, clip) {
+  const asset = getAsset(project, clip.assetId);
+  if (!asset || asset.kind !== "audio") {
+    return null;
+  }
+
+  const sourceDurationSeconds = Math.max(0.5, asset.durationSeconds || clip.durationSeconds || 20);
+  const trimStartSeconds = roundSeconds(Math.min(
+    Math.max(0, clip.trimStartSeconds ?? 0),
+    Math.max(0, sourceDurationSeconds - 0.5),
+  ));
+  const durationSeconds = roundSeconds(Math.min(
+    Math.max(0.5, clip.durationSeconds ?? sourceDurationSeconds - trimStartSeconds),
+    Math.max(0.5, sourceDurationSeconds - trimStartSeconds),
+  ));
+
+  return {
+    id: clip.id || `audio-${slugify(asset.name)}`,
+    assetId: asset.id,
+    trackId: clip.trackId || "A1",
+    title: clip.title || asset.name,
+    enabled: clip.enabled ?? true,
+    startSeconds: roundSeconds(Math.max(0, clip.startSeconds ?? 0)),
+    trimStartSeconds,
+    durationSeconds,
+    volume: Math.min(1, Math.max(0, clip.volume ?? project.musicTrack?.volume ?? 0.42)),
+  };
+}
+
+function uniqueAudioClipIds(audioClips) {
+  const seen = new Map();
+  return audioClips.map((clip) => {
+    const count = seen.get(clip.id) || 0;
+    seen.set(clip.id, count + 1);
+    return count === 0 ? clip : { ...clip, id: `${clip.id}-${count + 1}` };
+  });
+}
+
+function getPrimaryAudioClip(project, audioClips = getAudioTrackClips(project)) {
+  return (
+    audioClips.find((clip) => clip.id === project.selectedAudioClipId) ||
+    audioClips.find((clip) => clip.enabled !== false) ||
+    audioClips[0] ||
+    null
+  );
+}
+
+function syncLegacyMusicTrack(project, audioClips) {
+  const primaryAudioClip = getPrimaryAudioClip(project, audioClips);
+  if (!primaryAudioClip) {
+    return {
+      ...project.musicTrack,
+      enabled: false,
+    };
+  }
+
+  return {
+    assetId: primaryAudioClip.assetId,
+    enabled: primaryAudioClip.enabled,
+    trimStartSeconds: primaryAudioClip.trimStartSeconds,
+    volume: primaryAudioClip.volume,
+  };
+}
+
+function withAudioState(project, audioClips, selectedAudioClipId = project.selectedAudioClipId) {
+  const normalizedAudioClips = uniqueAudioClipIds(
+    audioClips
+      .map((clip) => normalizeAudioClip(project, clip))
+      .filter(Boolean)
+      .sort((a, b) => a.startSeconds - b.startSeconds),
+  );
+  const selectedExists = normalizedAudioClips.some((clip) => clip.id === selectedAudioClipId);
+  const nextProject = {
+    ...project,
+    audioClips: normalizedAudioClips,
+    selectedAudioClipId: selectedExists ? selectedAudioClipId : normalizedAudioClips[0]?.id,
+  };
+
+  return {
+    ...nextProject,
+    musicTrack: syncLegacyMusicTrack(nextProject, normalizedAudioClips),
+  };
+}
+
 export function createInitialTimelineProject() {
   const mediaAssets = sampleMediaAssets.map(cloneAsset);
   const clips = initialClipSpecs.map(([id, assetId]) => {
     const asset = mediaAssets.find((item) => item.id === assetId);
     return createClipFromAsset(asset, [], { id });
   });
+  const timelineClips = sequenceClips(clips);
+  const musicTrack = {
+    assetId: "music-glass-skin",
+    enabled: true,
+    trimStartSeconds: 0,
+    volume: 0.42,
+  };
+  const musicAsset = mediaAssets.find((asset) => asset.id === musicTrack.assetId);
+  const audioClips = [
+    {
+      id: "audio-glass-skin-pulse",
+      assetId: musicAsset.id,
+      trackId: "A1",
+      title: musicAsset.name,
+      enabled: true,
+      startSeconds: 0,
+      trimStartSeconds: 0,
+      durationSeconds: computePlacedClipEnd(timelineClips),
+      volume: musicTrack.volume,
+    },
+  ];
 
   return {
     id: "viralforge-summer-glow-edit",
@@ -276,13 +470,9 @@ export function createInitialTimelineProject() {
     height: OUTPUT_HEIGHT,
     fps: OUTPUT_FPS,
     mediaAssets,
-    timelineClips: sequenceClips(clips),
-    musicTrack: {
-      assetId: "music-glass-skin",
-      enabled: true,
-      trimStartSeconds: 0,
-      volume: 0.42,
-    },
+    timelineClips,
+    audioClips,
+    musicTrack,
     textOverlays: [
       {
         id: "overlay-main-cta",
@@ -298,27 +488,26 @@ export function createInitialTimelineProject() {
       { id: "marker-cta", atSeconds: 17, kind: "cta", label: "Shopee CTA" },
     ],
     selectedClipId: "clip-citrus-hook",
+    selectedAudioClipId: "audio-glass-skin-pulse",
     selectedOverlayId: "overlay-main-cta",
     playheadSeconds: 0,
   };
 }
 
 export function computeTimelineDuration(project) {
-  const clipEnd = project.timelineClips.reduce(
-    (max, clip) => Math.max(max, clip.startSeconds + clip.durationSeconds),
-    0,
-  );
-  const overlayEnd = project.textOverlays.reduce(
-    (max, overlay) => Math.max(max, overlay.startSeconds + overlay.durationSeconds),
-    0,
-  );
-  return roundSeconds(Math.max(clipEnd, overlayEnd));
+  const visualEnd = computeVisualTimelineDuration(project);
+  const audioEnd = computePlacedClipEnd(getAudioTrackClips(project));
+  return roundSeconds(Math.max(visualEnd, audioEnd));
 }
 
 export function addAssetToTimeline(project, assetId) {
   const asset = getAsset(project, assetId);
-  if (!asset || asset.kind === "audio") {
+  if (!asset) {
     return project;
+  }
+
+  if (asset.kind === "audio") {
+    return addAudioAssetToTimeline(project, assetId);
   }
 
   const nextClip = createClipFromAsset(asset, project.timelineClips);
@@ -330,6 +519,84 @@ export function addAssetToTimeline(project, assetId) {
     selectedClipId: nextClip.id,
     playheadSeconds: timelineClips.at(-1).startSeconds,
   };
+}
+
+export function getAudioTrackClips(project) {
+  const audioClips = Array.isArray(project.audioClips) && project.audioClips.length > 0
+    ? project.audioClips
+    : createLegacyAudioClip(project);
+
+  return uniqueAudioClipIds(
+    audioClips
+      .map((clip) => normalizeAudioClip(project, clip))
+      .filter(Boolean)
+      .sort((a, b) => a.startSeconds - b.startSeconds),
+  );
+}
+
+export function addAudioAssetToTimeline(project, assetId, overrides = {}) {
+  const asset = getAsset(project, assetId);
+  if (!asset || asset.kind !== "audio") {
+    return project;
+  }
+
+  const existingAudioClips = getAudioTrackClips(project);
+  const nextAudioClip = createAudioClipFromAsset(asset, existingAudioClips, project, overrides);
+
+  return withAudioState(project, [...existingAudioClips, nextAudioClip], nextAudioClip.id);
+}
+
+export function selectAudioClip(project, audioClipId) {
+  const audioClip = getAudioTrackClips(project).find((clip) => clip.id === audioClipId);
+  if (!audioClip) {
+    return project;
+  }
+
+  return withAudioState(project, getAudioTrackClips(project), audioClipId);
+}
+
+export function updateAudioClip(project, audioClipId, changes) {
+  const audioClips = getAudioTrackClips(project);
+  if (!audioClips.some((clip) => clip.id === audioClipId)) {
+    return project;
+  }
+
+  const nextAudioClips = audioClips.map((clip) => {
+    if (clip.id !== audioClipId) {
+      return clip;
+    }
+
+    const requestedAsset = changes.assetId ? getAsset(project, changes.assetId) : getAsset(project, clip.assetId);
+    const asset = requestedAsset?.kind === "audio" ? requestedAsset : getAsset(project, clip.assetId);
+    const sourceDurationSeconds = Math.max(0.5, asset.durationSeconds || clip.durationSeconds || 20);
+    const trimStartSeconds = roundSeconds(Math.min(
+      Math.max(0, changes.trimStartSeconds ?? clip.trimStartSeconds),
+      Math.max(0, sourceDurationSeconds - 0.5),
+    ));
+    const durationSeconds = roundSeconds(Math.min(
+      Math.max(0.5, changes.durationSeconds ?? clip.durationSeconds),
+      Math.max(0.5, sourceDurationSeconds - trimStartSeconds),
+    ));
+
+    return {
+      ...clip,
+      ...changes,
+      assetId: asset.id,
+      title: asset.name,
+      enabled: changes.enabled ?? clip.enabled,
+      startSeconds: roundSeconds(Math.max(0, changes.startSeconds ?? clip.startSeconds)),
+      trimStartSeconds,
+      durationSeconds,
+      volume: Math.min(1, Math.max(0, changes.volume ?? clip.volume)),
+    };
+  });
+
+  return withAudioState(project, nextAudioClips, audioClipId);
+}
+
+export function removeAudioClip(project, audioClipId) {
+  const nextAudioClips = getAudioTrackClips(project).filter((clip) => clip.id !== audioClipId);
+  return withAudioState(project, nextAudioClips);
 }
 
 export function reorderTimelineClip(project, activeClipId, overClipId) {
@@ -403,16 +670,36 @@ export function getClipAtPlayhead(project, seconds) {
 }
 
 export function updateMusicTrack(project, changes) {
-  return {
-    ...project,
-    musicTrack: {
-      ...project.musicTrack,
-      ...changes,
+  const audioClips = getAudioTrackClips(project);
+  const selectedAudioClip = getPrimaryAudioClip(project, audioClips);
+
+  if (!selectedAudioClip && changes.assetId) {
+    return addAudioAssetToTimeline(project, changes.assetId, {
       enabled: changes.enabled ?? true,
-      trimStartSeconds: roundSeconds(Math.max(0, changes.trimStartSeconds ?? project.musicTrack.trimStartSeconds)),
-      volume: Math.min(1, Math.max(0, changes.volume ?? project.musicTrack.volume)),
-    },
-  };
+      trimStartSeconds: changes.trimStartSeconds ?? 0,
+      volume: changes.volume ?? project.musicTrack?.volume ?? 0.42,
+    });
+  }
+
+  if (!selectedAudioClip) {
+    return {
+      ...project,
+      musicTrack: {
+        ...project.musicTrack,
+        ...changes,
+        enabled: changes.enabled ?? project.musicTrack?.enabled ?? false,
+        trimStartSeconds: roundSeconds(Math.max(0, changes.trimStartSeconds ?? project.musicTrack?.trimStartSeconds ?? 0)),
+        volume: Math.min(1, Math.max(0, changes.volume ?? project.musicTrack?.volume ?? 0.42)),
+      },
+    };
+  }
+
+  return updateAudioClip(project, selectedAudioClip.id, {
+    assetId: changes.assetId ?? selectedAudioClip.assetId,
+    enabled: changes.enabled ?? true,
+    trimStartSeconds: changes.trimStartSeconds ?? selectedAudioClip.trimStartSeconds,
+    volume: changes.volume ?? selectedAudioClip.volume,
+  });
 }
 
 export function updateTextOverlay(project, overlayId, changes) {
@@ -514,13 +801,29 @@ export function deserializeTimelineProject(value) {
 
     return asset;
   });
-
-  return {
+  const timelineClips = sequenceClips(parsed.timelineClips || fallback.timelineClips);
+  const restored = {
     ...fallback,
     ...parsed,
     mediaAssets,
-    timelineClips: sequenceClips(parsed.timelineClips || fallback.timelineClips),
+    timelineClips,
   };
+  const audioClips = Array.isArray(parsed.audioClips)
+    ? parsed.audioClips
+    : createLegacyAudioClip({
+      ...restored,
+      audioClips: [],
+      musicTrack: parsed.musicTrack || fallback.musicTrack,
+    });
+
+  return withAudioState(
+    {
+      ...restored,
+      audioClips,
+    },
+    audioClips,
+    parsed.selectedAudioClipId,
+  );
 }
 
 export function getSelectedClip(project) {
@@ -528,5 +831,8 @@ export function getSelectedClip(project) {
 }
 
 export function getMusicAsset(project) {
-  return project.mediaAssets.find((asset) => asset.id === project.musicTrack.assetId) || null;
+  const primaryAudioClip = getPrimaryAudioClip(project);
+  return project.mediaAssets.find((asset) => asset.id === primaryAudioClip?.assetId) ||
+    project.mediaAssets.find((asset) => asset.id === project.musicTrack?.assetId) ||
+    null;
 }

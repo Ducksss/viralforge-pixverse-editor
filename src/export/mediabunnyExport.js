@@ -8,7 +8,12 @@ import {
   Output,
   QUALITY_HIGH,
 } from "mediabunny";
-import { computeTimelineDuration, getClipAtPlayhead, getMusicAsset } from "../editor/timeline.js";
+import {
+  computeTimelineDuration,
+  getAudioTrackClips,
+  getClipAtPlayhead,
+  getMusicAsset,
+} from "../editor/timeline.js";
 
 export class ExportCanceledError extends Error {
   constructor() {
@@ -108,7 +113,7 @@ function getAudioContext() {
   return window.OfflineAudioContext || window.webkitOfflineAudioContext || null;
 }
 
-function createSyntheticMusicBuffer(durationSeconds, volume) {
+function createSyntheticAudioMixBuffer(durationSeconds, audioTracks, project) {
   const OfflineContext = getAudioContext();
   if (!OfflineContext) {
     return null;
@@ -118,14 +123,47 @@ function createSyntheticMusicBuffer(durationSeconds, volume) {
   const length = Math.max(1, Math.ceil(durationSeconds * sampleRate));
   const context = new OfflineContext(2, length, sampleRate);
   const buffer = context.createBuffer(2, length, sampleRate);
-  const frequency = 104;
+  const placedAudioTracks = Array.isArray(audioTracks)
+    ? audioTracks
+    : [
+      {
+        assetId: project?.musicTrack?.assetId,
+        durationSeconds,
+        enabled: true,
+        startSeconds: 0,
+        trimStartSeconds: 0,
+        volume: Number(audioTracks) || project?.musicTrack?.volume || 0.42,
+      },
+    ];
 
   for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
     const data = buffer.getChannelData(channel);
-    for (let index = 0; index < length; index += 1) {
-      const t = index / sampleRate;
-      const envelope = Math.min(1, t / 0.35, (durationSeconds - t) / 0.35);
-      data[index] = Math.sin(t * frequency * Math.PI * 2) * 0.08 * volume * Math.max(0, envelope);
+    for (const audioClip of placedAudioTracks) {
+      if (audioClip.enabled === false) {
+        continue;
+      }
+
+      const asset = project?.mediaAssets?.find((item) => item.id === audioClip.assetId);
+      const bpm = asset?.bpm || 104;
+      const frequency = Math.max(70, bpm + (audioClip.assetId || "").length * 3);
+      const volume = Math.min(1, Math.max(0, audioClip.volume ?? project?.musicTrack?.volume ?? 0.42));
+      const startSample = Math.max(0, Math.floor((audioClip.startSeconds || 0) * sampleRate));
+      const endSample = Math.min(
+        length,
+        Math.ceil(((audioClip.startSeconds || 0) + (audioClip.durationSeconds || durationSeconds)) * sampleRate),
+      );
+
+      for (let index = startSample; index < endSample; index += 1) {
+        const t = index / sampleRate;
+        const localTime = t - (audioClip.startSeconds || 0);
+        const remaining = (audioClip.durationSeconds || durationSeconds) - localTime;
+        const envelope = Math.min(1, localTime / 0.35, remaining / 0.35);
+        const sample = Math.sin((localTime + (audioClip.trimStartSeconds || 0)) * frequency * Math.PI * 2) *
+          0.08 *
+          volume *
+          Math.max(0, envelope);
+        data[index] = Math.max(-1, Math.min(1, data[index] + sample));
+      }
     }
   }
 
@@ -163,6 +201,19 @@ async function drawVisual(ctx, visual, width, height, localSeconds) {
   drawPlaceholder(ctx, width, height, visual?.title || "Missing media");
 }
 
+export function getClipVisualSourceSeconds(clip, frameTime, fps) {
+  if (!clip) {
+    return 0;
+  }
+
+  const frameDuration = 1 / Math.max(1, fps || 30);
+  const maxClipLocalSeconds = Math.max(0, (clip.durationSeconds || 0) - frameDuration);
+  const localSeconds = Math.max(0, Math.min(frameTime - (clip.startSeconds || 0), maxClipLocalSeconds));
+  const sourceOut = clip.sourceOutSeconds ?? (clip.sourceInSeconds || 0) + (clip.durationSeconds || 0);
+  const maxSourceSeconds = Math.max(clip.sourceInSeconds || 0, sourceOut - frameDuration);
+  return Math.min(maxSourceSeconds, (clip.sourceInSeconds || 0) + localSeconds);
+}
+
 function drawOverlay(ctx, overlay, width, height) {
   const text = overlay.text.trim();
   if (!text) {
@@ -198,7 +249,7 @@ function drawSafeZones(ctx, width, height) {
 async function renderFrame({ canvas, ctx, frameTime, project, visuals }) {
   const clip = getClipAtPlayhead(project, frameTime);
   const asset = project.mediaAssets.find((item) => item.id === clip?.assetId);
-  const localSeconds = clip ? clip.sourceInSeconds + (frameTime - clip.startSeconds) : 0;
+  const localSeconds = getClipVisualSourceSeconds(clip, frameTime, project.fps);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   await drawVisual(ctx, visuals.get(asset?.id), canvas.width, canvas.height, localSeconds);
@@ -220,6 +271,7 @@ export function buildExportPlan(project) {
     durationSeconds,
     frameCount,
     music: project.musicTrack.enabled ? project.musicTrack : null,
+    audioTracks: getAudioTrackClips(project).filter((clip) => clip.enabled !== false),
     overlays: project.textOverlays,
     clips: project.timelineClips,
   };
@@ -235,7 +287,7 @@ export async function exportTimelineProject(project, options = {}) {
     QUALITY_HIGH,
     canEncodeAudio,
     canEncodeVideo,
-    createAudioBuffer: createSyntheticMusicBuffer,
+    createAudioBuffer: createSyntheticAudioMixBuffer,
     createCanvas: defaultCanvasFactory,
     loadVisual: defaultLoadVisual,
     ...options.deps,
@@ -307,8 +359,8 @@ export async function exportTimelineProject(project, options = {}) {
   }
 
   const musicAsset = getMusicAsset(project);
-  if (plan.music && musicAsset) {
-    const audioBuffer = deps.createAudioBuffer(plan.durationSeconds, plan.music.volume, musicAsset, project);
+  if (plan.audioTracks.length > 0 && musicAsset) {
+    const audioBuffer = deps.createAudioBuffer(plan.durationSeconds, plan.audioTracks, project);
     if (audioBuffer) {
       await audioSource.add(audioBuffer);
     }

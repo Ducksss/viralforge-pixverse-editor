@@ -15,13 +15,16 @@ import {
   addAssetToTimeline,
   addMediaAsset,
   computeTimelineDuration,
+  getAudioTrackClips,
   getMusicAsset,
   getSelectedClip,
   reorderTimelineClip,
   sampleMediaAssets,
+  selectAudioClip,
   selectTimelineClip,
   setPlayhead,
   trimTimelineClip,
+  updateAudioClip,
   updateMusicTrack,
   updateTextOverlay,
 } from "./editor/timeline.js";
@@ -102,6 +105,10 @@ function createCampaignProject({ projectTitle, selectedShotId, shots, timelineEv
     commerceRole: shot.aiGenerated ? "generated" : "campaign",
   })));
   const selectedClipId = getShotClipId(shots.find((shot) => shot.id === selectedShotId) || shots[0]);
+  const durationSeconds = timelineClips.reduce(
+    (max, clip) => Math.max(max, clip.startSeconds + clip.durationSeconds),
+    0,
+  );
 
   return {
     id: "viralforge-campaign-embedded-nle",
@@ -113,6 +120,19 @@ function createCampaignProject({ projectTitle, selectedShotId, shots, timelineEv
     fps: OUTPUT_FPS,
     mediaAssets: [...shotAssets, ...musicAssets],
     timelineClips,
+    audioClips: [
+      {
+        id: "campaign-audio-glass-skin-pulse",
+        assetId: "music-glass-skin",
+        trackId: "A1",
+        title: "Glass Skin Pulse",
+        enabled: true,
+        startSeconds: 0,
+        trimStartSeconds: 0,
+        durationSeconds,
+        volume: 0.42,
+      },
+    ],
     musicTrack: {
       assetId: "music-glass-skin",
       enabled: true,
@@ -135,6 +155,7 @@ function createCampaignProject({ projectTitle, selectedShotId, shots, timelineEv
       label: event.kind,
     })),
     selectedClipId,
+    selectedAudioClipId: "campaign-audio-glass-skin-pulse",
     selectedOverlayId: "campaign-overlay-main",
     playheadSeconds: 0,
   };
@@ -245,6 +266,42 @@ function mergeCampaignShots(project, fallbackProject) {
   };
 }
 
+function getTrackPlacementStyle(clip, durationSeconds, minWidthPercent = 8) {
+  const timelineDuration = Math.max(
+    1,
+    durationSeconds,
+    (clip.startSeconds || 0) + (clip.durationSeconds || 0),
+  );
+  const leftPercent = Math.max(0, Math.min(99, ((clip.startSeconds || 0) / timelineDuration) * 100));
+  const rawWidthPercent = ((clip.durationSeconds || 0.5) / timelineDuration) * 100;
+  const widthPercent = Math.max(
+    1,
+    Math.min(100 - leftPercent, Math.max(minWidthPercent, rawWidthPercent)),
+  );
+
+  return {
+    left: `${Math.round(leftPercent * 100) / 100}%`,
+    width: `${Math.round(widthPercent * 100) / 100}%`,
+  };
+}
+
+function stackTimelineClips(clips) {
+  const laneEnds = [];
+  const stackedClips = clips.map((clip) => {
+    const clipStart = clip.startSeconds || 0;
+    const clipEnd = clipStart + (clip.durationSeconds || 0);
+    const reusableLaneIndex = laneEnds.findIndex((laneEnd) => clipStart >= laneEnd - 0.001);
+    const laneIndex = reusableLaneIndex === -1 ? laneEnds.length : reusableLaneIndex;
+    laneEnds[laneIndex] = clipEnd;
+    return { ...clip, laneIndex };
+  });
+
+  return {
+    laneCount: Math.max(1, laneEnds.length),
+    stackedClips,
+  };
+}
+
 function MediaAssetCard({ asset, isDragging, onAdd, onDragStart }) {
   return (
     <article
@@ -253,7 +310,12 @@ function MediaAssetCard({ asset, isDragging, onAdd, onDragStart }) {
       onDragEnd={() => onDragStart(null, null)}
       onDragStart={(event) => onDragStart(event, { type: "asset", assetId: asset.id, label: asset.name })}
     >
-      <button className="campaign-nle-thumb" onClick={() => onAdd(asset.id)} type="button">
+      <button
+        aria-label={asset.kind === "audio" ? `Add ${asset.name} to audio track` : `Add ${asset.name} to timeline`}
+        className="campaign-nle-thumb"
+        onClick={() => onAdd(asset.id)}
+        type="button"
+      >
         {asset.posterSrc ? <img src={asset.posterSrc} alt="" /> : <Music2 size={18} />}
       </button>
       <button className="campaign-nle-drag" type="button">
@@ -301,6 +363,23 @@ function TimelineDropTrack({ children, isOver, onDropPayload }) {
   );
 }
 
+function TimelineAudioClipCard({ asset, clip, durationSeconds, isSelected, laneIndex, onSelect }) {
+  const style = {
+    ...getTrackPlacementStyle(clip, durationSeconds, 12),
+    top: `${8 + laneIndex * 42}px`,
+  };
+
+  return (
+    <div className={`campaign-nle-audio-clip ${isSelected ? "is-selected" : ""}`} style={style}>
+      <button aria-label={`Audio clip ${clip.title}`} onClick={() => onSelect(clip.id)} type="button">
+        <Music2 size={14} />
+        <strong>{asset?.name || clip.title}</strong>
+        <small>{formatTime(clip.startSeconds)} · {formatDuration(clip.durationSeconds)} · {Math.round(clip.volume * 100)}%</small>
+      </button>
+    </div>
+  );
+}
+
 export function CampaignNleBay({
   onPlaybackChange,
   onPlayheadChange,
@@ -320,11 +399,19 @@ export function CampaignNleBay({
   const callbacksRef = useRef({ onPlaybackChange, onPlayheadChange, onProjectChange });
   const [project, setProject] = useState(() => restoreProject(fallbackProject));
   const [activeDrag, setActiveDrag] = useState(null);
+  const [seekDraft, setSeekDraft] = useState("0");
   const [exportJob, setExportJob] = useState({ status: "idle", progress: 0, message: "Ready" });
   const [exportResult, setExportResult] = useState(null);
   const durationSeconds = computeTimelineDuration(project);
+  const playerDurationFrames = Math.max(1, Math.ceil(durationSeconds * project.fps));
   const selectedClip = getSelectedClip(project);
   const selectedAsset = project.mediaAssets.find((asset) => asset.id === selectedClip?.assetId);
+  const audioClips = getAudioTrackClips(project);
+  const { laneCount: audioLaneCount, stackedClips: stackedAudioClips } = useMemo(
+    () => stackTimelineClips(audioClips),
+    [audioClips],
+  );
+  const selectedAudioClip = audioClips.find((clip) => clip.id === project.selectedAudioClipId) || audioClips[0];
   const musicAsset = getMusicAsset(project);
   const musicAssets = project.mediaAssets.filter((asset) => asset.kind === "audio");
   const videoAssets = project.mediaAssets.filter((asset) => asset.kind === "video");
@@ -385,12 +472,17 @@ export function CampaignNleBay({
       return;
     }
 
-    const targetFrame = Math.round(project.playheadSeconds * project.fps);
+    const targetSeconds = Math.min(Math.max(0, project.playheadSeconds), durationSeconds);
+    const targetFrame = Math.max(0, Math.min(playerDurationFrames - 1, Math.round(targetSeconds * project.fps)));
     const currentFrame = player.getCurrentFrame?.() ?? 0;
-    if (Math.abs(currentFrame - targetFrame) > 1) {
+    if (player.seekTo && Math.abs(currentFrame - targetFrame) > 1) {
       player.seekTo(targetFrame);
     }
-  }, [project.fps, project.playheadSeconds]);
+  }, [durationSeconds, playerDurationFrames, project.fps, project.playheadSeconds]);
+
+  useEffect(() => {
+    setSeekDraft(String(project.playheadSeconds));
+  }, [project.playheadSeconds]);
 
   function commitProject(updater) {
     setProject((currentProject) => {
@@ -439,6 +531,21 @@ export function CampaignNleBay({
     if (asset?.shotId) {
       onSelectShot?.(asset.shotId);
     }
+  }
+
+  function handleSelectAudioClip(audioClipId) {
+    commitProject((currentProject) => selectAudioClip(currentProject, audioClipId));
+  }
+
+  function handleJumpToTime(event) {
+    event.preventDefault();
+    const nextSeconds = Number(seekDraft);
+    if (Number.isNaN(nextSeconds)) {
+      return;
+    }
+
+    commitProject((currentProject) => setPlayhead(currentProject, nextSeconds));
+    onStatus?.(`Local timeline jumped to ${formatTime(nextSeconds)}`);
   }
 
   function handleNativeDragStart(event, payload) {
@@ -539,7 +646,7 @@ export function CampaignNleBay({
               </label>
             </div>
             <div className="campaign-nle-assets">
-              {videoAssets.slice(0, 8).map((asset) => (
+              {[...videoAssets.slice(0, 6), ...musicAssets].map((asset) => (
                 <MediaAssetCard
                   asset={asset}
                   isDragging={activeDrag?.assetId === asset.id}
@@ -560,7 +667,7 @@ export function CampaignNleBay({
                 compositionHeight={project.height}
                 compositionWidth={project.width}
                 controls
-                durationInFrames={Math.max(1, Math.ceil(durationSeconds * project.fps))}
+                durationInFrames={playerDurationFrames}
                 fps={project.fps}
                 initialFrame={Math.round(project.playheadSeconds * project.fps)}
                 inputProps={{ project }}
@@ -593,7 +700,7 @@ export function CampaignNleBay({
                 <span>Music bed</span>
                 <select
                   onChange={(event) => commitProject((currentProject) => updateMusicTrack(currentProject, { assetId: event.target.value }))}
-                  value={project.musicTrack.assetId}
+                  value={selectedAudioClip?.assetId || project.musicTrack.assetId}
                 >
                   {musicAssets.map((asset) => (
                     <option key={asset.id} value={asset.id}>{asset.name}</option>
@@ -608,9 +715,30 @@ export function CampaignNleBay({
                   onChange={(event) => commitProject((currentProject) => updateMusicTrack(currentProject, { volume: Number(event.target.value) }))}
                   step="0.05"
                   type="range"
-                  value={project.musicTrack.volume}
+                  value={selectedAudioClip?.volume ?? project.musicTrack.volume}
                 />
               </label>
+              {selectedAudioClip ? (
+                <div className="campaign-nle-trim">
+                  <span><Music2 size={13} />A1</span>
+                  <input
+                    aria-label="Audio clip start"
+                    min="0"
+                    onChange={(event) => commitProject((currentProject) => updateAudioClip(currentProject, selectedAudioClip.id, { startSeconds: Number(event.target.value) }))}
+                    step="0.5"
+                    type="number"
+                    value={selectedAudioClip.startSeconds}
+                  />
+                  <input
+                    aria-label="Audio clip duration"
+                    min="0.5"
+                    onChange={(event) => commitProject((currentProject) => updateAudioClip(currentProject, selectedAudioClip.id, { durationSeconds: Number(event.target.value) }))}
+                    step="0.5"
+                    type="number"
+                    value={selectedAudioClip.durationSeconds}
+                  />
+                </div>
+              ) : null}
               {selectedClip ? (
                 <div className="campaign-nle-trim">
                   <span><Scissors size={13} />Trim</span>
@@ -639,28 +767,67 @@ export function CampaignNleBay({
 
           <div className="campaign-nle-timeline">
             <div className="campaign-nle-ruler">
-              <span>{formatTime(0)}</span>
-              <span>{formatTime(Math.max(0, durationSeconds / 2))}</span>
-              <span>{formatTime(durationSeconds)}</span>
+              {[0, Math.max(0, durationSeconds / 2), durationSeconds].map((tick) => (
+                <button key={tick} onClick={() => commitProject((currentProject) => setPlayhead(currentProject, tick))} type="button">
+                  {formatTime(tick)}
+                </button>
+              ))}
+              <form className="campaign-nle-jump" onSubmit={handleJumpToTime}>
+                <input
+                  aria-label="Jump to embedded timeline time"
+                  max={durationSeconds}
+                  min="0"
+                  onChange={(event) => setSeekDraft(event.target.value)}
+                  step="0.1"
+                  type="number"
+                  value={seekDraft}
+                />
+                <button aria-label="Apply embedded timeline seek" type="submit">Go</button>
+              </form>
               <em>{musicAsset?.name || "No music"} · source audio muted</em>
             </div>
-            <TimelineDropTrack isOver={activeDrag?.type === "asset"} onDropPayload={handleDropPayload}>
-              {project.timelineClips.map((clip) => (
-                <TimelineClipCard
-                  asset={project.mediaAssets.find((asset) => asset.id === clip.assetId)}
-                  clip={clip}
-                  isDragging={activeDrag?.clipId === clip.id}
-                  isSelected={clip.id === project.selectedClipId}
-                  key={clip.id}
-                  onDragStart={handleNativeDragStart}
-                  onDropPayload={handleDropPayload}
-                  onSelect={handleSelectClip}
-                />
-              ))}
-              <button className="campaign-nle-add" onClick={() => handleAddAsset(videoAssets[0]?.id)} type="button">
-                <Plus size={16} />
-              </button>
-            </TimelineDropTrack>
+            <div className="campaign-nle-lane">
+              <span>V1</span>
+              <TimelineDropTrack isOver={activeDrag?.type === "asset"} onDropPayload={handleDropPayload}>
+                {project.timelineClips.map((clip) => (
+                  <TimelineClipCard
+                    asset={project.mediaAssets.find((asset) => asset.id === clip.assetId)}
+                    clip={clip}
+                    isDragging={activeDrag?.clipId === clip.id}
+                    isSelected={clip.id === project.selectedClipId}
+                    key={clip.id}
+                    onDragStart={handleNativeDragStart}
+                    onDropPayload={handleDropPayload}
+                    onSelect={handleSelectClip}
+                  />
+                ))}
+                <button className="campaign-nle-add" onClick={() => handleAddAsset(videoAssets[0]?.id)} type="button">
+                  <Plus size={16} />
+                </button>
+              </TimelineDropTrack>
+            </div>
+            <div className="campaign-nle-lane campaign-nle-audio-lane">
+              <span>A1</span>
+              <div
+                className="campaign-nle-track"
+                style={{ minHeight: `${Math.max(94, 20 + audioLaneCount * 42 + 42)}px` }}
+              >
+                {stackedAudioClips.map((clip) => (
+                  <TimelineAudioClipCard
+                    asset={project.mediaAssets.find((asset) => asset.id === clip.assetId)}
+                    clip={clip}
+                    durationSeconds={durationSeconds}
+                    isSelected={clip.id === project.selectedAudioClipId}
+                    key={clip.id}
+                    laneIndex={clip.laneIndex}
+                    onSelect={handleSelectAudioClip}
+                  />
+                ))}
+                <button className="campaign-nle-add" onClick={() => handleAddAsset(musicAssets[0]?.id)} type="button">
+                  <Music2 size={16} />
+                </button>
+              </div>
+            </div>
             <div className="campaign-nle-progress" aria-live="polite">
               <span style={{ width: `${Math.max(2, exportJob.progress * 100)}%` }} />
               <strong>{exportJob.message}</strong>

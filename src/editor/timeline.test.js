@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
   addAssetToTimeline,
+  addAudioAssetToTimeline,
   computeTimelineDuration,
   createInitialTimelineProject,
   deserializeTimelineProject,
+  getAudioTrackClips,
   getClipAtPlayhead,
   reorderTimelineClip,
+  selectAudioClip,
   serializeTimelineProject,
+  setPlayhead,
   trimTimelineClip,
+  updateAudioClip,
   updateMusicTrack,
   updateTextOverlay,
 } from "./timeline.js";
@@ -24,6 +29,51 @@ describe("timeline project helpers", () => {
     expect(project.mediaAssets.some((asset) => asset.kind === "audio")).toBe(true);
     expect(project.timelineClips.map((clip) => clip.startSeconds)).toEqual([0, 5, 10, 15]);
     expect(computeTimelineDuration(project)).toBe(20);
+  });
+
+  it("keeps music beds as editable audio clips on a real A1 timeline lane", () => {
+    let project = createInitialTimelineProject();
+
+    expect(getAudioTrackClips(project)).toEqual([
+      expect.objectContaining({
+        assetId: "music-glass-skin",
+        durationSeconds: 20,
+        startSeconds: 0,
+        trackId: "A1",
+        volume: 0.42,
+      }),
+    ]);
+
+    project = addAudioAssetToTimeline(project, "music-clean-glow");
+    const audioClips = getAudioTrackClips(project);
+
+    expect(audioClips).toHaveLength(2);
+    expect(audioClips[1]).toMatchObject({
+      assetId: "music-clean-glow",
+      startSeconds: 20,
+      durationSeconds: 20,
+      trackId: "A1",
+    });
+    expect(computeTimelineDuration(project)).toBe(40);
+
+    project = selectAudioClip(project, audioClips[1].id);
+    project = updateAudioClip(project, audioClips[1].id, {
+      durationSeconds: 6.25,
+      startSeconds: 4.5,
+      trimStartSeconds: 2,
+      volume: 0.33,
+    });
+
+    expect(project.selectedAudioClipId).toBe(audioClips[1].id);
+    expect(getAudioTrackClips(project)[1]).toMatchObject({
+      durationSeconds: 6.25,
+      startSeconds: 4.5,
+      trimStartSeconds: 2,
+      volume: 0.33,
+    });
+
+    project = setPlayhead(project, 7.6);
+    expect(project.playheadSeconds).toBe(7.6);
   });
 
   it("adds clips, reorders them, trims with bounds, and resolves playhead clips", () => {
@@ -118,5 +168,21 @@ describe("timeline project helpers", () => {
       reselectRequired: true,
       unavailableReason: "Reselect this local file to preview or export it.",
     });
+  });
+
+  it("migrates legacy single-music projects into the audio clip lane", () => {
+    const legacyProject = serializeTimelineProject(createInitialTimelineProject());
+    delete legacyProject.audioClips;
+    delete legacyProject.selectedAudioClipId;
+
+    const restored = deserializeTimelineProject(legacyProject);
+
+    expect(getAudioTrackClips(restored)).toEqual([
+      expect.objectContaining({
+        assetId: "music-glass-skin",
+        startSeconds: 0,
+        trackId: "A1",
+      }),
+    ]);
   });
 });

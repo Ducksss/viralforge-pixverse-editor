@@ -4,13 +4,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App.jsx";
 import { exportTimelineProject } from "./export/mediabunnyExport.js";
 
-vi.mock("@remotion/player", () => ({
-  Player: ({ inputProps }) => (
-    <div data-testid="remotion-player">
-      Remotion viewer {inputProps.project.aspectRatio} {inputProps.project.textOverlays[0].text}
-    </div>
-  ),
+const { playerSeekToMock } = vi.hoisted(() => ({
+  playerSeekToMock: vi.fn(),
 }));
+
+vi.mock("@remotion/player", async () => {
+  const React = await vi.importActual("react");
+  return {
+    Player: React.forwardRef(({ inputProps }, ref) => {
+      React.useImperativeHandle(ref, () => ({ seekTo: playerSeekToMock }));
+      return (
+        <div data-testid="remotion-player">
+          Remotion viewer {inputProps.project.aspectRatio} {inputProps.project.textOverlays[0].text}
+        </div>
+      );
+    }),
+  };
+});
 
 vi.mock("./export/mediabunnyExport.js", async () => {
   const actual = await vi.importActual("./export/mediabunnyExport.js");
@@ -88,6 +98,40 @@ describe("DaVinci-style local editor", () => {
 
     expect(screen.getByLabelText(/cta text/i)).toHaveValue("Tap for the bundle before it sells out");
     expect(screen.getByLabelText(/music volume/i)).toHaveValue(37);
+  }, 10000);
+
+  it("adds multiple music beds to A1 and jumps the playhead to an exact time", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /add clean glow loop to audio track/i }));
+
+    const audioTrack = screen.getByTestId("audio-track");
+    expect(within(audioTrack).getAllByRole("button", { name: /audio clip/i })).toHaveLength(2);
+
+    await user.click(within(audioTrack).getByRole("button", { name: /audio clip clean glow loop/i }));
+    const cleanAudioButton = within(audioTrack).getByRole("button", { name: /audio clip clean glow loop/i });
+    expect(cleanAudioButton.closest(".audio-clip")).toHaveStyle({ left: "50%", top: "26px", width: "50%" });
+
+    await user.clear(screen.getByLabelText(/audio clip track start/i));
+    await user.type(screen.getByLabelText(/audio clip track start/i), "5");
+    expect(cleanAudioButton.closest(".audio-clip")).toHaveStyle({ left: "20%", top: "70px" });
+    expect(cleanAudioButton).toHaveTextContent("00:05.00");
+
+    await user.clear(screen.getByLabelText(/audio clip volume/i));
+    await user.type(screen.getByLabelText(/audio clip volume/i), "33");
+
+    expect(within(audioTrack).getByRole("button", { name: /audio clip clean glow loop/i })).toHaveTextContent("33%");
+
+    await user.clear(screen.getByLabelText(/jump to timeline time/i));
+    await user.type(screen.getByLabelText(/jump to timeline time/i), "12.5");
+    await user.click(screen.getByRole("button", { name: /apply timeline seek/i }));
+
+    expect(screen.getByLabelText(/timeline playhead/i)).toHaveValue("12.5");
+    expect(screen.getByText(/00:12\.15/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(playerSeekToMock).toHaveBeenCalledWith(375);
+    });
   }, 10000);
 
   it("imports local media as session assets and marks them for reselect after reload", async () => {

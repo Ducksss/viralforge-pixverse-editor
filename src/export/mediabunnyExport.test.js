@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { createInitialTimelineProject, updateTextOverlay } from "../editor/timeline.js";
-import { buildExportPlan, ExportCanceledError, exportTimelineProject } from "./mediabunnyExport.js";
+import { addAudioAssetToTimeline, createInitialTimelineProject, updateTextOverlay } from "../editor/timeline.js";
+import {
+  buildExportPlan,
+  ExportCanceledError,
+  exportTimelineProject,
+  getClipVisualSourceSeconds,
+} from "./mediabunnyExport.js";
 
 function createMediabunnyMocks({ canEncode = true } = {}) {
   const calls = {
@@ -108,8 +113,33 @@ describe("Mediabunny export orchestration", () => {
       durationSeconds: 20,
       frameCount: 600,
       music: expect.objectContaining({ assetId: "music-glass-skin" }),
+      audioTracks: [expect.objectContaining({ assetId: "music-glass-skin", trackId: "A1" })],
       overlays: [expect.objectContaining({ text: "Tap for the bundle" })],
     });
+  });
+
+  it("exports all placed audio clips instead of only the legacy music setting", () => {
+    const project = addAudioAssetToTimeline(createInitialTimelineProject(), "music-clean-glow");
+
+    expect(buildExportPlan(project)).toMatchObject({
+      durationSeconds: 40,
+      frameCount: 1200,
+      audioTracks: [
+        expect.objectContaining({ assetId: "music-glass-skin", startSeconds: 0 }),
+        expect.objectContaining({ assetId: "music-clean-glow", startSeconds: 20 }),
+      ],
+    });
+  });
+
+  it("freezes the visual source frame when audio extends past the V1 edit", () => {
+    const project = addAudioAssetToTimeline(createInitialTimelineProject(), "music-clean-glow");
+    const lastClip = project.timelineClips.at(-1);
+
+    expect(buildExportPlan(project).durationSeconds).toBe(40);
+    expect(getClipVisualSourceSeconds(lastClip, 30, project.fps)).toBeCloseTo(
+      lastClip.sourceOutSeconds - (1 / project.fps),
+      4,
+    );
   });
 
   it("renders video frames, mixes music, reports progress, and returns an MP4 blob", async () => {

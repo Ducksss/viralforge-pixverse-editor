@@ -34,10 +34,10 @@ preview, commerce assistant rails, filming guidance, props, and listing assets
 stay on the main screen while the legacy top preview and shot strip are removed.
 
 The Local NLE uses the real MP4 footage in `src/assets/video/` as the campaign
-media pool, supports drag/drop and reorder, exposes trim/music/CTA controls,
-previews through Remotion Player, syncs the TikTok preview from the same
-timeline clock, persists metadata locally, and exports a downloadable 9:16 MP4
-through Mediabunny.
+media pool, supports drag/drop and reorder, exposes trim, multitrack music,
+timeline jump, and CTA controls, previews through Remotion Player, syncs the
+TikTok preview from the same timeline clock, persists metadata locally, and
+exports a downloadable 9:16 MP4 through Mediabunny.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -69,9 +69,10 @@ Core editor flow:
 2. Use the Local NLE Remotion Timeline as the main editor surface.
 3. Add campaign shots or imported media into the local timeline.
 4. Reorder clips, select a clip, and trim source in/out.
-5. Select a music bed, adjust volume, and edit the CTA overlay shared by preview and export.
-6. Scrub or play the Remotion Timeline and watch the TikTok-style Social Preview stay synced to the same playhead.
-7. Export a downloadable 9:16 MP4 through the Mediabunny orchestration layer.
+5. Click timeline ruler ticks or enter an exact jump time to seek the editor playhead.
+6. Add one or more music beds to the A1 audio lane, adjust selected-bed timing/volume, and edit the CTA overlay shared by preview and export.
+7. Scrub or play the Remotion Timeline and watch the TikTok-style Social Preview stay synced to the same playhead.
+8. Export a downloadable 9:16 MP4 through the Mediabunny orchestration layer.
 
 The standalone DaVinci-style local editor remains available at `/local-editor` or `/?workspace=local-nle` for focused NLE regression testing.
 
@@ -124,7 +125,9 @@ npm run build
 - The bundled campaign uses two real MP4s from `src/assets/video/`, split into six 5-second shot cards with generated poster frames under `src/assets/video/posters/`.
 - Import local video/audio files into the NLE media pool (metadata is probed with Mediabunny when possible).
 - Drag campaign shots or uploaded clips into the local timeline; reorder with drag-and-drop.
-- Trim clip source in/out, select a music bed, adjust volume, and edit the CTA overlay.
+- Click timeline ruler ticks or enter an exact jump time to seek the editor playhead.
+- Add multiple bundled or imported audio files to the A1 music lane, select an audio clip on the lane, then edit its source start, track start, duration, and volume.
+- Trim clip source in/out and edit the CTA overlay.
 - Scrub or play the NLE timeline to drive the TikTok-style Social Preview.
 - Export a 9:16 MP4 from the timeline without leaving the campaign workspace.
 
@@ -134,7 +137,7 @@ npm run build
 
 - V1 is fully browser-local: no upload, no authentication, no server rendering.
 - Uploaded file blobs are session-only. After a hard refresh, saved metadata remains, but uploads show `Reselect required`.
-- Source clip audio is muted in v1 export; the selected music bed is the supported audio track.
+- Source clip audio is muted in v1 export; placed A1 music-bed clips are the supported audio track.
 - Primary export target is 9:16 MP4; other aspect ratios are editable project settings.
 - Real MP4 export depends on the browser supporting the required AVC/AAC encoding path exposed through Mediabunny.
 

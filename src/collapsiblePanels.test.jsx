@@ -3,13 +3,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import EditorApp from "./App.jsx";
 import CampaignWorkspaceApp from "./CampaignWorkspaceApp.jsx";
 
-vi.mock("@remotion/player", () => ({
-  Player: ({ inputProps }) => (
-    <div data-testid="remotion-player">
-      Remotion viewer {inputProps.project.aspectRatio} {inputProps.project.textOverlays[0].text}
-    </div>
-  ),
-}));
+vi.mock("@remotion/player", async () => {
+  const React = await vi.importActual("react");
+  return {
+    Player: React.forwardRef(({ inputProps }, ref) => {
+      React.useImperativeHandle(ref, () => ({
+        seekTo: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }));
+      return (
+        <div data-testid="remotion-player">
+          Remotion viewer {inputProps.project.aspectRatio} {inputProps.project.textOverlays[0].text}
+        </div>
+      );
+    }),
+  };
+});
 
 function assertIndependentCollapse(panels) {
   expect(panels.length).toBeGreaterThan(0);

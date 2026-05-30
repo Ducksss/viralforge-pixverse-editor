@@ -56,13 +56,18 @@ if (typeof window !== "undefined") {
 }
 
 vi.mock("@remotion/player", () => ({
-  Player: ({ className, inputProps }) => (
-    React.createElement(
+  Player: React.forwardRef(({ className, inputProps }, ref) => {
+    React.useImperativeHandle(ref, () => ({
+      seekTo: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    return React.createElement(
       "div",
       { className, "data-testid": "remotion-player" },
       `Remotion viewer ${inputProps?.project?.aspectRatio || ""}`,
-    )
-  ),
+    );
+  }),
 }));
 
 Object.defineProperty(HTMLMediaElement.prototype, "play", {
