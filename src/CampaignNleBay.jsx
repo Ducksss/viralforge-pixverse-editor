@@ -32,6 +32,7 @@ import { exportTimelineProject } from "./export/mediabunnyExport.js";
 import { EditorComposition } from "./remotion/EditorComposition.jsx";
 
 const STORAGE_KEY = "viralforge.campaignNleProject.v1";
+const PLAYHEAD_UI_SYNC_INTERVAL_SECONDS = 0.2;
 
 function formatDuration(value) {
   return `${Number(value || 0).toFixed(value % 1 === 0 ? 0 : 1)}s`;
@@ -227,6 +228,36 @@ function persistProject(project) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableProject));
 }
 
+function getPersistableProjectKey(project) {
+  return JSON.stringify({
+    id: project.id,
+    storageVersion: project.storageVersion,
+    title: project.title,
+    aspectRatio: project.aspectRatio,
+    width: project.width,
+    height: project.height,
+    fps: project.fps,
+    mediaAssets: project.mediaAssets.map((asset) => {
+      const { file, objectUrl, ...serializableAsset } = asset;
+      if (asset.sourceType !== "upload") {
+        return serializableAsset;
+      }
+
+      return {
+        ...serializableAsset,
+        reselectRequired: true,
+      };
+    }),
+    timelineClips: project.timelineClips,
+    audioClips: project.audioClips,
+    musicTrack: project.musicTrack,
+    textOverlays: project.textOverlays,
+    commerceMarkers: project.commerceMarkers,
+    selectedAudioClipId: project.selectedAudioClipId,
+    selectedOverlayId: project.selectedOverlayId,
+  });
+}
+
 function mergeCampaignShots(project, fallbackProject) {
   const assetById = new Map(project.mediaAssets.map((asset) => [asset.id, asset]));
   const clipById = new Map(project.timelineClips.map((clip) => [clip.id, clip]));
@@ -380,6 +411,50 @@ function TimelineAudioClipCard({ asset, clip, durationSeconds, isSelected, laneI
   );
 }
 
+function TimelineVideoPreloadRack({ project }) {
+  const preloadItems = useMemo(() => {
+    const seen = new Set();
+
+    return project.timelineClips
+      .map((clip) => {
+        const asset = project.mediaAssets.find((item) => item.id === clip.assetId);
+        const src = asset?.objectUrl || asset?.src;
+
+        if (!src || asset?.kind !== "video" || seen.has(src)) {
+          return null;
+        }
+
+        seen.add(src);
+        return {
+          id: `${asset.id}-${src}`,
+          posterSrc: asset.posterSrc,
+          src,
+        };
+      })
+      .filter(Boolean);
+  }, [project.mediaAssets, project.timelineClips]);
+
+  if (preloadItems.length === 0) {
+    return null;
+  }
+
+  return (
+    <div aria-hidden="true" className="campaign-nle-preload-rack">
+      {preloadItems.map((item) => (
+        <video
+          key={item.id}
+          muted
+          playsInline
+          poster={item.posterSrc}
+          preload="auto"
+          src={item.src}
+          tabIndex={-1}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function CampaignNleBay({
   onPlaybackChange,
   onPlayheadChange,
@@ -397,11 +472,15 @@ export function CampaignNleBay({
   );
   const playerRef = useRef(null);
   const callbacksRef = useRef({ onPlaybackChange, onPlayheadChange, onProjectChange });
+  const lastPersistableProjectKeyRef = useRef("");
+  const lastPublishedPlayheadRef = useRef(0);
+  const pendingExternalSeekRef = useRef(false);
   const [project, setProject] = useState(() => restoreProject(fallbackProject));
   const [activeDrag, setActiveDrag] = useState(null);
   const [seekDraft, setSeekDraft] = useState("0");
   const [exportJob, setExportJob] = useState({ status: "idle", progress: 0, message: "Ready" });
   const [exportResult, setExportResult] = useState(null);
+  const latestProjectRef = useRef(project);
   const durationSeconds = computeTimelineDuration(project);
   const playerDurationFrames = Math.max(1, Math.ceil(durationSeconds * project.fps));
   const selectedClip = getSelectedClip(project);
@@ -422,10 +501,24 @@ export function CampaignNleBay({
   }, [onPlaybackChange, onPlayheadChange, onProjectChange]);
 
   useEffect(() => {
-    setProject((currentProject) => mergeCampaignShots(currentProject, fallbackProject));
+    latestProjectRef.current = project;
+  }, [project]);
+
+  useEffect(() => {
+    setProject((currentProject) => {
+      const mergedProject = mergeCampaignShots(currentProject, fallbackProject);
+      latestProjectRef.current = mergedProject;
+      return mergedProject;
+    });
   }, [fallbackProject]);
 
   useEffect(() => {
+    const persistableProjectKey = getPersistableProjectKey(project);
+    if (persistableProjectKey === lastPersistableProjectKeyRef.current) {
+      return;
+    }
+
+    lastPersistableProjectKeyRef.current = persistableProjectKey;
     persistProject(project);
   }, [project]);
 
@@ -440,26 +533,50 @@ export function CampaignNleBay({
       return undefined;
     }
 
-    const syncFrameToProject = (event) => {
+    const syncFrameToProject = (event, { force = false } = {}) => {
       const frame = Number(event.detail?.frame);
       if (!Number.isFinite(frame)) {
         return;
       }
 
-      setProject((currentProject) => setPlayhead(currentProject, frame / currentProject.fps));
+      const currentProject = latestProjectRef.current;
+      const nextProject = setPlayhead(currentProject, frame / currentProject.fps);
+      const clipChanged = nextProject.selectedClipId !== currentProject.selectedClipId;
+      const playheadChanged = nextProject.playheadSeconds !== currentProject.playheadSeconds;
+      const enoughTimeElapsed = Math.abs(
+        nextProject.playheadSeconds - lastPublishedPlayheadRef.current,
+      ) >= PLAYHEAD_UI_SYNC_INTERVAL_SECONDS;
+
+      if (!force && !clipChanged && (!playheadChanged || !enoughTimeElapsed)) {
+        return;
+      }
+
+      lastPublishedPlayheadRef.current = nextProject.playheadSeconds;
+      latestProjectRef.current = nextProject;
+      setProject(nextProject);
     };
     const markPlaying = () => callbacksRef.current.onPlaybackChange?.(true);
-    const markPaused = () => callbacksRef.current.onPlaybackChange?.(false);
+    const syncCurrentPlayerFrame = () => {
+      const frame = player.getCurrentFrame?.();
+      if (Number.isFinite(frame)) {
+        syncFrameToProject({ detail: { frame } }, { force: true });
+      }
+    };
+    const markPaused = () => {
+      syncCurrentPlayerFrame();
+      callbacksRef.current.onPlaybackChange?.(false);
+    };
+    const handleSeeked = (event) => syncFrameToProject(event, { force: true });
 
     player.addEventListener("frameupdate", syncFrameToProject);
-    player.addEventListener("seeked", syncFrameToProject);
+    player.addEventListener("seeked", handleSeeked);
     player.addEventListener("play", markPlaying);
     player.addEventListener("pause", markPaused);
     player.addEventListener("ended", markPaused);
 
     return () => {
       player.removeEventListener("frameupdate", syncFrameToProject);
-      player.removeEventListener("seeked", syncFrameToProject);
+      player.removeEventListener("seeked", handleSeeked);
       player.removeEventListener("play", markPlaying);
       player.removeEventListener("pause", markPaused);
       player.removeEventListener("ended", markPaused);
@@ -471,26 +588,36 @@ export function CampaignNleBay({
     if (!player) {
       return;
     }
+    if (!pendingExternalSeekRef.current) {
+      return;
+    }
 
     const targetSeconds = Math.min(Math.max(0, project.playheadSeconds), durationSeconds);
     const targetFrame = Math.max(0, Math.min(playerDurationFrames - 1, Math.round(targetSeconds * project.fps)));
     const currentFrame = player.getCurrentFrame?.() ?? 0;
+    pendingExternalSeekRef.current = false;
     if (player.seekTo && Math.abs(currentFrame - targetFrame) > 1) {
       player.seekTo(targetFrame);
     }
-  }, [durationSeconds, playerDurationFrames, project.fps, project.playheadSeconds]);
+  }, [durationSeconds, playerDurationFrames, project]);
 
   useEffect(() => {
     setSeekDraft(String(project.playheadSeconds));
   }, [project.playheadSeconds]);
 
-  function commitProject(updater) {
+  function commitProject(updater, { seekPlayback = false } = {}) {
+    if (seekPlayback) {
+      pendingExternalSeekRef.current = true;
+    }
+
     setProject((currentProject) => {
       const nextProject = typeof updater === "function" ? updater(currentProject) : updater;
-      return {
+      const sequencedProject = {
         ...nextProject,
         timelineClips: sequenceClips(nextProject.timelineClips),
       };
+      latestProjectRef.current = sequencedProject;
+      return sequencedProject;
     });
   }
 
@@ -520,13 +647,15 @@ export function CampaignNleBay({
       return;
     }
 
-    commitProject((currentProject) => addAssetToTimeline(currentProject, assetId));
     const asset = project.mediaAssets.find((item) => item.id === assetId);
+    commitProject((currentProject) => addAssetToTimeline(currentProject, assetId), {
+      seekPlayback: asset?.kind === "video",
+    });
     onStatus?.(`${asset?.name || "Clip"} added to local timeline`);
   }
 
   function handleSelectClip(clip) {
-    commitProject((currentProject) => selectTimelineClip(currentProject, clip.id));
+    commitProject((currentProject) => selectTimelineClip(currentProject, clip.id), { seekPlayback: true });
     const asset = project.mediaAssets.find((item) => item.id === clip.assetId);
     if (asset?.shotId) {
       onSelectShot?.(asset.shotId);
@@ -544,7 +673,7 @@ export function CampaignNleBay({
       return;
     }
 
-    commitProject((currentProject) => setPlayhead(currentProject, nextSeconds));
+    commitProject((currentProject) => setPlayhead(currentProject, nextSeconds), { seekPlayback: true });
     onStatus?.(`Local timeline jumped to ${formatTime(nextSeconds)}`);
   }
 
@@ -578,7 +707,7 @@ export function CampaignNleBay({
     }
 
     if (payload?.type === "clip" && overClipId && payload.clipId !== overClipId) {
-      commitProject((currentProject) => reorderTimelineClip(currentProject, payload.clipId, overClipId));
+      commitProject((currentProject) => reorderTimelineClip(currentProject, payload.clipId, overClipId), { seekPlayback: true });
       onStatus?.("Local timeline reordered");
     }
   }
@@ -660,6 +789,7 @@ export function CampaignNleBay({
 
           <div className="campaign-nle-program">
             <div className="campaign-nle-player-wrap">
+              <TimelineVideoPreloadRack project={project} />
               <Player
                 acknowledgeRemotionLicense
                 className="campaign-nle-player"
@@ -746,7 +876,7 @@ export function CampaignNleBay({
                     aria-label="Clip in"
                     max={Math.max(0, selectedClip.sourceOutSeconds - 0.5)}
                     min="0"
-                    onChange={(event) => commitProject((currentProject) => trimTimelineClip(currentProject, selectedClip.id, { sourceInSeconds: Number(event.target.value) }))}
+                    onChange={(event) => commitProject((currentProject) => trimTimelineClip(currentProject, selectedClip.id, { sourceInSeconds: Number(event.target.value) }), { seekPlayback: true })}
                     step="0.5"
                     type="number"
                     value={selectedClip.sourceInSeconds}
@@ -755,7 +885,7 @@ export function CampaignNleBay({
                     aria-label="Clip out"
                     max={selectedAsset?.durationSeconds || selectedClip.sourceOutSeconds}
                     min={selectedClip.sourceInSeconds + 0.5}
-                    onChange={(event) => commitProject((currentProject) => trimTimelineClip(currentProject, selectedClip.id, { sourceOutSeconds: Number(event.target.value) }))}
+                    onChange={(event) => commitProject((currentProject) => trimTimelineClip(currentProject, selectedClip.id, { sourceOutSeconds: Number(event.target.value) }), { seekPlayback: true })}
                     step="0.5"
                     type="number"
                     value={selectedClip.sourceOutSeconds}
@@ -768,7 +898,7 @@ export function CampaignNleBay({
           <div className="campaign-nle-timeline">
             <div className="campaign-nle-ruler">
               {[0, Math.max(0, durationSeconds / 2), durationSeconds].map((tick) => (
-                <button key={tick} onClick={() => commitProject((currentProject) => setPlayhead(currentProject, tick))} type="button">
+                <button key={tick} onClick={() => commitProject((currentProject) => setPlayhead(currentProject, tick), { seekPlayback: true })} type="button">
                   {formatTime(tick)}
                 </button>
               ))}

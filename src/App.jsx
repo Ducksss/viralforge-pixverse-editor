@@ -17,6 +17,14 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Player } from "@remotion/player";
 import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import {
   AlertTriangle,
   BadgeCheck,
   Captions,
@@ -77,6 +85,13 @@ import {
 } from "./editor/persistence.js";
 import { exportTimelineProject } from "./export/mediabunnyExport.js";
 import { EditorComposition } from "./remotion/EditorComposition.jsx";
+import {
+  APP_ROUTES,
+  getLegacyRouteRedirect,
+  getLegacyWorkspaceQueryRedirect,
+  getWorkspacePageFromPath,
+  getWorkspacePath,
+} from "./routes.js";
 import CampaignWorkspaceApp from "./CampaignWorkspaceApp.jsx";
 import DemoFlow from "./DemoFlow.jsx";
 import SetupWizard from "./SetupWizard.jsx";
@@ -1381,7 +1396,11 @@ function LocalNleEditorApp() {
   );
 }
 
-function CampaignAppShell({ enableWizard = false } = {}) {
+function CampaignAppShell({
+  activePage = "editor",
+  enableWizard = false,
+  onNavigateWorkspace,
+} = {}) {
   const [wizardData, setWizardData] = useState(null);
   const [activeDemoStep, setActiveDemoStep] = useState("editor");
   const [repromptOpen, setRepromptOpen] = useState(false);
@@ -1429,6 +1448,8 @@ function CampaignAppShell({ enableWizard = false } = {}) {
     <div style={{ height: "100%", width: "100%" }}>
       <CampaignWorkspaceApp
         activeDemoStep={activeDemoStep}
+        activePage={activePage}
+        onNavigateWorkspace={onNavigateWorkspace}
         onPublishClick={() => setActiveDemoStep("publish")}
         onRepromptClick={() => setRepromptOpen(true)}
         wizardData={wizardData}
@@ -1504,19 +1525,49 @@ function CampaignAppShell({ enableWizard = false } = {}) {
   );
 }
 
-export default function App() {
-  const standaloneEditorRequested =
-    typeof window !== "undefined" &&
-    (
-      window.location.pathname === "/local-editor" ||
-      new URLSearchParams(window.location.search).get("workspace") === "local-nle"
-    );
-  const wizardRequested =
-    typeof window !== "undefined" &&
-    (
-      window.location.pathname === "/wizard" ||
-      new URLSearchParams(window.location.search).get("workspace") === "wizard"
-    );
+function CampaignWorkspaceRoute({ enableWizard = false } = {}) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const activePage = getWorkspacePageFromPath(location.pathname) || "editor";
 
-  return standaloneEditorRequested ? <LocalNleEditorApp /> : <CampaignAppShell enableWizard={wizardRequested} />;
+  return (
+    <CampaignAppShell
+      activePage={activePage}
+      enableWizard={enableWizard}
+      onNavigateWorkspace={(pageId) => navigate(getWorkspacePath(pageId))}
+    />
+  );
+}
+
+function AppRouteSwitch() {
+  const location = useLocation();
+  const legacyWorkspaceRedirect = getLegacyWorkspaceQueryRedirect(location.search);
+  const legacyRouteRedirect = getLegacyRouteRedirect(location.pathname);
+
+  if (legacyWorkspaceRedirect) {
+    return <Navigate replace to={legacyWorkspaceRedirect} />;
+  }
+
+  if (legacyRouteRedirect) {
+    return <Navigate replace to={legacyRouteRedirect} />;
+  }
+
+  return (
+    <Routes>
+      <Route path={APP_ROUTES.home} element={<Navigate replace to={APP_ROUTES.editor} />} />
+      <Route path={APP_ROUTES.editor} element={<CampaignWorkspaceRoute />} />
+      <Route path={APP_ROUTES.aiPeople} element={<CampaignWorkspaceRoute />} />
+      <Route path={APP_ROUTES.wizard} element={<CampaignWorkspaceRoute enableWizard />} />
+      <Route path={APP_ROUTES.localEditor} element={<LocalNleEditorApp />} />
+      <Route path="*" element={<Navigate replace to={APP_ROUTES.editor} />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRouteSwitch />
+    </BrowserRouter>
+  );
 }

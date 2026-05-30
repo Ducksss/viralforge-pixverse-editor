@@ -603,13 +603,14 @@ function CampaignVideoFrame({ activeShot, currentSeconds, isMuted, isPlaying, lo
     }
 
     try {
-      if (Number.isFinite(sourceSeconds) && Math.abs((video.currentTime || 0) - sourceSeconds) > 0.2) {
+      const allowedDriftSeconds = isPlaying ? 0.5 : 0.08;
+      if (Number.isFinite(sourceSeconds) && Math.abs((video.currentTime || 0) - sourceSeconds) > allowedDriftSeconds) {
         video.currentTime = sourceSeconds;
       }
     } catch {
       // Browser media seeking can be temporarily unavailable before metadata loads.
     }
-  }, [sourceSeconds, videoSrc]);
+  }, [isPlaying, sourceSeconds, videoSrc]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -642,7 +643,7 @@ function CampaignVideoFrame({ activeShot, currentSeconds, isMuted, isPlaying, lo
       muted={isMuted}
       playsInline
       poster={posterSrc}
-      preload="metadata"
+      preload="auto"
       src={videoSrc}
     />
   );
@@ -666,13 +667,14 @@ function TimelineProjectFrame({ currentSeconds, isMuted, isPlaying, project }) {
     }
 
     try {
-      if (Number.isFinite(sourceSeconds) && Math.abs((video.currentTime || 0) - sourceSeconds) > 0.2) {
+      const allowedDriftSeconds = isPlaying ? 0.5 : 0.08;
+      if (Number.isFinite(sourceSeconds) && Math.abs((video.currentTime || 0) - sourceSeconds) > allowedDriftSeconds) {
         video.currentTime = sourceSeconds;
       }
     } catch {
       // Browser media seeking can be temporarily unavailable before metadata loads.
     }
-  }, [sourceSeconds, mediaSrc]);
+  }, [isPlaying, sourceSeconds, mediaSrc]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -702,7 +704,7 @@ function TimelineProjectFrame({ currentSeconds, isMuted, isPlaying, project }) {
         muted={isMuted}
         playsInline
         poster={posterSrc}
-        preload="metadata"
+        preload="auto"
         src={mediaSrc}
       />
     );
@@ -725,7 +727,7 @@ function ShotMedia({ shot }) {
       muted
       playsInline
       poster={posterSrc}
-      preload="metadata"
+      preload="auto"
       src={videoSrc}
     />
   );
@@ -1877,9 +1879,16 @@ function MainEditor({
   );
 }
 
-export default function App({ wizardData, activeDemoStep, onRepromptClick, onPublishClick } = {}) {
+export default function App({
+  activeDemoStep,
+  activePage: routedActivePage,
+  onNavigateWorkspace,
+  onPublishClick,
+  onRepromptClick,
+  wizardData,
+} = {}) {
   const [activePresetId, setActivePresetId] = useState(editorSnapshot.generationPresets[0].id);
-  const [activePage, setActivePage] = useState(editorSnapshot.defaultPage);
+  const [internalActivePage, setInternalActivePage] = useState(editorSnapshot.defaultPage);
   const [activeTab, setActiveTab] = useState("editor");
   const [aspectRatio, setAspectRatio] = useState(editorSnapshot.video.aspectRatio);
   const [balance, setBalance] = useState(editorSnapshot.video.balance);
@@ -1932,6 +1941,7 @@ export default function App({ wizardData, activeDemoStep, onRepromptClick, onPub
   const [statusMessage, setStatusMessage] = useState("Saved");
   const [timelineEvents, setTimelineEvents] = useState(editorSnapshot.timelineEvents);
   const [titleDraft, setTitleDraft] = useState(editorSnapshot.project.title);
+  const activePage = routedActivePage || internalActivePage;
   const [trendIndex, setTrendIndex] = useState(0);
   const [uploadedModelName, setUploadedModelName] = useState("");
 
@@ -2179,7 +2189,7 @@ export default function App({ wizardData, activeDemoStep, onRepromptClick, onPub
     setShots((items) => [...items, auditionShot]);
     setSelectedShotId(auditionShot.id);
     setCurrentSeconds(auditionShot.startSeconds);
-    setActivePage("editor");
+    navigateWorkspace("editor");
     setSavedMessage(`Audition generated: ${selectedPerson.name} (${auditionShot.durationSeconds}s)`);
   }
 
@@ -2201,7 +2211,11 @@ export default function App({ wizardData, activeDemoStep, onRepromptClick, onPub
 
   function navigateWorkspace(id) {
     if (id === "editor" || id === "people") {
-      setActivePage(id);
+      if (onNavigateWorkspace) {
+        onNavigateWorkspace(id);
+      } else {
+        setInternalActivePage(id);
+      }
       setOpenMenu(null);
     }
   }

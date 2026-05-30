@@ -65,7 +65,7 @@ exports a downloadable 9:16 MP4 through Mediabunny.
 
 Core editor flow:
 
-1. Open the default ViralForge campaign workspace at `/`.
+1. Open the ViralForge campaign editor at `/editor` (`/` redirects there).
 2. Use the Local NLE Remotion Timeline as the main editor surface.
 3. Add campaign shots or imported media into the local timeline.
 4. Reorder clips, select a clip, and trim source in/out.
@@ -74,7 +74,9 @@ Core editor flow:
 7. Scrub or play the Remotion Timeline and watch the TikTok-style Social Preview stay synced to the same playhead.
 8. Export a downloadable 9:16 MP4 through the Mediabunny orchestration layer.
 
-The standalone DaVinci-style local editor remains available at `/local-editor` or `/?workspace=local-nle` for focused NLE regression testing.
+The AI People workspace is directly available at `/ai-people`. The standalone
+DaVinci-style local editor remains available at `/local-editor` or
+`/?workspace=local-nle` for focused NLE regression testing.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -85,6 +87,7 @@ The standalone DaVinci-style local editor remains available at `/local-editor` o
 - [Remotion](https://www.remotion.dev/) / [@remotion/player](https://www.remotion.dev/docs/player)
 - [Mediabunny](https://github.com/Vanilagy/mediabunny)
 - [dnd-kit](https://dndkit.com/)
+- [React Router](https://reactrouter.com/)
 - [Vitest](https://vitest.dev/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -93,7 +96,7 @@ The standalone DaVinci-style local editor remains available at `/local-editor` o
 
 ### Prerequisites
 
-- Node.js (recommended: Node 18+)
+- Node.js (recommended: Node 20+)
 - npm
 
 ### Installation
@@ -122,6 +125,7 @@ npm run build
 ## Usage
 
 - Use the Local NLE as the primary editor inside the ViralForge campaign workspace.
+- Route directly to `/editor`, `/ai-people`, `/wizard`, or `/local-editor`.
 - The bundled campaign uses two real MP4s from `src/assets/video/`, split into six 5-second shot cards with generated poster frames under `src/assets/video/posters/`.
 - Import local video/audio files into the NLE media pool (metadata is probed with Mediabunny when possible).
 - Drag campaign shots or uploaded clips into the local timeline; reorder with drag-and-drop.
@@ -150,6 +154,7 @@ npm run build
 - [UGC AI People legacy workflow](docs/UGC_AI_PEOPLE.md)
 - [Filming review panel notes](docs/filming-review-panel.md)
 - [Local NLE and TikTok preview sync](docs/local-nle-sync.md)
+- [App routing](docs/routing.md)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

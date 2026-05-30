@@ -30,6 +30,8 @@ export function EditorComposition({ project }) {
     <Sequence from={clipStartFrame} durationInFrames={clipDurationFrames} key={clip.id}>
       <Video
         muted
+        playsInline
+        preload="auto"
         src={mediaSrc}
         startFrom={sourceStartFrame}
         style={{

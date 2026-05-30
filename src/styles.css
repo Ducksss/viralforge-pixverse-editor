@@ -1486,6 +1486,7 @@ img {
   min-height: 238px;
   place-items: center;
   overflow: hidden;
+  position: relative;
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
     linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
@@ -1499,6 +1500,22 @@ img {
   overflow: hidden;
   background: #050607;
   border-radius: 9px;
+}
+
+.campaign-nle-preload-rack {
+  height: 1px;
+  left: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 1px;
+}
+
+.campaign-nle-preload-rack video {
+  height: 1px;
+  width: 1px;
 }
 
 .campaign-nle-inspector {

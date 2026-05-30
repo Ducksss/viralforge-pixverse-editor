@@ -37,6 +37,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@remotion/player": "^4.0.469",
     "mediabunny": "^1.45.4",
+    "react-router-dom": "^7.16.0",
     "remotion": "^4.0.469"
   }
 }
