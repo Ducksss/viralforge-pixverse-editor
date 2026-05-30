@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   buildTimelineMarkers,
+  createAuditionShot,
   createGeneratedShot,
+  createGeneratedShots,
   createHotspot,
   createTimelineEvent,
   editorSnapshot,
   formatSeconds,
+  getGenerationEstimate,
   getChecklistProgress,
   getPeopleReadiness,
   getShotAtTime,
@@ -13,7 +16,8 @@ import {
 
 describe("editorSnapshot", () => {
   it("models the PixVerse campaign editor with a 36 second assembled video", () => {
-    expect(editorSnapshot.project.title).toBe("Summer Glow Skincare - PixVerse Campaign");
+    expect(editorSnapshot.project.title).toBe("Summer Glow Vitamin C Serum Launch");
+    expect(editorSnapshot.project.category).toBe("Serum");
     expect(editorSnapshot.video.durationSeconds).toBe(36);
     expect(editorSnapshot.shots).toHaveLength(6);
     expect(editorSnapshot.shots.map((shot) => shot.durationSeconds).reduce((sum, duration) => sum + duration, 0)).toBe(36);
@@ -33,7 +37,7 @@ describe("editorSnapshot", () => {
   });
 
   it("models reusable AI people with upload readiness", () => {
-    expect(editorSnapshot.defaultPage).toBe("people");
+    expect(editorSnapshot.defaultPage).toBe("editor");
     expect(editorSnapshot.aiPeople.defaultGender).toBe("Woman");
     expect(editorSnapshot.aiPeople.creatorProfiles.map((person) => person.name)).toEqual([
       "Maya Chen",
@@ -45,6 +49,17 @@ describe("editorSnapshot", () => {
       "Man",
       "Non-binary",
     ]);
+    expect(editorSnapshot.aiPeople.creatorProfiles.map((person) => person.asset)).toEqual([
+      "creatorMaya",
+      "creatorDaniel",
+      "creatorJordan",
+    ]);
+    expect(new Set(editorSnapshot.aiPeople.creatorProfiles.map((person) => person.asset)).size).toBe(3);
+    expect(
+      editorSnapshot.aiPeople.creatorProfiles.find(
+        (person) => person.id === editorSnapshot.aiPeople.defaultPersonId,
+      )?.gender,
+    ).toBe(editorSnapshot.aiPeople.defaultGender);
     expect(getPeopleReadiness(editorSnapshot.aiPeople)).toEqual({
       completed: 4,
       total: 5,
@@ -106,6 +121,136 @@ describe("editorSnapshot", () => {
       range: "00:12 - 00:16",
       x: 67,
       y: 58,
+    });
+  });
+
+  it("estimates guided generation batches and creates sequential sample clips", () => {
+    const preset = editorSnapshot.generationPresets.find((item) => item.id === "ugc-proof");
+    const estimate = getGenerationEstimate({
+      preset,
+      sampleCount: 3,
+      durationSeconds: 30,
+    });
+
+    expect(estimate).toEqual({
+      sampleCount: 3,
+      durationSeconds: 30,
+      durationMultiplier: 2,
+      creditsPerSample: 240,
+      totalCredits: 720,
+      totalDurationSeconds: 90,
+      label: "3 samples x 30s",
+    });
+
+    const generatedShots = createGeneratedShots(
+      editorSnapshot.shots,
+      "creator applies serum, macro texture, Shopee CTA",
+      {
+        durationSeconds: 30,
+        preset,
+        sampleCount: 3,
+      },
+    );
+
+    expect(generatedShots).toEqual([
+      expect.objectContaining({
+        id: "shot-7",
+        number: 7,
+        start: "0:36",
+        startSeconds: 36,
+        durationSeconds: 30,
+        title: "AI UGC Proof sample 1",
+        variantLabel: "Sample 1/3",
+      }),
+      expect.objectContaining({
+        id: "shot-8",
+        number: 8,
+        start: "1:06",
+        startSeconds: 66,
+        durationSeconds: 30,
+        title: "AI UGC Proof sample 2",
+        variantLabel: "Sample 2/3",
+      }),
+      expect.objectContaining({
+        id: "shot-9",
+        number: 9,
+        start: "1:36",
+        startSeconds: 96,
+        durationSeconds: 30,
+        title: "AI UGC Proof sample 3",
+        variantLabel: "Sample 3/3",
+      }),
+    ]);
+  });
+
+  it("creates deterministic AI people audition shots from the selected creator", () => {
+    const person = editorSnapshot.aiPeople.creatorProfiles.find((profile) => profile.id === "daniel-ong");
+    const auditionShot = createAuditionShot(editorSnapshot.shots, person, {
+      scripts: editorSnapshot.aiPeople.auditionScripts,
+    });
+
+    expect(auditionShot).toMatchObject({
+      id: "shot-7",
+      number: 7,
+      start: "0:36",
+      startSeconds: 36,
+      durationSeconds: 12,
+      title: "Daniel Ong audition",
+      asset: "creatorDaniel",
+      audition: true,
+      personId: "daniel-ong",
+      personName: "Daniel Ong",
+      variantLabel: "Man creator audition",
+    });
+    expect(auditionShot.prompt).toContain("Fast, practical product verdict");
+    expect(auditionShot.prompt).toContain("Commerce close");
+  });
+
+  it("defines switchable commerce projects for the current project card", () => {
+    expect(editorSnapshot.projects.map((project) => project.title)).toEqual([
+      "Summer Glow Vitamin C Serum Launch",
+      "Cloud Bounce Moisturizer Campaign",
+      "Fresh Reset Toner Flash Sale",
+    ]);
+    expect(editorSnapshot.projects.map((project) => project.category)).toEqual([
+      "Serum",
+      "Moisturizer",
+      "Toner",
+    ]);
+    expect(new Set(editorSnapshot.projects.map((project) => project.category)).size).toBe(3);
+
+    expect(editorSnapshot.projects[1]).toMatchObject({
+      id: "cloud-bounce",
+      product: "Cloud Bounce Gel Moisturizer",
+      channels: "Shopee - Instagram Reels",
+      status: "Brief ready",
+    });
+  });
+
+  it("defines shot-aware filming review guidance for the current-frame panel", () => {
+    const creatorReview = editorSnapshot.filmingReviews?.["shot-3"];
+
+    expect(creatorReview).toMatchObject({
+      score: 82,
+      verdict: "Strong creator proof",
+      priority: "Medium",
+      nextSetup: "Lower lens 10-15deg, pull back 6cm, keep serum near left third.",
+    });
+    expect(creatorReview.metrics.map((metric) => metric.label)).toEqual([
+      "Lighting",
+      "Camera angle",
+      "Headroom",
+      "Product read",
+    ]);
+    expect(creatorReview.priorityFixes.map((fix) => fix.title)).toEqual([
+      "Lower camera angle",
+      "Open the crop",
+    ]);
+
+    expect(editorSnapshot.filmingReviewFallback).toMatchObject({
+      score: 78,
+      verdict: "Manual review needed",
+      priority: "Review",
     });
   });
 });
