@@ -6,11 +6,12 @@ import video1 from "./assets/video/video-1.mp4";
 import video2 from "./assets/video/video-2.mp4";
 
 const SHOT_THUMBS = [
-  { label: "Shot 1: Product Close-up", asset: "projectThumb" },
-  { label: "Shot 2: Texture dropper", asset: "shotDropper" },
-  { label: "Shot 3: Spokesperson hold", asset: "shotModel" },
-  { label: "Shot 4: Science bubbles", asset: "shotBubbles" },
-  { label: "Shot 5: Before / After glow", asset: "shotSocial" }
+  { label: "Shot 1: Product Close-up", asset: "actualShot1" },
+  { label: "Shot 2: Texture dropper", asset: "actualShot2" },
+  { label: "Shot 3: Spokesperson hold", asset: "actualShot3" },
+  { label: "Shot 4: Science bubbles", asset: "actualShot4" },
+  { label: "Shot 5: Before / After glow", asset: "actualShot5" },
+  { label: "Shot 6: Bottle CTA close", asset: "actualShot6" },
 ];
 
 const NLE_SOURCE_WINDOWS = [
@@ -19,6 +20,7 @@ const NLE_SOURCE_WINDOWS = [
   { videoAsset: "actualVideo1", startSeconds: 10, endSeconds: 15 },
   { videoAsset: "actualVideo2", startSeconds: 0, endSeconds: 5 },
   { videoAsset: "actualVideo2", startSeconds: 5, endSeconds: 10 },
+  { videoAsset: "actualVideo2", startSeconds: 10, endSeconds: 15 },
 ];
 
 function getShotTitle(label) {
@@ -167,16 +169,20 @@ export default function DemoFlow({ data, initialView = "generating", onReset }) 
   };
 
   const handleVideoEnded = () => {
-    if (isExtended) {
-      if (currentVideoSrc === video1) {
-        setCurrentVideoSrc(video2);
-        setSelectedShotIndex(4); // Show the 5th shot (represents the extension outro)
-      } else {
-        setCurrentVideoSrc(video1);
-        setSelectedShotIndex(0); // Loop back
+    if (currentVideoSrc === video1) {
+      setCurrentVideoSrc(video2);
+      setSelectedShotIndex(3);
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+      }
+      if (socialVideoRef.current) {
+        socialVideoRef.current.currentTime = 0;
+        socialVideoRef.current.play().catch(() => {});
       }
     } else {
-      // Loop video 1 normally
+      setCurrentVideoSrc(video1);
+      setSelectedShotIndex(0);
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play().catch(() => {});
@@ -212,21 +218,28 @@ export default function DemoFlow({ data, initialView = "generating", onReset }) 
     });
   };
 
+  const getShotVideoAndStart = (idx) => {
+    const video = idx < 3 ? video1 : video2;
+    const time = idx < 3 ? [0, 5, 10][idx] : [0, 5, 10][idx - 3];
+    return { video, time };
+  };
+
   const handleShotCardClick = (idx) => {
     setSelectedShotIndex(idx);
 
     // Seek logic to make it feel like a real editor
-    if (currentVideoSrc !== video1) {
-      setCurrentVideoSrc(video1);
+    const { video: targetVideo, time: targetTime } = getShotVideoAndStart(idx);
+
+    if (currentVideoSrc !== targetVideo) {
+      setCurrentVideoSrc(targetVideo);
     }
     setTimeout(() => {
-      const shotStarts = [0, 5, 11, 17, 23];
       if (videoRef.current) {
-        videoRef.current.currentTime = shotStarts[idx];
+        videoRef.current.currentTime = targetTime;
         videoRef.current.play().catch(() => {});
       }
       if (socialVideoRef.current) {
-        socialVideoRef.current.currentTime = shotStarts[idx];
+        socialVideoRef.current.currentTime = targetTime;
         socialVideoRef.current.play().catch(() => {});
       }
     }, 50);
@@ -235,26 +248,52 @@ export default function DemoFlow({ data, initialView = "generating", onReset }) 
 
   const handleTimeUpdate = (e) => {
     const time = e.target.currentTime;
-    if (currentVideoSrc === video2) {
-      setSelectedShotIndex(4);
-    } else {
-      if (!isExtended && time >= 17) {
+    if (currentVideoSrc === video1) {
+      if (time >= 15) {
+        setCurrentVideoSrc(video2);
+        setSelectedShotIndex(3);
         if (videoRef.current) {
           videoRef.current.currentTime = 0;
+          videoRef.current.play().catch(() => {});
         }
         if (socialVideoRef.current) {
           socialVideoRef.current.currentTime = 0;
+          socialVideoRef.current.play().catch(() => {});
         }
-        setSelectedShotIndex(0);
         return;
       }
-
-      const shotStarts = [0, 5, 11, 17, 23];
+      // Determine active index in video1
       let activeIdx = 0;
-      for (let i = 0; i < shotStarts.length; i++) {
-        if (time >= shotStarts[i]) {
-          activeIdx = i;
+      if (time >= 10) {
+        activeIdx = 2;
+      } else if (time >= 5) {
+        activeIdx = 1;
+      } else {
+        activeIdx = 0;
+      }
+      setSelectedShotIndex(activeIdx);
+    } else if (currentVideoSrc === video2) {
+      if (time >= 15) {
+        setCurrentVideoSrc(video1);
+        setSelectedShotIndex(0);
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0;
+          videoRef.current.play().catch(() => {});
         }
+        if (socialVideoRef.current) {
+          socialVideoRef.current.currentTime = 0;
+          socialVideoRef.current.play().catch(() => {});
+        }
+        return;
+      }
+      // Determine active index in video2
+      let activeIdx = 3;
+      if (time >= 10) {
+        activeIdx = 5;
+      } else if (time >= 5) {
+        activeIdx = 4;
+      } else {
+        activeIdx = 3;
       }
       setSelectedShotIndex(activeIdx);
     }
@@ -274,16 +313,18 @@ export default function DemoFlow({ data, initialView = "generating", onReset }) 
       case 3:
         return `Shot 4: Core Ingredients - Formulated with 10% Pure Vitamin C`;
       case 4:
-        if (isExtended && currentVideoSrc === video2) {
+        if (currentVideoSrc === video2) {
           return `Shot 5: Extended CTA - Limited time discount, buy one get one free!`;
         }
         return `Shot 5: Before / After Glow - Visible brightness in 5 seconds`;
+      case 5:
+        return `Shot 6: Bottle CTA close - "Click the shop link to buy yours today!"`;
       default:
         return "";
     }
   };
 
-  const activeShots = useMemo(() => (isExtended ? SHOT_THUMBS : SHOT_THUMBS.slice(0, 3)), [isExtended]);
+  const activeShots = useMemo(() => SHOT_THUMBS, []);
   const nleShots = useMemo(() => activeShots.map((shot, index) => {
     const sourceWindow = NLE_SOURCE_WINDOWS[index] || NLE_SOURCE_WINDOWS[0];
 
@@ -463,7 +504,7 @@ export default function DemoFlow({ data, initialView = "generating", onReset }) 
 
               <div className="demo-shot-strip-container">
                 <p style={{ fontSize: "12px", fontWeight: "700", color: "var(--muted)", margin: "0 0 10px" }}>
-                  Shots ({activeShots.length}) • {isExtended ? "30.0s" : "15.0s"}
+                  Shots ({activeShots.length}) • {`${(activeShots.length * 5).toFixed(1)}s`}
                 </p>
                 <div className="demo-shot-strip" style={{ gridTemplateColumns: `repeat(${activeShots.length}, 1fr)` }}>
                   {activeShots.map((thumb, idx) => (
@@ -474,12 +515,10 @@ export default function DemoFlow({ data, initialView = "generating", onReset }) 
                       type="button"
                     >
                       <div className="demo-shot-thumb">
-                        <video
-                          src={`${video1}#t=${[0.1, 5, 11, 17, 23][idx]}`}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }}
-                          preload="metadata"
-                          muted
-                          playsInline
+                        <img
+                          src={assets[thumb.asset]}
+                          alt={thumb.label}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         />
                         <span className="demo-shot-num">{idx + 1}</span>
                       </div>
@@ -638,6 +677,7 @@ export default function DemoFlow({ data, initialView = "generating", onReset }) 
               projectTitle={campaignTitle}
               selectedShotId={nleShots[Math.min(selectedShotIndex, nleShots.length - 1)]?.id}
               shots={nleShots}
+              storageKey="viralforge.demoCampaignNleProject.v1"
               timelineEvents={nleTimelineEvents}
             />
             <aside className="demo-nle-sidecar">
@@ -650,7 +690,7 @@ export default function DemoFlow({ data, initialView = "generating", onReset }) 
                 </div>
                 <div>
                   <dt>Runtime</dt>
-                  <dd>{isExtended ? "30.0s" : "15.0s"}</dd>
+                  <dd>{`${nleShots.reduce((total, shot) => total + shot.durationSeconds, 0).toFixed(1)}s`}</dd>
                 </div>
                 <div>
                   <dt>Output</dt>

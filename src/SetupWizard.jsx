@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { ChevronRight, ChevronLeft, Sparkles, Check, Globe, Search } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { ChevronRight, ChevronLeft, Sparkles, Check, Globe, Search, Palette, Users, Target, Crosshair, Plus, X } from "lucide-react";
 import { assets } from "./assetMap.js";
 
 // Female portraits
@@ -50,10 +50,12 @@ const DEFAULT_PRODUCT_NAME = "Summer Glow Vitamin C Serum";
 const DEFAULT_PRODUCT = PRODUCTS.find((product) => product.name === DEFAULT_PRODUCT_NAME) ?? PRODUCTS[0];
 
 export const DEFAULT_PRODUCT_STORY = [
-  "Create a 15-second vertical UGC skincare ad that continues from the previous video. Use the same Korean on-camera person, same face, same hairstyle, same outfit, same bathroom vanity setting, and same warm summer lighting. Use the uploaded image as the exact product reference for Summer Glow Vitamin C Serum. The product must remain a green serum bottle with green packaging for the entire video. Do not change it to orange, yellow, white, gold, blue, pink, or transparent. Keep the same bottle shape, green label, cap, logo placement, proportions, and packaging design from the uploaded image.",
-  "Start with the creator turning slightly toward the mirror and showing her healthy dewy glow result with a confident natural smile. Keep the skin realistic, bright, and not overly filtered.",
-  "Then show the creator placing the green serum bottle on a white marble tray with fresh leaves, a clean towel, and minimal citrus accents. The camera slowly pushes in on the product like a Shopee/TikTok Shop listing hero shot. Product should be centered, front-facing, sharp, and label-visible.",
-  "End with the creator holding the serum next to her face and giving a natural final recommendation. Finish on a clean product close-up on the vanity with a premium commerce-ready look. Add English voiceover audio with a natural Korean female beauty influencer accent, friendly TikTok skincare tone, clear pronunciation, soft confident delivery.",
+  "Shot 1: Opening Hook - Create a 15-second vertical UGC skincare ad that continues from the previous video. Use the same Korean on-camera person, face, hairstyle, outfit, bathroom vanity setting, and warm summer lighting. Use the uploaded image as the exact product reference for Summer Glow Vitamin C Serum.",
+  "Shot 2: Texture Proof - Focus on demonstrating the premium product texture and skin absorption. The creator holds the glass dropper close to their face, dispensing a single glossy, translucent drop of the Miracle Serum onto their cheek. Capture the slow glide of the serum drop and the creator gently patting it into the skin, revealing a healthy, hydrated, and radiant dewy glow under warm bathroom vanity lighting. The skin must look realistic, natural, and highly polished, avoiding any artificial or heavy filter effects.",
+  "Shot 3: Product Context & Spokesperson Intro - Establish the creator's space and clear brand presence. The spokesperson smiles warmly at the camera, introducing their daily skincare routine. In a smooth motion, the creator places the green Summer Glow Vitamin C Serum bottle onto a pristine white marble vanity tray. The bottle must remain perfectly consistent in shape, with its distinctive green label and cap, surrounded by clean aesthetics like a folded white hand towel and fresh green leaves to accentuate the natural formula.",
+  "Shot 4: Label Macro Lock - Add fresh leaves, a clean towel, and minimal citrus accents to the tray. Keep the same bottle shape, green label, cap, logo placement, proportions, and packaging design from the uploaded image.",
+  "Shot 5: Ingredient Close Read - The camera slowly pushes in on the product like a Shopee/TikTok Shop listing hero shot. Product should be centered, front-facing, sharp, and label-visible with a premium commerce-ready look.",
+  "Shot 6: Final Recommendation - End with the creator holding the serum next to her face and giving a natural final recommendation. Add English voiceover audio with a natural Korean female beauty influencer accent, friendly TikTok skincare tone, clear pronunciation, soft confident delivery.",
 ].join("\n\n");
 
 const TONES = ["Authentic", "Funny", "Urgent", "Soft Sell"];
@@ -62,6 +64,91 @@ const HOOKS = [
   "POV: you finally found the serum that works",
   "Skincare gatekeepers are going to be so mad at this",
   "Adding this to my morning routine was the best decision ever"
+];
+
+// ── Brand palette generator: deterministic from URL ──
+const BRAND_PALETTE_PRESETS = {
+  somebymi: {
+    name: "SOME BY MI",
+    tagline: "Miracle skincare for sensitive skin",
+    colors: [
+      { hex: "#1B8C78", name: "Miracle Green" },
+      { hex: "#2EC4A9", name: "Fresh Mint" },
+      { hex: "#F5F0E8", name: "Soft Cream" },
+      { hex: "#1A1A2E", name: "Deep Navy" },
+      { hex: "#E8505B", name: "Accent Coral" },
+    ],
+    fonts: ["Pretendard", "Noto Sans KR"],
+    industry: "K-Beauty & Skincare",
+  },
+  default: {
+    name: "Your Brand",
+    tagline: "Your brand identity",
+    colors: [
+      { hex: "#6366F1", name: "Primary Indigo" },
+      { hex: "#8B5CF6", name: "Accent Violet" },
+      { hex: "#F8FAFC", name: "Light Surface" },
+      { hex: "#0F172A", name: "Dark Ink" },
+      { hex: "#F59E0B", name: "Warm Amber" },
+    ],
+    fonts: ["Inter", "System UI"],
+    industry: "E-Commerce",
+  },
+};
+
+function getBrandFromUrl(url) {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    for (const key of Object.keys(BRAND_PALETTE_PRESETS)) {
+      if (key !== "default" && hostname.includes(key)) {
+        return BRAND_PALETTE_PRESETS[key];
+      }
+    }
+    // Generate deterministic colors from the hostname
+    let hash = 0;
+    for (let i = 0; i < hostname.length; i++) {
+      hash = hostname.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    const brandName = hostname.replace(/^(www\.|en\.)/i, "").split(".")[0];
+    return {
+      name: brandName.charAt(0).toUpperCase() + brandName.slice(1),
+      tagline: `Discovered from ${hostname}`,
+      colors: [
+        { hex: `hsl(${hue}, 72%, 42%)`, name: "Primary" },
+        { hex: `hsl(${(hue + 30) % 360}, 65%, 55%)`, name: "Secondary" },
+        { hex: `hsl(${hue}, 15%, 96%)`, name: "Surface" },
+        { hex: `hsl(${hue}, 40%, 12%)`, name: "Dark" },
+        { hex: `hsl(${(hue + 180) % 360}, 70%, 58%)`, name: "Accent" },
+      ],
+      fonts: ["Inter", "System UI"],
+      industry: "E-Commerce",
+    };
+  } catch {
+    return BRAND_PALETTE_PRESETS.default;
+  }
+}
+
+const TARGET_AUDIENCES = [
+  "Gen Z (18–24)",
+  "Millennials (25–34)",
+  "Young Professionals (25–40)",
+  "Parents & Families",
+  "Beauty Enthusiasts",
+  "Health & Wellness",
+  "Tech-Savvy Shoppers",
+  "Budget-Conscious Buyers",
+];
+
+const CAMPAIGN_GOALS = [
+  "Brand Awareness",
+  "Product Launch",
+  "Drive Sales / Conversions",
+  "Grow Social Following",
+  "Build Community Trust",
+  "Seasonal Promotion",
+  "Influencer Collaboration",
+  "Retarget Existing Customers",
 ];
 
 const AVATARS = [
@@ -101,8 +188,8 @@ const AVATARS = [
 ];
 
 export default function SetupWizard({ onComplete }) {
-  const [step, setStep] = useState("branding"); // branding, scanning, query, story, character
-  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [step, setStep] = useState("branding"); // branding, scanning, brand-profile, query, story, character
+  const [websiteUrl, setWebsiteUrl] = useState("https://en.somebymi.com/");
   const [scanProgress, setScanProgress] = useState(0);
   const [scanLines, setScanLines] = useState([]);
   const [email, setEmail] = useState("");
@@ -112,6 +199,47 @@ export default function SetupWizard({ onComplete }) {
   const [selectedTone, setSelectedTone] = useState("Authentic");
   const [selectedCharacter, setSelectedCharacter] = useState(AVATARS[0]);
   const [genderFilter, setGenderFilter] = useState("All");
+
+  // Brand profile state – pre-filled for demo
+  const [brandPeople, setBrandPeople] = useState([
+    "Bae Suzy (Ambassador)",
+    "Dr. Park Jihye (Dermatologist)",
+    "@glowwithme (Beauty KOL)",
+  ]);
+  const [brandPersonInput, setBrandPersonInput] = useState("");
+  const [selectedTargets, setSelectedTargets] = useState([
+    "Gen Z (18–24)",
+    "Millennials (25–34)",
+    "Beauty Enthusiasts",
+  ]);
+  const [selectedGoals, setSelectedGoals] = useState([
+    "Brand Awareness",
+    "Drive Sales / Conversions",
+    "Influencer Collaboration",
+  ]);
+  const [brandNotes, setBrandNotes] = useState(
+    "SOME BY MI is a Korean skincare brand known for the 30-day Miracle line. Focus on clean, clinical-yet-fun visuals that appeal to the K-beauty community worldwide."
+  );
+
+  const brandData = useMemo(() => getBrandFromUrl(websiteUrl), [websiteUrl]);
+
+  // Local editable palette colors (initialized from brandData)
+  const [paletteColors, setPaletteColors] = useState([]);
+  useEffect(() => {
+    setPaletteColors(brandData.colors);
+  }, [brandData]);
+
+  const handleRemoveColor = (idx) => {
+    setPaletteColors((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleAddColor = () => {
+    const hue = Math.floor(Math.random() * 360);
+    setPaletteColors((prev) => [
+      ...prev,
+      { hex: `hsl(${hue}, 65%, 50%)`, name: `Custom ${prev.length + 1}` },
+    ]);
+  };
 
   // Scanning animation side effect
   useEffect(() => {
@@ -133,7 +261,7 @@ export default function SetupWizard({ onComplete }) {
         if (messages[i - 1]) setScanLines((prev) => [...prev, messages[i - 1]]);
         if (i >= messages.length) {
           clearInterval(interval);
-          setTimeout(() => setStep("query"), 700);
+          setTimeout(() => setStep("brand-profile"), 700);
         }
       }, 600);
       return () => clearInterval(interval);
@@ -154,6 +282,30 @@ export default function SetupWizard({ onComplete }) {
     e.preventDefault();
     if (!websiteUrl.trim()) return;
     setStep("scanning");
+  };
+
+  const handleAddBrandPerson = () => {
+    const trimmed = brandPersonInput.trim();
+    if (trimmed && !brandPeople.includes(trimmed)) {
+      setBrandPeople((prev) => [...prev, trimmed]);
+    }
+    setBrandPersonInput("");
+  };
+
+  const handleRemoveBrandPerson = (person) => {
+    setBrandPeople((prev) => prev.filter((p) => p !== person));
+  };
+
+  const handleToggleTarget = (target) => {
+    setSelectedTargets((prev) =>
+      prev.includes(target) ? prev.filter((t) => t !== target) : [...prev, target]
+    );
+  };
+
+  const handleToggleGoal = (goal) => {
+    setSelectedGoals((prev) =>
+      prev.includes(goal) ? prev.filter((g) => g !== goal) : [...prev, goal]
+    );
   };
 
   const handleLoginSubmit = (e) => {
@@ -277,6 +429,215 @@ export default function SetupWizard({ onComplete }) {
         </div>
       )}
 
+      {/* ── Brand Profile step ── */}
+      {step === "brand-profile" && (
+        <div className="wizard-card wide">
+          <div className="wizard-steps">
+            <span className="wizard-step-dot active" />
+            <span className="wizard-step-dot" />
+            <span className="wizard-step-dot" />
+            <span className="wizard-step-dot" />
+            <span className="wizard-step-dot" />
+          </div>
+
+          <h2 className="wizard-title">Your brand identity</h2>
+          <p className="wizard-subtitle">
+            We've extracted your brand palette and identity. Tell us more about your brand to create the perfect campaign.
+          </p>
+
+          {/* ── Brand Palette ── */}
+          <div className="brand-profile-section">
+            <div className="brand-profile-header">
+              <div className="brand-profile-icon-circle">
+                <Palette size={18} />
+              </div>
+              <div>
+                <h3 className="brand-profile-section-title">Brand Palette</h3>
+                <p className="brand-profile-section-sub">Extracted from {brandData.name}</p>
+              </div>
+            </div>
+
+            <div className="brand-palette-card">
+              <div className="brand-palette-swatches">
+                {paletteColors.map((color, idx) => (
+                  <div key={idx} className="brand-swatch">
+                    <div className="brand-swatch-color" style={{ background: color.hex }}>
+                      {paletteColors.length > 1 && (
+                        <button
+                          type="button"
+                          className="brand-swatch-remove"
+                          onClick={() => handleRemoveColor(idx)}
+                          aria-label={`Remove ${color.name}`}
+                        >
+                          <X size={10} />
+                        </button>
+                      )}
+                    </div>
+                    <span className="brand-swatch-name">{color.name}</span>
+                    <span className="brand-swatch-hex">{color.hex}</span>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="brand-swatch brand-swatch-add"
+                  onClick={handleAddColor}
+                >
+                  <div className="brand-swatch-color brand-swatch-add-color">
+                    <Plus size={18} />
+                  </div>
+                  <span className="brand-swatch-name">Add Color</span>
+                </button>
+              </div>
+              <div className="brand-palette-meta">
+                <div className="brand-meta-item">
+                  <span className="brand-meta-label">Typography</span>
+                  <span className="brand-meta-value">{brandData.fonts.join(" / ")}</span>
+                </div>
+                <div className="brand-meta-item">
+                  <span className="brand-meta-label">Industry</span>
+                  <span className="brand-meta-value">{brandData.industry}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Brand People ── */}
+          <div className="brand-profile-section">
+            <div className="brand-profile-header">
+              <div className="brand-profile-icon-circle">
+                <Users size={18} />
+              </div>
+              <div>
+                <h3 className="brand-profile-section-title">Brand People</h3>
+                <p className="brand-profile-section-sub">Who represents your brand? Spokespeople, founders, influencers…</p>
+              </div>
+            </div>
+
+            <div className="brand-people-input-row">
+              <input
+                id="brand-person-input"
+                type="text"
+                placeholder="e.g. Kim Taeri, CEO Name, @influencer"
+                value={brandPersonInput}
+                onChange={(e) => setBrandPersonInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddBrandPerson();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="brand-people-add-btn"
+                onClick={handleAddBrandPerson}
+                disabled={!brandPersonInput.trim()}
+              >
+                <Plus size={16} /> Add
+              </button>
+            </div>
+
+            {brandPeople.length > 0 && (
+              <div className="brand-people-tags">
+                {brandPeople.map((person) => (
+                  <span key={person} className="brand-person-tag">
+                    {person}
+                    <button
+                      type="button"
+                      className="brand-person-tag-remove"
+                      onClick={() => handleRemoveBrandPerson(person)}
+                      aria-label={`Remove ${person}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Target Audience ── */}
+          <div className="brand-profile-section">
+            <div className="brand-profile-header">
+              <div className="brand-profile-icon-circle">
+                <Target size={18} />
+              </div>
+              <div>
+                <h3 className="brand-profile-section-title">Target Audience</h3>
+                <p className="brand-profile-section-sub">Who are you trying to reach?</p>
+              </div>
+            </div>
+
+            <div className="brand-chip-grid">
+              {TARGET_AUDIENCES.map((audience) => (
+                <button
+                  key={audience}
+                  type="button"
+                  className={`brand-chip ${selectedTargets.includes(audience) ? "selected" : ""}`}
+                  onClick={() => handleToggleTarget(audience)}
+                >
+                  {selectedTargets.includes(audience) && <Check size={13} />}
+                  {audience}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Campaign Goals ── */}
+          <div className="brand-profile-section">
+            <div className="brand-profile-header">
+              <div className="brand-profile-icon-circle">
+                <Crosshair size={18} />
+              </div>
+              <div>
+                <h3 className="brand-profile-section-title">Campaign Goals</h3>
+                <p className="brand-profile-section-sub">What do you want to achieve?</p>
+              </div>
+            </div>
+
+            <div className="brand-chip-grid">
+              {CAMPAIGN_GOALS.map((goal) => (
+                <button
+                  key={goal}
+                  type="button"
+                  className={`brand-chip ${selectedGoals.includes(goal) ? "selected" : ""}`}
+                  onClick={() => handleToggleGoal(goal)}
+                >
+                  {selectedGoals.includes(goal) && <Check size={13} />}
+                  {goal}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Additional Notes ── */}
+          <div className="brand-profile-section">
+            <textarea
+              id="brand-notes"
+              className="brand-notes-textarea"
+              placeholder="Anything else we should know about your brand? (optional)"
+              value={brandNotes}
+              onChange={(e) => setBrandNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div className="wizard-footer">
+            <button className="btn-back" onClick={() => setStep("branding")} type="button">
+              <ChevronLeft size={16} /> Back
+            </button>
+            <button
+              className="btn-primary btn-teal"
+              style={{ width: "auto", padding: "0 24px" }}
+              onClick={() => setStep("query")}
+              type="button"
+            >
+              Continue <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {step === "login" && (
         <div className="wizard-card">
           <div className="wizard-logo-area">
@@ -335,6 +696,7 @@ export default function SetupWizard({ onComplete }) {
         <div className="wizard-card wide">
           <div className="wizard-steps">
             <span className="wizard-step-dot" />
+            <span className="wizard-step-dot" />
             <span className="wizard-step-dot active" />
             <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />
@@ -366,7 +728,7 @@ export default function SetupWizard({ onComplete }) {
           </div>
 
           <div className="wizard-footer">
-            <button className="btn-back" onClick={() => setStep("branding")} type="button">
+            <button className="btn-back" onClick={() => setStep("brand-profile")} type="button">
               <ChevronLeft size={16} /> Back
             </button>
             <button
@@ -385,6 +747,7 @@ export default function SetupWizard({ onComplete }) {
       {step === "story" && (
         <div className="wizard-card">
           <div className="wizard-steps">
+            <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />
             <span className="wizard-step-dot active" />
@@ -468,6 +831,7 @@ export default function SetupWizard({ onComplete }) {
       {step === "character" && (
         <div className="wizard-card wide">
           <div className="wizard-steps">
+            <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />
             <span className="wizard-step-dot" />

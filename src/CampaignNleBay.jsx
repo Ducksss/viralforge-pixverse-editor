@@ -31,7 +31,7 @@ import {
 import { exportTimelineProject } from "./export/mediabunnyExport.js";
 import { EditorComposition } from "./remotion/EditorComposition.jsx";
 
-const STORAGE_KEY = "viralforge.campaignNleProject.v1";
+const DEFAULT_STORAGE_KEY = "viralforge.campaignNleProject.v1";
 const PLAYHEAD_UI_SYNC_INTERVAL_SECONDS = 0.2;
 
 function formatDuration(value) {
@@ -162,13 +162,13 @@ function createCampaignProject({ projectTitle, selectedShotId, shots, timelineEv
   };
 }
 
-function restoreProject(fallbackProject) {
+function restoreProject(fallbackProject, storageKey = DEFAULT_STORAGE_KEY) {
   if (typeof window === "undefined") {
     return fallbackProject;
   }
 
   try {
-    const rawProject = window.localStorage.getItem(STORAGE_KEY);
+    const rawProject = window.localStorage.getItem(storageKey);
     if (!rawProject) {
       return fallbackProject;
     }
@@ -205,7 +205,7 @@ function restoreProject(fallbackProject) {
   }
 }
 
-function persistProject(project) {
+function persistProject(project, storageKey = DEFAULT_STORAGE_KEY) {
   if (typeof window === "undefined") {
     return;
   }
@@ -225,7 +225,7 @@ function persistProject(project) {
     }),
   };
 
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableProject));
+  window.localStorage.setItem(storageKey, JSON.stringify(serializableProject));
 }
 
 function getPersistableProjectKey(project) {
@@ -266,6 +266,7 @@ function mergeCampaignShots(project, fallbackProject) {
     ...project.mediaAssets.filter((asset) => !asset.id.startsWith("campaign-asset-")),
     ...fallbackProject.mediaAssets.filter((asset) => asset.id.startsWith("campaign-asset-")),
   ];
+  const validAssetIds = new Set(mediaAssets.map((asset) => asset.id));
   const timelineClips = sequenceClips(
     [
       ...fallbackProject.timelineClips.map((fallbackClip) => ({
@@ -274,7 +275,9 @@ function mergeCampaignShots(project, fallbackProject) {
         title: fallbackClip.title,
         assetId: fallbackClip.assetId,
       })),
-      ...project.timelineClips.filter((clip) => !fallbackClipIds.has(clip.id)),
+      ...project.timelineClips.filter(
+        (clip) => !fallbackClipIds.has(clip.id) && validAssetIds.has(clip.assetId),
+      ),
     ],
   );
   const selectedClipId = clipById.has(project.selectedClipId)
@@ -464,6 +467,7 @@ export function CampaignNleBay({
   projectTitle,
   selectedShotId,
   shots,
+  storageKey = DEFAULT_STORAGE_KEY,
   timelineEvents,
 }) {
   const fallbackProject = useMemo(
@@ -475,7 +479,7 @@ export function CampaignNleBay({
   const lastPersistableProjectKeyRef = useRef("");
   const lastPublishedPlayheadRef = useRef(0);
   const pendingExternalSeekRef = useRef(false);
-  const [project, setProject] = useState(() => restoreProject(fallbackProject));
+  const [project, setProject] = useState(() => restoreProject(fallbackProject, storageKey));
   const [activeDrag, setActiveDrag] = useState(null);
   const [seekDraft, setSeekDraft] = useState("0");
   const [exportJob, setExportJob] = useState({ status: "idle", progress: 0, message: "Ready" });
@@ -519,8 +523,8 @@ export function CampaignNleBay({
     }
 
     lastPersistableProjectKeyRef.current = persistableProjectKey;
-    persistProject(project);
-  }, [project]);
+    persistProject(project, storageKey);
+  }, [project, storageKey]);
 
   useEffect(() => {
     callbacksRef.current.onProjectChange?.(project);
