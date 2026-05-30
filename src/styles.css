@@ -3104,6 +3104,7 @@ img {
   color: #18323a;
   background: white;
   font-size: 11px;
+  white-space: nowrap;
 }
 
 .people-dropzone {
@@ -3727,3 +3728,4 @@ img {
   .tips-frame {
     width: 100%;
   }
+}

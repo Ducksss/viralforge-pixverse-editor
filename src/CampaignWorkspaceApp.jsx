@@ -1283,8 +1283,8 @@ function PeopleHero({ selectedPerson, selectedGender }) {
       <div className="people-hero-copy">
         <h2>UGC AI People</h2>
         <p>
-          Build a licensed creator for the Summer Glow campaign, then carry that person into
-          PixVerse testimonial shots, social cuts, and listing assets.
+          Pick a licensed AI creator for the Summer Glow campaign, then carry the same approved
+          reference into PixVerse testimonial shots, social cuts, and listing assets.
         </p>
         <div className="people-stepper" aria-label="AI People workflow">
           {editorSnapshot.aiPeople.uploadRequirements.map((requirement, index) => (
@@ -1308,18 +1308,18 @@ function PeopleHero({ selectedPerson, selectedGender }) {
 }
 
 function ModelUploadPanel({ uploadedModelName, onUploadReference, selectedPerson }) {
-  const ready = Boolean(uploadedModelName);
+  const hasCustomReference = Boolean(uploadedModelName);
 
   return (
     <Panel className="people-upload-panel">
       <div className="people-panel-heading">
         <div>
           <h3>Model Reference</h3>
-          <p>{ready ? "Reference ready" : "Waiting for people reference"}</p>
+          <p>{hasCustomReference ? "Custom reference ready" : "Using selected creator reference"}</p>
         </div>
-        <span className={`reference-pill ${ready ? "is-ready" : ""}`}>
+        <span className="reference-pill is-ready">
           <FileImage size={14} />
-          {ready ? "Uploaded" : "Needed"}
+          {hasCustomReference ? "Uploaded" : "Profile ready"}
         </span>
       </div>
       <label className="people-dropzone" htmlFor="people-reference-upload">
@@ -1338,8 +1338,8 @@ function ModelUploadPanel({ uploadedModelName, onUploadReference, selectedPerson
           type="file"
         />
         <span className="upload-glyph"><Upload size={22} /></span>
-        <strong>{uploadedModelName || "Upload model reference"}</strong>
-        <small>PNG, JPG, WEBP - clear face, natural light, release on file</small>
+        <strong>{uploadedModelName || "Upload custom reference"}</strong>
+        <small>Optional PNG, JPG, WEBP - clear face, natural light, release on file</small>
       </label>
       <div className="reference-preview-row">
         <img src={assets[selectedPerson.asset]} alt={`${selectedPerson.name} reference preview`} />
@@ -1387,7 +1387,7 @@ function CreatorCasting({ onGenerateAudition, selectedPersonId, onSelectPerson }
       <div className="people-panel-heading">
         <div>
           <h3>Creator Casting</h3>
-          <p>Reusable AI people for UGC campaign variants</p>
+          <p>Reusable licensed AI creators for UGC campaign variants</p>
         </div>
         <button className="compact-action" onClick={onGenerateAudition} type="button">
           <Sparkles size={14} />Generate audition

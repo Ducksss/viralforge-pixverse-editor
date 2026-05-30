@@ -265,7 +265,8 @@ Automated tests must verify:
 - Timeline markers are positioned deterministically.
 - The AI People model includes creator profiles, gender options, and readiness
   data.
-- Upload readiness updates from 4/5 to 5/5 when a model reference is present.
+- Selected creator profiles provide 5/5 readiness, and uploaded model
+  references appear as optional custom overrides.
 - The editor renders the primary workflow panels.
 - The AI People page renders upload, casting, readiness, and guardrail panels.
 - Uploading a model reference updates visible local UI state.
