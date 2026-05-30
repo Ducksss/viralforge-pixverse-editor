@@ -1,0 +1,65 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import EditorApp from "./App.jsx";
+import CampaignWorkspaceApp from "./CampaignWorkspaceApp.jsx";
+
+vi.mock("@remotion/player", () => ({
+  Player: ({ inputProps }) => (
+    <div data-testid="remotion-player">
+      Remotion viewer {inputProps.project.aspectRatio} {inputProps.project.textOverlays[0].text}
+    </div>
+  ),
+}));
+
+function assertIndependentCollapse(panels) {
+  expect(panels.length).toBeGreaterThan(0);
+
+  for (const panel of panels) {
+    expect(panel.content()).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: panel.collapse }));
+    expect(panel.query()).not.toBeInTheDocument();
+  }
+
+  fireEvent.click(screen.getByRole("button", { name: panels[0].expand }));
+
+  expect(panels[0].content()).toBeInTheDocument();
+  for (const panel of panels.slice(1)) {
+    expect(panel.query()).not.toBeInTheDocument();
+  }
+}
+
+describe("right rail collapsible panels", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      Response.json({
+        accountId: 42,
+        creditMonthly: 1000,
+        creditPackage: 250,
+        fetchedAt: "2026-05-30T05:23:00.000Z",
+        source: "pixverse-api",
+        totalCredits: 1250,
+      }),
+    ));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("collapses every campaign right rail panel independently", async () => {
+    render(<CampaignWorkspaceApp />);
+
+    await screen.findByText("Synced PixVerse API");
+
+    assertIndependentCollapse([
+      { collapse: /collapse gen z trend translator/i, expand: /expand gen z trend translator/i, content: () => screen.getByText(/what's the vibe/i), query: () => screen.queryByText(/what's the vibe/i) },
+      { collapse: /collapse top performing videos/i, expand: /expand top performing videos/i, content: () => screen.getByText("Glass Skin in 3 Steps"), query: () => screen.queryByText("Glass Skin in 3 Steps") },
+      { collapse: /collapse filming tips/i, expand: /expand filming tips/i, content: () => screen.getByText("Shot readiness"), query: () => screen.queryByText("Shot readiness") },
+      { collapse: /collapse props sourcing checklist/i, expand: /expand props sourcing checklist/i, content: () => screen.getByText("White marble tray"), query: () => screen.queryByText("White marble tray") },
+      { collapse: /collapse listing assets/i, expand: /expand listing assets/i, content: () => screen.getByText("Images (6)"), query: () => screen.queryByText("Images (6)") },
+    ]);
+  }, 10000);
+
+  // Editor collapsible panels test will be added in PR 2 when LocalNleEditor is introduced.
+});
