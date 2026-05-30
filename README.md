@@ -39,3 +39,9 @@ npm run build
 - All editor controls and content panels are code-native.
 - Campaign frames are local static assets derived from the accepted editor
   concept image for demo fidelity.
+
+## Product Requirements
+
+See [docs/PRD.md](docs/PRD.md) for the product requirements, target user,
+core workflows, functional requirements, success metrics, risks, and future
+enhancements.
