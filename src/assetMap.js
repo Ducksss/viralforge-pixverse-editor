@@ -13,6 +13,7 @@ import shotProduct from "./assets/shot-product.png";
 import shotSocial from "./assets/shot-social.png";
 import socialPhoneFrame from "./assets/social-phone-frame.png";
 import mainFrame from "./assets/viralforge-main-frame.png";
+import sunbymeSerum from "./assets/sunbyme-serum.png";
 
 export const assets = {
   creatorDaniel,
@@ -30,4 +31,5 @@ export const assets = {
   shotProduct,
   shotSocial,
   socialPhoneFrame,
+  sunbymeSerum,
 };
