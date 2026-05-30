@@ -17,12 +17,13 @@ The page answers four operational questions:
 
 ## Main Workflow
 
-1. Open the AI People workspace from the ViralForge sidebar.
+1. Open the editor, then switch to the AI People workspace from the ViralForge sidebar.
 2. Upload a model reference image with a clear face and release on file.
 3. Choose the gender intent: Woman, Man, or Non-binary.
 4. Select one of the reusable creator profiles.
 5. Review generation readiness and consent guardrails.
-6. Use the audition plan as the creator script map for campaign shots.
+6. Generate an audition for the selected creator and review it in the editor
+   shot strip.
 
 ## Implemented Interactions
 
@@ -31,8 +32,12 @@ The page answers four operational questions:
 - Gender selection updates the selected state and visible intent line.
 - Selecting a creator updates the hero summary, selected creator rail, and fit
   score.
-- The existing PixVerse editor remains reachable from the sidebar and keeps its
-  shot-selection and props-checklist interactions.
+- Generating an audition creates a deterministic 12-second AI People audition
+  shot for the selected creator, switches back to the editor, selects the new
+  shot, and updates the saved status.
+- The PixVerse editor remains the default workspace, while AI People stays
+  reachable from the sidebar and keeps its casting, upload, and readiness
+  interactions.
 
 ## Data Model
 
@@ -50,6 +55,8 @@ The `editorSnapshot.aiPeople` model includes:
 
 `getPeopleReadiness()` derives the readiness count from the checklist and the
 current upload state.
+`createAuditionShot()` converts the selected creator and audition script map
+into the generated shot appended by the Generate audition action.
 
 ## Test Coverage
 
@@ -57,8 +64,9 @@ Vitest and Testing Library cover:
 
 - AI People fixture shape and default gender options
 - readiness calculation before and after uploading a reference
-- initial rendering of the AI People workspace
-- navigation from AI People back to the PixVerse editor
+- initial rendering of the PixVerse editor workspace
+- navigation from the editor to AI People and back
 - model reference upload state
 - gender segmented-control state
 - creator selection state
+- selected-creator audition generation into the editor shot strip

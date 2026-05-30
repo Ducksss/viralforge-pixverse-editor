@@ -1,14 +1,13 @@
-# ViralForge PixVerse Editor
+# ViralForge Local Video Editor
 
-A polished React/Vite demo of a ViralForge Commerce campaign editor for the
-TRAE x PixVerse Video Generation Track.
+A browser-local React/Vite video editor for commerce sellers. The default
+workspace is a DaVinci Resolve-inspired edit page: media pool on the left,
+Remotion 9:16 program monitor in the center, inspector on the right, and a
+custom multitrack timeline across the bottom.
 
-The app models a 36-second Summer Glow skincare campaign with a PixVerse-style
-video preview, vertical social preview, shot strip, waveform timeline, product
-hotspots, AI frame feedback, trend translation, prop sourcing checklist, and
-auto-generated listing assets. It also includes a UGC AI People workspace for
-uploading a model reference, selecting gender intent, casting reusable AI
-creator profiles, and checking consent readiness before generation.
+The editor is built around one shared timeline model. Media pool actions,
+clip reorder, trim handles, CTA overlay editing, Remotion preview, persistence,
+and Mediabunny export all read and write the same project state.
 
 ## Run Locally
 
@@ -19,6 +18,46 @@ npm run dev
 
 Open `http://127.0.0.1:5173/`.
 
+The previous ViralForge campaign workspace is still available at `/campaign`
+for regression coverage and PixVerse balance experiments.
+
+## Core Editor Flow
+
+1. Import or select clips from the media pool.
+2. Drag clips into the timeline or use the Add command.
+3. Reorder clips, select a clip, and trim source in/out in the inspector.
+4. Select a music bed and adjust music start/volume.
+5. Edit the CTA text overlay shared by preview and export.
+6. Preview through Remotion Player.
+7. Export a downloadable 9:16 MP4 through the Mediabunny orchestration layer.
+
+## Features
+
+- Seeded sample video clips and music beds for a deterministic first run.
+- Local video/audio upload with Mediabunny metadata probing and safe fallback
+  metadata for unsupported files.
+- `@dnd-kit` drag/drop from media pool to timeline plus sortable clip reorder.
+- Custom timeline helpers for duration, gapless sequencing, trim bounds,
+  playhead-to-clip resolution, CTA timing, and serialization.
+- Remotion Player preview using `src/remotion/EditorComposition.jsx`.
+- Mediabunny export orchestration using canvas video samples and a music bed.
+- Commerce assistant context inside the editor: trend beats, filming review,
+  CTA/listing metadata, and compliance guardrails.
+- Local metadata persistence through `localStorage`.
+
+## Browser-Local Limits
+
+- V1 does not upload media, call PixVerse generation APIs, or render on a
+  server.
+- Uploaded file blobs are session-only. After a hard refresh, saved metadata
+  remains, but uploads show `Reselect required`.
+- Source clip audio is muted in v1 export. The selected music bed is the
+  supported audio track.
+- Export targets 9:16 social video first. 16:9 and 1:1 are editable project
+  settings, but 9:16 MP4 is the primary deliverable.
+- Real MP4 export depends on the browser supporting the required AVC/AAC
+  encoding path exposed through Mediabunny.
+
 ## Validate
 
 ```sh
@@ -26,46 +65,13 @@ npm test
 npm run build
 ```
 
-## Product Scope
+Focused suites cover timeline helpers, media import metadata, localStorage
+serialization, Mediabunny export orchestration, the DaVinci-style local editor,
+and the preserved campaign workspace.
 
-- Domain: Marketing / E-commerce
-- User: small commerce sellers creating short-form product campaign assets
-- Video concept: a PixVerse-generated skincare campaign assembled from six
-  short shots totaling 36 seconds
-- Functionality beyond playback: project renaming, export/share commands,
-  aspect-ratio switching, playback controls, shot selection, timeline markers,
-  AI shot generation, frame feedback comparison, editable hotspots, sourcing
-  checklist progress, trend guidance, social preview, AI people setup, and
-  listing asset review
+## Documentation
 
-## Implementation Notes
-
-- Built with React, Vite, Vitest, Testing Library, and lucide-react.
-- All editor controls and content panels are code-native.
-- Campaign frames are local static assets derived from the accepted editor
-  concept image for demo fidelity.
-- The app is intentionally client-only. Export, sharing, sourcing, AI
-  generation, and copy commands update realistic local editor state instead of
-  calling external services.
-
-## Product Requirements
-
-See [docs/PRD.md](docs/PRD.md) for the product requirements, target user,
-core workflows, functional requirements, success metrics, risks, and future
-enhancements. See [docs/UGC_AI_PEOPLE.md](docs/UGC_AI_PEOPLE.md) for the AI
-People workflow and test coverage.
-
-## Interactive Workflows
-
-- Rename the campaign from the top bar and watch saved status update.
-- Switch between 16:9, 9:16, and 1:1 preview targets.
-- Open Export or Share menus to queue a package or copy a review link.
-- Play, skip, mute, loop, toggle captions, scrub the timeline, and add CTA
-  markers at the current playhead.
-- Use AI Generate to choose a preset, enter a prompt, spend PixVerse credits,
-  and append a generated shot to the timeline.
-- Add, edit, and delete product hotspots directly from the hotspot panel.
-- Upload a model reference, select gender intent, cast a reusable creator, and
-  check consent readiness from the AI People workspace.
-- Navigate trend cards, source props, regenerate listing assets, switch listing
-  tabs, and copy generated commerce copy.
+- [Local video editor PRD](docs/PRD.md)
+- [AI Generate Studio legacy workflow](docs/AI_GENERATE_STUDIO.md)
+- [UGC AI People legacy workflow](docs/UGC_AI_PEOPLE.md)
+- [Filming review panel notes](docs/filming-review-panel.md)
