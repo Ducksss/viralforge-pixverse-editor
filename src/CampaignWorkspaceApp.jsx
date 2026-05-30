@@ -619,7 +619,7 @@ function CampaignVideoFrame({ activeShot, currentSeconds, isMuted, isPlaying, lo
     try {
       if (isPlaying) {
         const playResult = video.play?.();
-        playResult?.catch?.(() => {});
+        playResult?.catch?.(() => { });
       } else {
         video.pause?.();
       }
@@ -2002,10 +2002,10 @@ export default function App({ wizardData, activeDemoStep, onRepromptClick, onPub
         look: `${wizardData.character.style} style, natural window light`,
         voice: `${wizardData.character.style} UGC voice`
       };
-      
+
       // Register character image in assets map dynamically
       assets[wizardData.character.id] = wizardData.character.image;
-      
+
       return [newProfile, ...editorSnapshot.aiPeople.creatorProfiles];
     }
     return editorSnapshot.aiPeople.creatorProfiles;

@@ -141,6 +141,11 @@ function hydrateProjectMedia(project) {
   return {
     ...project,
     mediaAssets: project.mediaAssets.map((asset) => {
+      const wizardRequested =
+        typeof window !== "undefined" &&
+        (window.location.pathname === "/wizard" ||
+          new URLSearchParams(window.location.search).get("workspace") ===
+            "wizard");
       const seededAsset = seededAssetById.get(asset.id);
       const assetKey = asset.assetKey || seededAsset?.assetKey;
       const srcKey = asset.srcKey || seededAsset?.srcKey;
@@ -1310,5 +1315,12 @@ export default function App() {
       new URLSearchParams(window.location.search).get("workspace") === "local-nle"
     );
 
-  return standaloneEditorRequested ? <LocalNleEditorApp /> : <CampaignAppShell enableWizard={true} />;
+  const wizardRequested =
+    typeof window !== "undefined" &&
+    (
+      window.location.pathname === "/wizard" ||
+      new URLSearchParams(window.location.search).get("workspace") === "wizard"
+    );
+
+  return standaloneEditorRequested ? <LocalNleEditorApp /> : <CampaignAppShell enableWizard={wizardRequested} />;
 }
