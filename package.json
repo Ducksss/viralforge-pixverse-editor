@@ -1,0 +1,34 @@
+{
+  "name": "viralforge-pixverse-editor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A ViralForge Commerce PixVerse campaign editor demo for a 36-second skincare video workflow.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "pixverse",
+    "video-generation",
+    "campaign-editor",
+    "react",
+    "vite",
+    "ecommerce"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "jsdom": "^27.0.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "vite": "^7.1.9",
+    "vitest": "^3.2.4"
+  }
+}
