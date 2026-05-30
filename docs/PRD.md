@@ -12,7 +12,9 @@ The app is not a video generation tool. It is a product experience around an
 AI-generated video: sellers can review the assembled campaign, inspect shots,
 track product hotspots, get frame-level feedback, translate trends into useful
 creative direction, plan props, and prepare listing assets for commerce
-channels.
+channels. The AI People workspace adds pre-generation creator casting so
+sellers can upload or select licensed people references before creating UGC
+variants.
 
 ## 2. Track Fit
 
@@ -74,6 +76,8 @@ major areas:
 - Left navigation for campaign workflow modules
 - Top project bar with project title, saved state, aspect ratio, export, and
   share controls
+- AI People workspace for model-reference upload, gender intent, creator
+  casting, generation readiness, and consent guardrails
 - Main PixVerse video preview for the 36-second campaign
 - Vertical social preview for 9:16 short-form channels
 - Six-shot storyboard strip with timing and selected state
@@ -98,7 +102,18 @@ major areas:
 Expected result: the seller understands the complete campaign asset and how it
 will appear in social commerce contexts.
 
-### Flow 2: Inspect Shots
+### Flow 2: Prepare AI People
+
+1. Seller opens the AI People workspace.
+2. Seller uploads a model reference image.
+3. Seller chooses gender intent for the generated creator.
+4. Seller selects a reusable AI creator profile.
+5. Seller checks readiness and consent guardrails before generation.
+
+Expected result: the seller can cast a licensed UGC creator and verify that the
+people setup is ready before generating campaign variants.
+
+### Flow 3: Inspect Shots
 
 1. Seller selects a shot from the storyboard strip.
 2. The selected shot receives a visible active state.
@@ -108,7 +123,7 @@ will appear in social commerce contexts.
 Expected result: the seller can evaluate the campaign shot by shot instead of
 only watching the video passively.
 
-### Flow 3: Validate Product Hotspots
+### Flow 4: Validate Product Hotspots
 
 1. Seller opens the Product Hotspots panel.
 2. Seller sees purchase-relevant moments such as serum, dropper detail, and
@@ -117,7 +132,7 @@ only watching the video passively.
 
 Expected result: the video supports product discovery and purchase intent.
 
-### Flow 4: Prepare Props
+### Flow 5: Prepare Props
 
 1. Seller reviews the props sourcing checklist.
 2. Seller marks items complete as they are sourced.
@@ -126,7 +141,7 @@ Expected result: the video supports product discovery and purchase intent.
 Expected result: the seller can move from creative review to practical
 production planning.
 
-### Flow 5: Package Listing Assets
+### Flow 6: Package Listing Assets
 
 1. Seller reviews generated listing images.
 2. Seller checks product description and SEO keywords.
@@ -143,6 +158,20 @@ Expected result: the video campaign becomes a reusable commerce asset set.
 - Provide playback-style controls for play, skip, volume, loop, captions, and
   fullscreen presentation.
 - Preserve video as the central content component of the screen.
+
+### AI People
+
+- Show a UGC AI People workspace as a first-class sidebar destination.
+- Provide a model-reference upload control for people images.
+- Show uploaded filename and readiness state after a reference is selected.
+- Provide gender options for Woman, Man, and Non-binary.
+- Selecting gender must update local UI state.
+- Show at least three reusable creator profiles with name, gender, fit score,
+  role, language, voice, and consent status.
+- Selecting a creator must update the hero and selected-creator rail.
+- Show generation readiness with a derived completed-count label.
+- Show consent and usage guardrails before generation.
+- Show a timed UGC audition plan mapped to campaign moments.
 
 ### Shot Strip
 
@@ -234,7 +263,13 @@ Automated tests must verify:
 - Hotspot data contains the expected commerce moments.
 - Checklist progress is computed correctly.
 - Timeline markers are positioned deterministically.
+- The AI People model includes creator profiles, gender options, and readiness
+  data.
+- Upload readiness updates from 4/5 to 5/5 when a model reference is present.
 - The editor renders the primary workflow panels.
+- The AI People page renders upload, casting, readiness, and guardrail panels.
+- Uploading a model reference updates visible local UI state.
+- Selecting gender and creator profiles updates visible local UI state.
 - Selecting shot 2 updates frame feedback.
 - Checking the white marble tray updates checklist progress from 3/6 to 4/6.
 

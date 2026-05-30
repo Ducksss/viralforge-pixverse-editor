@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import {
+  BadgeCheck,
   BarChart3,
   Bell,
   CalendarDays,
+  Camera,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -12,6 +14,7 @@ import {
   Copy,
   Download,
   Edit3,
+  FileImage,
   Film,
   Home,
   Image,
@@ -29,12 +32,16 @@ import {
   Settings,
   ShoppingBag,
   ShoppingCart,
+  ShieldCheck,
   SkipForward,
   SlidersHorizontal,
   Sparkles,
   Star,
   Store,
   Trash2,
+  Upload,
+  UserRound,
+  Users,
   Volume2,
   VolumeX,
   WandSparkles,
@@ -48,6 +55,7 @@ import {
   editorSnapshot,
   formatSeconds,
   getChecklistProgress,
+  getPeopleReadiness,
   getShotAtTime,
   getVideoDuration,
 } from "./editorData.js";
@@ -58,6 +66,7 @@ const navIcons = {
   storyboard: Image,
   scheduler: CalendarDays,
   props: Store,
+  people: Users,
   editor: Film,
   listings: ShoppingBag,
   ugc: Inbox,
@@ -88,7 +97,7 @@ function DropdownMenu({ children, open }) {
   );
 }
 
-function Sidebar({ balance }) {
+function Sidebar({ activePage, balance, onNavigate }) {
   return (
     <aside className="sidebar">
       <div className="brand-row">
@@ -105,8 +114,17 @@ function Sidebar({ balance }) {
       <nav className="nav-stack" aria-label="ViralForge workspace navigation">
         {editorSnapshot.navItems.map((item) => {
           const NavIcon = navIcons[item.id] || Layers;
+          const active = activePage === item.id;
+
           return (
-            <button key={item.id} className={`nav-item ${item.active ? "is-active" : ""}`} type="button">
+            <button
+              aria-current={active ? "page" : undefined}
+              aria-label={`${item.label} ${item.caption}`}
+              key={item.id}
+              className={`nav-item ${active ? "is-active" : ""}`}
+              onClick={() => onNavigate(item.id)}
+              type="button"
+            >
               <NavIcon size={19} />
               <span className="nav-copy">
                 <strong>{item.label}</strong>
@@ -893,6 +911,321 @@ function ListingAssets({ listingTab, listingVersion, onCopy, onRegenerate, setLi
   );
 }
 
+function PeopleHero({ selectedPerson, selectedGender }) {
+  return (
+    <Panel className="people-hero-panel">
+      <div className="people-hero-copy">
+        <h2>UGC AI People</h2>
+        <p>
+          Build a licensed creator for the Summer Glow campaign, then carry that person into
+          PixVerse testimonial shots, social cuts, and listing assets.
+        </p>
+        <div className="people-stepper" aria-label="AI People workflow">
+          {editorSnapshot.aiPeople.uploadRequirements.map((requirement, index) => (
+            <span key={requirement}>
+              <b>{index + 1}</b>
+              {requirement}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="people-hero-card">
+        <img src={assets[selectedPerson.asset]} alt={`${selectedPerson.name} campaign reference`} />
+        <div>
+          <strong data-testid="selected-person-name">{selectedPerson.name}</strong>
+          <small>{selectedPerson.role} - {selectedPerson.locale}</small>
+          <span>Creator gender: {selectedGender}</span>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function ModelUploadPanel({ uploadedModelName, onUploadReference, selectedPerson }) {
+  const ready = Boolean(uploadedModelName);
+
+  return (
+    <Panel className="people-upload-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>Model Reference</h3>
+          <p>{ready ? "Reference ready" : "Waiting for people reference"}</p>
+        </div>
+        <span className={`reference-pill ${ready ? "is-ready" : ""}`}>
+          <FileImage size={14} />
+          {ready ? "Uploaded" : "Needed"}
+        </span>
+      </div>
+      <label className="people-dropzone" htmlFor="people-reference-upload">
+        <input
+          accept="image/png,image/jpeg,image/webp"
+          aria-label="Upload model reference"
+          className="sr-only"
+          id="people-reference-upload"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+
+            if (file) {
+              onUploadReference(file.name);
+            }
+          }}
+          type="file"
+        />
+        <span className="upload-glyph"><Upload size={22} /></span>
+        <strong>{uploadedModelName || "Upload model reference"}</strong>
+        <small>PNG, JPG, WEBP - clear face, natural light, release on file</small>
+      </label>
+      <div className="reference-preview-row">
+        <img src={assets[selectedPerson.asset]} alt={`${selectedPerson.name} reference preview`} />
+        <div>
+          <strong>{selectedPerson.look}</strong>
+          <small>{selectedPerson.consent}</small>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function GenderPanel({ selectedGender, onSelectGender }) {
+  return (
+    <Panel className="gender-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>Gender</h3>
+          <p>Gender intent: {selectedGender}</p>
+        </div>
+        <UserRound size={18} />
+      </div>
+      <div className="gender-segmented" role="group" aria-label="Gender">
+        {editorSnapshot.aiPeople.genderOptions.map((option) => (
+          <button
+            aria-label={option.label}
+            aria-pressed={selectedGender === option.label}
+            className={selectedGender === option.label ? "is-selected" : ""}
+            key={option.id}
+            onClick={() => onSelectGender(option.label)}
+            type="button"
+          >
+            <strong>{option.label}</strong>
+            <small>{option.tone}</small>
+          </button>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+function CreatorCasting({ selectedPersonId, onSelectPerson }) {
+  return (
+    <Panel className="creator-casting-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>Creator Casting</h3>
+          <p>Reusable AI people for UGC campaign variants</p>
+        </div>
+        <button className="compact-action" type="button"><Sparkles size={14} />Generate audition</button>
+      </div>
+      <div className="creator-grid">
+        {editorSnapshot.aiPeople.creatorProfiles.map((person) => {
+          const selected = person.id === selectedPersonId;
+
+          return (
+            <article className={`creator-card ${selected ? "is-selected" : ""}`} key={person.id}>
+              <img src={assets[person.asset]} alt={`${person.name} creator frame`} />
+              <div className="creator-card-copy">
+                <div>
+                  <strong>{person.name}</strong>
+                  <small>{person.role}</small>
+                </div>
+                <span>{person.gender}</span>
+              </div>
+              <dl>
+                <div>
+                  <dt>Fit</dt>
+                  <dd>{person.fitScore}%</dd>
+                </div>
+                <div>
+                  <dt>Voice</dt>
+                  <dd>{person.voice}</dd>
+                </div>
+                <div>
+                  <dt>Language</dt>
+                  <dd>{person.language}</dd>
+                </div>
+              </dl>
+              <button
+                aria-label={`Use ${person.name}`}
+                className="use-person-button"
+                onClick={() => onSelectPerson(person.id)}
+                type="button"
+              >
+                {selected ? <Check size={14} /> : <Plus size={14} />}
+                {selected ? "Selected" : "Use"}
+              </button>
+            </article>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+function GenerationSettingsPanel() {
+  return (
+    <Panel className="generation-settings-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>People Generation Controls</h3>
+          <p>Locks that keep UGC shots consistent across the campaign</p>
+        </div>
+        <Camera size={18} />
+      </div>
+      <div className="settings-grid">
+        {editorSnapshot.aiPeople.generationSettings.map((setting) => (
+          <div className="setting-tile" key={setting.label}>
+            <span>{setting.label}</span>
+            <strong>{setting.value}</strong>
+            <small>{setting.detail}</small>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+function SelectedPersonPanel({ selectedPerson }) {
+  return (
+    <Panel className="selected-person-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>Selected Creator</h3>
+          <p>Creator fit: {selectedPerson.fitScore}%</p>
+        </div>
+        <BadgeCheck size={18} />
+      </div>
+      <div className="selected-person-card">
+        <img src={assets[selectedPerson.asset]} alt={`${selectedPerson.name} selected creator`} />
+        <div>
+          <strong>{selectedPerson.name}</strong>
+          <small>{selectedPerson.gender} - {selectedPerson.language}</small>
+          <span>{selectedPerson.consent}</span>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function ReadinessPanel({ referenceUploaded }) {
+  const readiness = getPeopleReadiness(editorSnapshot.aiPeople, { referenceUploaded });
+
+  return (
+    <Panel className="readiness-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>Generation Readiness</h3>
+          <p>PixVerse people setup</p>
+        </div>
+        <strong className="readiness-score">{readiness.label}</strong>
+      </div>
+      <div className="readiness-list">
+        {editorSnapshot.aiPeople.readinessChecklist.map((item) => {
+          const done = item.id === "reference" ? referenceUploaded || item.done : item.done;
+
+          return (
+            <div className={`readiness-row ${done ? "is-done" : ""}`} key={item.id}>
+              <span><Check size={12} /></span>
+              <strong>{item.label}</strong>
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+function GuardrailsPanel() {
+  return (
+    <Panel className="guardrails-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>Consent & Usage Guardrails</h3>
+          <p>Export rules for AI UGC creators</p>
+        </div>
+        <ShieldCheck size={18} />
+      </div>
+      <ul>
+        {editorSnapshot.aiPeople.guardrails.map((guardrail) => (
+          <li key={guardrail}><Check size={13} />{guardrail}</li>
+        ))}
+      </ul>
+    </Panel>
+  );
+}
+
+function AuditionPlanPanel({ selectedPerson }) {
+  return (
+    <Panel className="audition-plan-panel">
+      <div className="people-panel-heading">
+        <div>
+          <h3>UGC Audition Plan</h3>
+          <p>{selectedPerson.name} mapped to campaign timing</p>
+        </div>
+      </div>
+      <div className="audition-list">
+        {editorSnapshot.aiPeople.auditionScripts.map((script) => (
+          <div className="audition-row" key={script.id}>
+            <span>{script.duration}</span>
+            <div>
+              <strong>{script.title}</strong>
+              <small>{script.line}</small>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+function PeopleWorkspace({
+  selectedGender,
+  selectedPersonId,
+  uploadedModelName,
+  onSelectGender,
+  onSelectPerson,
+  onUploadReference,
+}) {
+  const selectedPerson = useMemo(
+    () =>
+      editorSnapshot.aiPeople.creatorProfiles.find((person) => person.id === selectedPersonId) ||
+      editorSnapshot.aiPeople.creatorProfiles[0],
+    [selectedPersonId],
+  );
+
+  return (
+    <main className="people-page">
+      <section className="people-main">
+        <PeopleHero selectedPerson={selectedPerson} selectedGender={selectedGender} />
+        <div className="people-builder-grid">
+          <ModelUploadPanel
+            onUploadReference={onUploadReference}
+            selectedPerson={selectedPerson}
+            uploadedModelName={uploadedModelName}
+          />
+          <GenderPanel selectedGender={selectedGender} onSelectGender={onSelectGender} />
+        </div>
+        <CreatorCasting selectedPersonId={selectedPersonId} onSelectPerson={onSelectPerson} />
+        <GenerationSettingsPanel />
+      </section>
+      <aside className="people-right-rail">
+        <SelectedPersonPanel selectedPerson={selectedPerson} />
+        <ReadinessPanel referenceUploaded={Boolean(uploadedModelName)} />
+        <GuardrailsPanel />
+        <AuditionPlanPanel selectedPerson={selectedPerson} />
+      </aside>
+    </main>
+  );
+}
+
 function RightRail({
   checklist,
   listingTab,
@@ -1054,6 +1387,7 @@ function MainEditor({
 
 export default function App() {
   const [activePresetId, setActivePresetId] = useState(editorSnapshot.generationPresets[0].id);
+  const [activePage, setActivePage] = useState(editorSnapshot.defaultPage);
   const [activeTab, setActiveTab] = useState("editor");
   const [aspectRatio, setAspectRatio] = useState(editorSnapshot.video.aspectRatio);
   const [balance, setBalance] = useState(editorSnapshot.video.balance);
@@ -1077,12 +1411,15 @@ export default function App() {
   const [projectTitle, setProjectTitle] = useState(editorSnapshot.project.title);
   const [quality, setQuality] = useState(editorSnapshot.video.quality);
   const [safeEnabled, setSafeEnabled] = useState(true);
+  const [selectedGender, setSelectedGender] = useState(editorSnapshot.aiPeople.defaultGender);
+  const [selectedPersonId, setSelectedPersonId] = useState(editorSnapshot.aiPeople.defaultPersonId);
   const [selectedShotId, setSelectedShotId] = useState(editorSnapshot.selectedShotId);
   const [shots, setShots] = useState(editorSnapshot.shots);
   const [statusMessage, setStatusMessage] = useState("Saved");
   const [timelineEvents, setTimelineEvents] = useState(editorSnapshot.timelineEvents);
   const [titleDraft, setTitleDraft] = useState(editorSnapshot.project.title);
   const [trendIndex, setTrendIndex] = useState(0);
+  const [uploadedModelName, setUploadedModelName] = useState("");
 
   const duration = getVideoDuration(shots);
   const selectedShot = useMemo(
@@ -1202,9 +1539,16 @@ export default function App() {
     setSavedMessage(option === "Copy review link" ? "Review link copied" : `${option} ready`);
   }
 
+  function navigateWorkspace(id) {
+    if (id === "editor" || id === "people") {
+      setActivePage(id);
+      setOpenMenu(null);
+    }
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar balance={balance} />
+      <Sidebar activePage={activePage} balance={balance} onNavigate={navigateWorkspace} />
       <div className="workspace">
         <Topbar
           aspectRatio={aspectRatio}
@@ -1228,88 +1572,101 @@ export default function App() {
           statusMessage={statusMessage}
           titleDraft={titleDraft}
         />
-        <div className="content-shell">
-          <MainEditor
-            activePresetId={activePresetId}
-            activeTab={activeTab}
-            aspectRatio={aspectRatio}
-            balance={balance}
-            captionsEnabled={captionsEnabled}
-            compareEnabled={compareEnabled}
-            currentSeconds={currentSeconds}
-            duration={duration}
-            editingHotspotId={editingHotspotId}
-            fullscreen={fullscreen}
-            generationPrompt={generationPrompt}
-            hotspotDraft={hotspotDraft}
-            hotspots={hotspots}
-            isMuted={isMuted}
-            isPlaying={isPlaying}
-            loopEnabled={loopEnabled}
-            model={model}
-            onAddHotspot={addHotspot}
-            onAddTimelineEvent={addTimelineEvent}
-            onDeleteHotspot={deleteHotspot}
-            onEditHotspot={editHotspot}
-            onGenerate={generateShot}
-            onModelChange={(option) => {
-              setModel(option);
-              setOpenMenu(null);
-              setSavedMessage(`${option} selected`);
-            }}
-            onQualityChange={(option) => {
-              setQuality(option);
-              setOpenMenu(null);
-              setSavedMessage(`${option} output selected`);
-            }}
-            onSafeToggle={() => {
-              setSafeEnabled((value) => !value);
-              setSavedMessage(safeEnabled ? "Manual review enabled" : "AI Safe checks enabled");
-            }}
-            onSaveHotspot={saveHotspot}
-            onScrub={scrubTo}
-            onSelectShot={selectShot}
-            onSkip={skipToNextShot}
-            onToggleCaptions={() => {
-              setCaptionsEnabled((value) => !value);
-              setSavedMessage(captionsEnabled ? "Captions disabled" : "Captions enabled");
-            }}
-            onToggleCompare={() => setCompareEnabled((value) => !value)}
-            onToggleFullscreen={() => setFullscreen((value) => !value)}
-            onToggleLoop={() => setLoopEnabled((value) => !value)}
-            onToggleMute={() => setIsMuted((value) => !value)}
-            onTogglePlay={() => setIsPlaying((value) => !value)}
-            openMenu={openMenu}
-            quality={quality}
-            safeEnabled={safeEnabled}
-            selectedShot={selectedShot}
-            selectedShotId={selectedShotId}
-            setActivePresetId={setActivePresetId}
-            setActiveTab={setActiveTab}
-            setGenerationPrompt={setGenerationPrompt}
-            setHotspotDraft={setHotspotDraft}
-            setOpenMenu={setOpenMenu}
-            shots={shots}
-            timelineEvents={timelineEvents}
-          />
-          <RightRail
-            checklist={checklist}
-            listingTab={listingTab}
-            listingVersion={listingVersion}
-            onCopyListing={() => setSavedMessage("Listing assets copied")}
-            onRegenerateListing={() => {
-              setListingVersion((value) => value + 1);
-              setSavedMessage("Listing assets regenerated");
-            }}
-            onSelectVideo={(video) => setSavedMessage(`${video.title} used as reference`)}
-            onSourceProp={(item) => setSavedMessage(`Sourcing ${item.label} from ${item.vendor}`)}
-            onToggleProp={toggleProp}
-            onTrendSignal={(signal) => setSavedMessage(`Trend signal saved: ${signal}`)}
-            selectedShot={selectedShot}
-            setListingTab={setListingTab}
-            setTrendIndex={setTrendIndex}
-            trendIndex={trendIndex}
-          />
+        <div className={`content-shell ${activePage === "people" ? "people-content-shell" : ""}`}>
+          {activePage === "people" ? (
+            <PeopleWorkspace
+              onSelectGender={setSelectedGender}
+              onSelectPerson={setSelectedPersonId}
+              onUploadReference={setUploadedModelName}
+              selectedGender={selectedGender}
+              selectedPersonId={selectedPersonId}
+              uploadedModelName={uploadedModelName}
+            />
+          ) : (
+            <>
+              <MainEditor
+                activePresetId={activePresetId}
+                activeTab={activeTab}
+                aspectRatio={aspectRatio}
+                balance={balance}
+                captionsEnabled={captionsEnabled}
+                compareEnabled={compareEnabled}
+                currentSeconds={currentSeconds}
+                duration={duration}
+                editingHotspotId={editingHotspotId}
+                fullscreen={fullscreen}
+                generationPrompt={generationPrompt}
+                hotspotDraft={hotspotDraft}
+                hotspots={hotspots}
+                isMuted={isMuted}
+                isPlaying={isPlaying}
+                loopEnabled={loopEnabled}
+                model={model}
+                onAddHotspot={addHotspot}
+                onAddTimelineEvent={addTimelineEvent}
+                onDeleteHotspot={deleteHotspot}
+                onEditHotspot={editHotspot}
+                onGenerate={generateShot}
+                onModelChange={(option) => {
+                  setModel(option);
+                  setOpenMenu(null);
+                  setSavedMessage(`${option} selected`);
+                }}
+                onQualityChange={(option) => {
+                  setQuality(option);
+                  setOpenMenu(null);
+                  setSavedMessage(`${option} output selected`);
+                }}
+                onSafeToggle={() => {
+                  setSafeEnabled((value) => !value);
+                  setSavedMessage(safeEnabled ? "Manual review enabled" : "AI Safe checks enabled");
+                }}
+                onSaveHotspot={saveHotspot}
+                onScrub={scrubTo}
+                onSelectShot={selectShot}
+                onSkip={skipToNextShot}
+                onToggleCaptions={() => {
+                  setCaptionsEnabled((value) => !value);
+                  setSavedMessage(captionsEnabled ? "Captions disabled" : "Captions enabled");
+                }}
+                onToggleCompare={() => setCompareEnabled((value) => !value)}
+                onToggleFullscreen={() => setFullscreen((value) => !value)}
+                onToggleLoop={() => setLoopEnabled((value) => !value)}
+                onToggleMute={() => setIsMuted((value) => !value)}
+                onTogglePlay={() => setIsPlaying((value) => !value)}
+                openMenu={openMenu}
+                quality={quality}
+                safeEnabled={safeEnabled}
+                selectedShot={selectedShot}
+                selectedShotId={selectedShotId}
+                setActivePresetId={setActivePresetId}
+                setActiveTab={setActiveTab}
+                setGenerationPrompt={setGenerationPrompt}
+                setHotspotDraft={setHotspotDraft}
+                setOpenMenu={setOpenMenu}
+                shots={shots}
+                timelineEvents={timelineEvents}
+              />
+              <RightRail
+                checklist={checklist}
+                listingTab={listingTab}
+                listingVersion={listingVersion}
+                onCopyListing={() => setSavedMessage("Listing assets copied")}
+                onRegenerateListing={() => {
+                  setListingVersion((value) => value + 1);
+                  setSavedMessage("Listing assets regenerated");
+                }}
+                onSelectVideo={(video) => setSavedMessage(`${video.title} used as reference`)}
+                onSourceProp={(item) => setSavedMessage(`Sourcing ${item.label} from ${item.vendor}`)}
+                onToggleProp={toggleProp}
+                onTrendSignal={(signal) => setSavedMessage(`Trend signal saved: ${signal}`)}
+                selectedShot={selectedShot}
+                setListingTab={setListingTab}
+                setTrendIndex={setTrendIndex}
+                trendIndex={trendIndex}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>

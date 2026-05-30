@@ -7,6 +7,7 @@ import {
   editorSnapshot,
   formatSeconds,
   getChecklistProgress,
+  getPeopleReadiness,
   getShotAtTime,
 } from "./editorData.js";
 
@@ -28,6 +29,31 @@ describe("editorSnapshot", () => {
       completed: 3,
       total: 6,
       label: "3/6",
+    });
+  });
+
+  it("models reusable AI people with upload readiness", () => {
+    expect(editorSnapshot.defaultPage).toBe("people");
+    expect(editorSnapshot.aiPeople.defaultGender).toBe("Woman");
+    expect(editorSnapshot.aiPeople.creatorProfiles.map((person) => person.name)).toEqual([
+      "Maya Chen",
+      "Daniel Ong",
+      "Jordan Lee",
+    ]);
+    expect(editorSnapshot.aiPeople.genderOptions.map((option) => option.label)).toEqual([
+      "Woman",
+      "Man",
+      "Non-binary",
+    ]);
+    expect(getPeopleReadiness(editorSnapshot.aiPeople)).toEqual({
+      completed: 4,
+      total: 5,
+      label: "4/5",
+    });
+    expect(getPeopleReadiness(editorSnapshot.aiPeople, { referenceUploaded: true })).toEqual({
+      completed: 5,
+      total: 5,
+      label: "5/5",
     });
   });
 

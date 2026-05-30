@@ -26,6 +26,7 @@ export const editorSnapshot = {
   },
   exportOptions: ["Publish package", "Download MP4", "Listing image pack", "Creator brief PDF"],
   shareOptions: ["Copy review link", "Invite collaborator", "Send to Shopee team"],
+  defaultPage: "people",
   selectedShotId: "shot-3",
   navItems: [
     { id: "trend", label: "Trend Radar", caption: "Live trends & alerts", badge: "NEW" },
@@ -33,11 +34,118 @@ export const editorSnapshot = {
     { id: "storyboard", label: "Storyboard", caption: "Plan your shots" },
     { id: "scheduler", label: "Shoot Scheduler", caption: "Calendar & call sheets" },
     { id: "props", label: "Props", caption: "Find & source props" },
-    { id: "editor", label: "Editor", caption: "Edit & generate", active: true },
+    { id: "people", label: "AI People", caption: "Models & consent", badge: "UGC" },
+    { id: "editor", label: "Editor", caption: "Edit & generate" },
     { id: "listings", label: "Listings", caption: "Auto content & SEO" },
     { id: "ugc", label: "UGC Inbox", caption: "Reviews & clips", badge: "12" },
     { id: "analytics", label: "Analytics", caption: "Track & optimize" },
   ],
+  aiPeople: {
+    defaultPersonId: "maya-chen",
+    defaultGender: "Woman",
+    uploadRequirements: [
+      "Clear face reference",
+      "Signed model release",
+      "Neutral expression pass",
+      "No minors or private identity",
+    ],
+    genderOptions: [
+      {
+        id: "woman",
+        label: "Woman",
+        tone: "Soft authority, skincare routine host",
+      },
+      {
+        id: "man",
+        label: "Man",
+        tone: "Direct demo, practical buyer confidence",
+      },
+      {
+        id: "non-binary",
+        label: "Non-binary",
+        tone: "Inclusive creator voice, candid product proof",
+      },
+    ],
+    creatorProfiles: [
+      {
+        id: "maya-chen",
+        name: "Maya Chen",
+        gender: "Woman",
+        role: "Skincare creator",
+        locale: "Singapore",
+        language: "English + Mandarin",
+        fitScore: 94,
+        consent: "Model release signed",
+        asset: "shotModel",
+        look: "Natural glow, warm bathroom light",
+        voice: "Calm routine walkthrough",
+      },
+      {
+        id: "daniel-ong",
+        name: "Daniel Ong",
+        gender: "Man",
+        role: "Commerce reviewer",
+        locale: "Malaysia",
+        language: "English + Malay",
+        fitScore: 91,
+        consent: "Licensed marketplace talent",
+        asset: "shotSocial",
+        look: "Clean studio, direct-to-camera proof",
+        voice: "Fast, practical product verdict",
+      },
+      {
+        id: "jordan-lee",
+        name: "Jordan Lee",
+        gender: "Non-binary",
+        role: "Routine storyteller",
+        locale: "Singapore",
+        language: "English",
+        fitScore: 89,
+        consent: "Creator likeness approved",
+        asset: "shotModel",
+        look: "Candid shelfie setup, soft daylight",
+        voice: "Friendly myth-busting explainer",
+      },
+    ],
+    readinessChecklist: [
+      { id: "reference", label: "People reference uploaded", done: false },
+      { id: "release", label: "Usage release attached", done: true },
+      { id: "gender", label: "Gender intent selected", done: true },
+      { id: "voice", label: "Voice and language locked", done: true },
+      { id: "disclosure", label: "AI creator disclosure enabled", done: true },
+    ],
+    generationSettings: [
+      { label: "Face lock", value: "86%", detail: "Stable across all six shots" },
+      { label: "Wardrobe", value: "Cream tank + robe", detail: "Matches clean skincare routine" },
+      { label: "Shot mode", value: "UGC testimonial", detail: "Phone-native framing with product holds" },
+    ],
+    auditionScripts: [
+      {
+        id: "hook",
+        title: "First-second hook",
+        duration: "0:00 - 0:05",
+        line: "I tested this vitamin C serum before my morning commute.",
+      },
+      {
+        id: "texture",
+        title: "Texture proof",
+        duration: "0:05 - 0:14",
+        line: "It sinks in fast, so makeup does not slide around after.",
+      },
+      {
+        id: "conversion",
+        title: "Commerce close",
+        duration: "0:29 - 0:36",
+        line: "Save the listing if dullness is your main skin concern.",
+      },
+    ],
+    guardrails: [
+      "Use only uploaded or licensed likeness references.",
+      "Keep AI creator disclosure on every exported UGC cut.",
+      "Block age-down prompts and private-person impersonation.",
+      "Require brand-safe wardrobe before PixVerse generation.",
+    ],
+  },
   shots: [
     { id: "shot-1", number: 1, start: "0:00", startSeconds: 0, durationSeconds: 5, title: "Citrus product hook", asset: "shotProduct" },
     { id: "shot-2", number: 2, start: "0:05", startSeconds: 5, durationSeconds: 6, title: "Dropper texture", asset: "shotDropper" },
@@ -193,6 +301,23 @@ function formatShotStart(seconds) {
 export function getChecklistProgress(items) {
   const completed = items.filter((item) => item.done).length;
   const total = items.length;
+
+  return {
+    completed,
+    total,
+    label: `${completed}/${total}`,
+  };
+}
+
+export function getPeopleReadiness(aiPeople, options = {}) {
+  const completed = aiPeople.readinessChecklist.filter((item) => {
+    if (item.id === "reference") {
+      return Boolean(options.referenceUploaded) || item.done;
+    }
+
+    return item.done;
+  }).length;
+  const total = aiPeople.readinessChecklist.length;
 
   return {
     completed,

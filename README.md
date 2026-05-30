@@ -6,7 +6,9 @@ TRAE x PixVerse Video Generation Track.
 The app models a 36-second Summer Glow skincare campaign with a PixVerse-style
 video preview, vertical social preview, shot strip, waveform timeline, product
 hotspots, AI frame feedback, trend translation, prop sourcing checklist, and
-auto-generated listing assets.
+auto-generated listing assets. It also includes a UGC AI People workspace for
+uploading a model reference, selecting gender intent, casting reusable AI
+creator profiles, and checking consent readiness before generation.
 
 ## Run Locally
 
@@ -33,7 +35,8 @@ npm run build
 - Functionality beyond playback: project renaming, export/share commands,
   aspect-ratio switching, playback controls, shot selection, timeline markers,
   AI shot generation, frame feedback comparison, editable hotspots, sourcing
-  checklist progress, trend guidance, social preview, and listing asset review
+  checklist progress, trend guidance, social preview, AI people setup, and
+  listing asset review
 
 ## Implementation Notes
 
@@ -49,7 +52,8 @@ npm run build
 
 See [docs/PRD.md](docs/PRD.md) for the product requirements, target user,
 core workflows, functional requirements, success metrics, risks, and future
-enhancements.
+enhancements. See [docs/UGC_AI_PEOPLE.md](docs/UGC_AI_PEOPLE.md) for the AI
+People workflow and test coverage.
 
 ## Interactive Workflows
 
@@ -61,5 +65,7 @@ enhancements.
 - Use AI Generate to choose a preset, enter a prompt, spend PixVerse credits,
   and append a generated shot to the timeline.
 - Add, edit, and delete product hotspots directly from the hotspot panel.
+- Upload a model reference, select gender intent, cast a reusable creator, and
+  check consent readiness from the AI People workspace.
 - Navigate trend cards, source props, regenerate listing assets, switch listing
   tabs, and copy generated commerce copy.
