@@ -1,4 +1,4 @@
-import { AbsoluteFill, Img, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, Sequence, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { getClipAtPlayhead } from "../editor/timeline.js";
 
 function getAsset(project, clip) {
@@ -19,10 +19,28 @@ export function EditorComposition({ project }) {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
+  const mediaSrc = asset?.objectUrl || asset?.src;
+  const clipStartFrame = Math.round((clip?.startSeconds || 0) * fps);
+  const clipDurationFrames = Math.max(1, Math.round((clip?.durationSeconds || 0) * fps));
+  const sourceStartFrame = Math.round((clip?.sourceInSeconds || 0) * fps);
 
   return (
     <AbsoluteFill style={{ background: "#07090d", color: "white", overflow: "hidden" }}>
-      {asset?.posterSrc ? (
+      {mediaSrc && asset?.kind === "video" && clip ? (
+        <Sequence from={clipStartFrame} durationInFrames={clipDurationFrames} key={clip.id}>
+          <Video
+            muted
+            src={mediaSrc}
+            startFrom={sourceStartFrame}
+            style={{
+              height: "100%",
+              objectFit: "cover",
+              transform: `scale(${subtleZoom})`,
+              width: "100%",
+            }}
+          />
+        </Sequence>
+      ) : asset?.posterSrc ? (
         <Img
           src={asset.posterSrc}
           style={{

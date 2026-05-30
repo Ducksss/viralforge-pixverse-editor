@@ -44,7 +44,7 @@ or server rendering in v1.
 ## 5. Core User Flow
 
 1. Seller opens the editor at `/`.
-2. Seller picks seeded sample clips or imports local video/audio.
+2. Seller picks bundled real MP4 cuts from `src/assets/video/` or imports local video/audio.
 3. Seller drags clips from the media pool into the timeline.
 4. Seller reorders clips, selects clips, and trims source in/out.
 5. Seller chooses a music bed and edits music volume/start.
@@ -57,7 +57,7 @@ or server rendering in v1.
 
 ### Media Pool
 
-- Show deterministic seeded video clips and music beds.
+- Show deterministic real-footage video cuts and music beds.
 - Allow local video/audio import.
 - Probe media metadata with Mediabunny when possible.
 - Fall back to safe editable placeholder metadata when metadata parsing fails.
@@ -91,7 +91,7 @@ or server rendering in v1.
 
 - Use `@remotion/player` for in-browser preview.
 - Render the same project state used by export.
-- Show seeded media poster frames or upload placeholders.
+- Show real media poster frames, video playback, or upload placeholders.
 - Render safe zones and CTA overlay.
 - Respect project aspect dimensions.
 
@@ -132,7 +132,7 @@ or server rendering in v1.
 
 Core types live in `src/editor/timeline.js` as JSDoc typedefs:
 
-- `MediaAsset`: seeded, uploaded, or generated media metadata.
+- `MediaAsset`: bundled real-footage, uploaded, or generated media metadata.
 - `TimelineClip`: a placed clip with source in/out and gapless start time.
 - `MusicTrack`: selected music asset, enabled state, start trim, and volume.
 - `TextOverlay`: CTA text, timing, and position.
@@ -156,7 +156,7 @@ Coverage expectations:
 - Media helpers: mocked files and mocked Mediabunny metadata responses.
 - Export orchestration: unsupported codecs, cancel path, progress events, and
   successful MP4 blob result.
-- UI: sample import/add, reorder, trim, music selection, CTA editing,
+- UI: real media import/add, reorder, trim, music selection, CTA editing,
   persistence/reload, upload reselect placeholder, and export status.
 - Legacy campaign workspace: preserved `/campaign` behavior.
 

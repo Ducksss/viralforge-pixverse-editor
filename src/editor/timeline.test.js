@@ -22,8 +22,8 @@ describe("timeline project helpers", () => {
     expect(project.fps).toBe(30);
     expect(project.mediaAssets.some((asset) => asset.kind === "video")).toBe(true);
     expect(project.mediaAssets.some((asset) => asset.kind === "audio")).toBe(true);
-    expect(project.timelineClips.map((clip) => clip.startSeconds)).toEqual([0, 5, 11, 17]);
-    expect(computeTimelineDuration(project)).toBe(23);
+    expect(project.timelineClips.map((clip) => clip.startSeconds)).toEqual([0, 5, 10, 15]);
+    expect(computeTimelineDuration(project)).toBe(20);
   });
 
   it("adds clips, reorders them, trims with bounds, and resolves playhead clips", () => {
@@ -32,9 +32,9 @@ describe("timeline project helpers", () => {
 
     expect(project.timelineClips.at(-1)).toMatchObject({
       assetId: "sample-social-proof",
-      startSeconds: 23,
-      sourceInSeconds: 0,
-      sourceOutSeconds: 6,
+      startSeconds: 20,
+      sourceInSeconds: 5,
+      sourceOutSeconds: 10,
     });
 
     project = reorderTimelineClip(project, "clip-creator-proof", "clip-citrus-hook");
@@ -43,9 +43,9 @@ describe("timeline project helpers", () => {
       "clip-citrus-hook",
       "clip-dropper-texture",
       "clip-ingredient-bridge",
-      "clip-social-proof",
+      "clip-ingredient-close-read",
     ]);
-    expect(project.timelineClips.map((clip) => clip.startSeconds)).toEqual([0, 6, 11, 17, 23]);
+    expect(project.timelineClips.map((clip) => clip.startSeconds)).toEqual([0, 5, 10, 15, 20]);
 
     project = trimTimelineClip(project, "clip-creator-proof", {
       sourceInSeconds: 1.25,

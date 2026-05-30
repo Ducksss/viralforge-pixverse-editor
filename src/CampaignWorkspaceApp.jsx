@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -48,6 +48,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 import { assets } from "./assetMap.js";
+import { CampaignNleBay } from "./CampaignNleBay.jsx";
 import {
   buildTimelineMarkers,
   createAuditionShot,
@@ -501,13 +502,21 @@ function VideoPreview({
   onToggleLoop,
   onToggleMute,
   onTogglePlay,
+  shots,
 }) {
   const progress = duration > 0 ? Math.min(100, (currentSeconds / duration) * 100) : 0;
+  const activeShot = getShotAtTime(shots, currentSeconds);
 
   return (
     <Panel className={`video-panel ${fullscreen ? "is-fullscreen" : ""}`}>
       <div className="preview-stage">
-        <img src={assets.mainFrame} alt="PixVerse skincare campaign preview frame" />
+        <CampaignVideoFrame
+          activeShot={activeShot}
+          currentSeconds={currentSeconds}
+          isMuted={isMuted}
+          isPlaying={isPlaying}
+          loopEnabled={loopEnabled}
+        />
         <div className="preview-badge">
           <span className={isPlaying ? "is-live" : ""} />
           {isPlaying ? "Playing" : "Preview"} {duration}s
@@ -563,7 +572,90 @@ function VideoPreview({
   );
 }
 
-function SocialPreview({ aspectRatio }) {
+function CampaignVideoFrame({ activeShot, currentSeconds, isMuted, isPlaying, loopEnabled }) {
+  const videoRef = useRef(null);
+  const videoSrc = activeShot?.videoAsset ? assets[activeShot.videoAsset] : null;
+  const posterSrc = activeShot?.asset ? assets[activeShot.asset] : assets.mainFrame;
+  const sourceSeconds = Math.max(
+    0,
+    (activeShot?.videoStartSeconds || 0) + (currentSeconds - (activeShot?.startSeconds || 0)),
+  );
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) {
+      return;
+    }
+
+    try {
+      if (Number.isFinite(sourceSeconds) && Math.abs((video.currentTime || 0) - sourceSeconds) > 0.2) {
+        video.currentTime = sourceSeconds;
+      }
+    } catch {
+      // Browser media seeking can be temporarily unavailable before metadata loads.
+    }
+  }, [sourceSeconds, videoSrc]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) {
+      return;
+    }
+
+    try {
+      if (isPlaying) {
+        const playResult = video.play?.();
+        playResult?.catch?.(() => {});
+      } else {
+        video.pause?.();
+      }
+    } catch {
+      // jsdom and some autoplay policies reject media methods; the visible frame still renders.
+    }
+  }, [isPlaying, videoSrc]);
+
+  if (!videoSrc) {
+    return <img src={posterSrc} alt="PixVerse skincare campaign preview frame" />;
+  }
+
+  return (
+    <video
+      key={videoSrc}
+      ref={videoRef}
+      aria-label={`${activeShot?.title || "Campaign"} source video`}
+      loop={loopEnabled}
+      muted={isMuted}
+      playsInline
+      poster={posterSrc}
+      preload="metadata"
+      src={videoSrc}
+    />
+  );
+}
+
+function ShotMedia({ shot }) {
+  const posterSrc = assets[shot.asset];
+  const videoSrc = shot.videoAsset ? assets[shot.videoAsset] : null;
+
+  if (!videoSrc) {
+    return <img src={posterSrc} alt={shot.title} />;
+  }
+
+  return (
+    <video
+      aria-label={`${shot.title} source video`}
+      muted
+      playsInline
+      poster={posterSrc}
+      preload="metadata"
+      src={videoSrc}
+    />
+  );
+}
+
+function SocialPreview({ aspectRatio, currentSeconds, isMuted, isPlaying, loopEnabled, shots }) {
+  const activeShot = getShotAtTime(shots, currentSeconds);
+
   return (
     <Panel className="social-preview-panel">
       <div className="section-title-line" data-testid="social-preview-title">
@@ -571,7 +663,13 @@ function SocialPreview({ aspectRatio }) {
         <span>({aspectRatio === "16:9" ? "9:16" : aspectRatio})</span>
       </div>
       <div className="phone-frame">
-        <img src={assets.socialPhoneFrame} alt="Vertical social cut of the skincare video" />
+        <CampaignVideoFrame
+          activeShot={activeShot}
+          currentSeconds={currentSeconds}
+          isMuted={isMuted}
+          isPlaying={isPlaying}
+          loopEnabled={loopEnabled}
+        />
         <div className="phone-nav">
           <span><Home size={11} />Home</span>
           <span><Search size={11} />Discover</span>
@@ -601,7 +699,7 @@ function ShotStrip({ currentSeconds, duration, onAddTimelineEvent, onSelectShot,
             onClick={() => onSelectShot(shot.id)}
             type="button"
           >
-            <img src={assets[shot.asset]} alt={shot.title} />
+            <ShotMedia shot={shot} />
             <span className="shot-number">{shot.number}</span>
             <span className="shot-start">{shot.start}</span>
             <span className="shot-duration">{shot.durationSeconds.toFixed(1)}s</span>
@@ -1675,6 +1773,7 @@ function MainEditor({
   onScrub,
   onSelectShot,
   onSkip,
+  onNleStatus,
   onToggleCaptions,
   onToggleCompare,
   onToggleFullscreen,
@@ -1682,6 +1781,7 @@ function MainEditor({
   onToggleMute,
   onTogglePlay,
   openMenu,
+  projectTitle,
   quality,
   safeEnabled,
   sampleCount,
@@ -1744,6 +1844,7 @@ function MainEditor({
             onToggleLoop={onToggleLoop}
             onToggleMute={onToggleMute}
             onTogglePlay={onTogglePlay}
+            shots={shots}
           />
         )}
         <ShotStrip
@@ -1751,6 +1852,15 @@ function MainEditor({
           duration={duration}
           onAddTimelineEvent={onAddTimelineEvent}
           onSelectShot={onSelectShot}
+          selectedShotId={selectedShotId}
+          shots={shots}
+          timelineEvents={timelineEvents}
+        />
+        <CampaignNleBay
+          currentSeconds={currentSeconds}
+          onSelectShot={onSelectShot}
+          onStatus={onNleStatus}
+          projectTitle={projectTitle}
           selectedShotId={selectedShotId}
           shots={shots}
           timelineEvents={timelineEvents}
@@ -1775,7 +1885,14 @@ function MainEditor({
       </section>
       <section className="middle-column">
         <div className="middle-spacer" />
-        <SocialPreview aspectRatio={aspectRatio} />
+        <SocialPreview
+          aspectRatio={aspectRatio}
+          currentSeconds={currentSeconds}
+          isMuted={isMuted}
+          isPlaying={isPlaying}
+          loopEnabled={loopEnabled}
+          shots={shots}
+        />
       </section>
     </main>
   );
@@ -2139,6 +2256,7 @@ export default function App() {
                 onScrub={scrubTo}
                 onSelectShot={selectShot}
                 onSkip={skipToNextShot}
+                onNleStatus={setSavedMessage}
                 onToggleCaptions={() => {
                   setCaptionsEnabled((value) => !value);
                   setSavedMessage(captionsEnabled ? "Captions disabled" : "Captions enabled");
@@ -2149,6 +2267,7 @@ export default function App() {
                 onToggleMute={() => setIsMuted((value) => !value)}
                 onTogglePlay={() => setIsPlaying((value) => !value)}
                 openMenu={openMenu}
+                projectTitle={projectTitle}
                 quality={quality}
                 safeEnabled={safeEnabled}
                 sampleCount={sampleCount}

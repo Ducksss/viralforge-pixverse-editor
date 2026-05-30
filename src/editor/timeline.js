@@ -11,9 +11,14 @@ export const OUTPUT_FPS = 30;
  * @property {string} name
  * @property {number} durationSeconds
  * @property {string=} assetKey
+ * @property {string=} srcKey
  * @property {string=} posterSrc
+ * @property {string=} src
  * @property {string=} objectUrl
  * @property {File=} file
+ * @property {number=} sourceDurationSeconds
+ * @property {number=} defaultSourceInSeconds
+ * @property {number=} defaultSourceOutSeconds
  * @property {boolean=} reselectRequired
  * @property {string=} unavailableReason
  */
@@ -69,66 +74,90 @@ export const sampleMediaAssets = [
     id: "sample-citrus-hook",
     kind: "video",
     sourceType: "sample",
-    name: "Citrus Hook",
-    assetKey: "shotProduct",
+    name: "Bottle Reveal Hook",
+    assetKey: "actualShot1",
+    srcKey: "actualVideo1",
     durationSeconds: 5,
-    width: 1080,
-    height: 1920,
-    tags: ["hook", "product"],
+    sourceDurationSeconds: 15.04,
+    defaultSourceInSeconds: 0,
+    defaultSourceOutSeconds: 5,
+    width: 624,
+    height: 1280,
+    tags: ["hook", "real-footage"],
   },
   {
     id: "sample-dropper-texture",
     kind: "video",
     sourceType: "sample",
-    name: "Dropper Texture",
-    assetKey: "shotDropper",
-    durationSeconds: 6,
-    width: 1080,
-    height: 1920,
-    tags: ["texture", "macro"],
+    name: "Bathroom Shelf Proof",
+    assetKey: "actualShot2",
+    srcKey: "actualVideo1",
+    durationSeconds: 5,
+    sourceDurationSeconds: 15.04,
+    defaultSourceInSeconds: 5,
+    defaultSourceOutSeconds: 10,
+    width: 624,
+    height: 1280,
+    tags: ["routine", "real-footage"],
   },
   {
     id: "sample-creator-proof",
     kind: "video",
     sourceType: "sample",
-    name: "Creator Proof",
-    assetKey: "shotModel",
-    durationSeconds: 6,
-    width: 1080,
-    height: 1920,
-    tags: ["creator", "proof"],
+    name: "Handheld Serum Hold",
+    assetKey: "actualShot3",
+    srcKey: "actualVideo1",
+    durationSeconds: 5,
+    sourceDurationSeconds: 15.04,
+    defaultSourceInSeconds: 10,
+    defaultSourceOutSeconds: 15,
+    width: 624,
+    height: 1280,
+    tags: ["handheld", "product"],
   },
   {
     id: "sample-ingredient-bridge",
     kind: "video",
     sourceType: "sample",
-    name: "Ingredient Bridge",
-    assetKey: "shotBubbles",
-    durationSeconds: 6,
-    width: 1080,
-    height: 1920,
-    tags: ["ingredient", "benefit"],
+    name: "Label Macro Lock",
+    assetKey: "actualShot4",
+    srcKey: "actualVideo2",
+    durationSeconds: 5,
+    sourceDurationSeconds: 15.04,
+    defaultSourceInSeconds: 0,
+    defaultSourceOutSeconds: 5,
+    width: 624,
+    height: 1280,
+    tags: ["label", "macro"],
   },
   {
     id: "sample-social-proof",
     kind: "video",
     sourceType: "sample",
-    name: "Social Proof",
-    assetKey: "shotSocial",
-    durationSeconds: 6,
-    width: 1080,
-    height: 1920,
-    tags: ["ugc", "result"],
+    name: "Ingredient Close Read",
+    assetKey: "actualShot5",
+    srcKey: "actualVideo2",
+    durationSeconds: 5,
+    sourceDurationSeconds: 15.04,
+    defaultSourceInSeconds: 5,
+    defaultSourceOutSeconds: 10,
+    width: 624,
+    height: 1280,
+    tags: ["ingredient", "label"],
   },
   {
     id: "sample-final-bottle",
     kind: "video",
     sourceType: "sample",
-    name: "Final Bottle CTA",
-    assetKey: "shotBottle",
-    durationSeconds: 7,
-    width: 1080,
-    height: 1920,
+    name: "Bottle CTA Close",
+    assetKey: "actualShot6",
+    srcKey: "actualVideo2",
+    durationSeconds: 5,
+    sourceDurationSeconds: 15.04,
+    defaultSourceInSeconds: 10,
+    defaultSourceOutSeconds: 15,
+    width: 624,
+    height: 1280,
     tags: ["cta", "product"],
   },
   {
@@ -191,10 +220,22 @@ function sequenceClips(clips) {
 }
 
 function createClipFromAsset(asset, existingClips, overrides = {}) {
-  const sourceInSeconds = Math.max(0, overrides.sourceInSeconds ?? 0);
+  const sourceDurationSeconds = asset.sourceDurationSeconds || asset.durationSeconds || 6;
+  const defaultSourceInSeconds = Math.min(
+    Math.max(0, asset.defaultSourceInSeconds ?? 0),
+    Math.max(0, sourceDurationSeconds - 0.5),
+  );
+  const defaultSourceOutSeconds = Math.min(
+    sourceDurationSeconds,
+    Math.max(
+      defaultSourceInSeconds + 0.5,
+      asset.defaultSourceOutSeconds ?? defaultSourceInSeconds + (asset.durationSeconds || sourceDurationSeconds),
+    ),
+  );
+  const sourceInSeconds = Math.max(0, overrides.sourceInSeconds ?? defaultSourceInSeconds);
   const sourceOutSeconds = Math.max(
     sourceInSeconds + 0.5,
-    Math.min(asset.durationSeconds || 6, overrides.sourceOutSeconds ?? asset.durationSeconds ?? 6),
+    Math.min(sourceDurationSeconds, overrides.sourceOutSeconds ?? defaultSourceOutSeconds),
   );
   const baseId = `clip-${slugify(asset.name)}`;
   const existingIds = new Set(existingClips.map((clip) => clip.id));
@@ -323,7 +364,7 @@ export function trimTimelineClip(project, clipId, nextTrim) {
     }
 
     const asset = getAsset(project, clip.assetId);
-    const assetDuration = asset?.durationSeconds || clip.sourceOutSeconds;
+    const assetDuration = asset?.sourceDurationSeconds || asset?.durationSeconds || clip.sourceOutSeconds;
     const requestedIn = nextTrim.sourceInSeconds ?? clip.sourceInSeconds;
     const requestedOut = nextTrim.sourceOutSeconds ?? clip.sourceOutSeconds;
     const sourceInSeconds = roundSeconds(Math.min(Math.max(0, requestedIn), Math.max(0, assetDuration - 0.5)));

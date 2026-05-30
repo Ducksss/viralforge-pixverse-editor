@@ -76,8 +76,9 @@ function createVideo(src) {
 }
 
 async function defaultLoadVisual(asset) {
-  if (asset?.objectUrl && asset.kind === "video" && !asset.reselectRequired) {
-    return createVideo(asset.objectUrl);
+  const videoSrc = asset?.objectUrl || asset?.src;
+  if (videoSrc && asset.kind === "video" && !asset.reselectRequired) {
+    return createVideo(videoSrc);
   }
 
   if (asset?.posterSrc) {

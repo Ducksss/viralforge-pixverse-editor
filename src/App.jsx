@@ -71,7 +71,6 @@ import {
 import { exportTimelineProject } from "./export/mediabunnyExport.js";
 import { EditorComposition } from "./remotion/EditorComposition.jsx";
 import CampaignWorkspaceApp from "./CampaignWorkspaceApp.jsx";
-import "./davinciEditor.css";
 
 const seededProject = createInitialTimelineProject();
 const seededAssetById = new Map(seededProject.mediaAssets.map((asset) => [asset.id, asset]));
@@ -137,11 +136,14 @@ function hydrateProjectMedia(project) {
     mediaAssets: project.mediaAssets.map((asset) => {
       const seededAsset = seededAssetById.get(asset.id);
       const assetKey = asset.assetKey || seededAsset?.assetKey;
+      const srcKey = asset.srcKey || seededAsset?.srcKey;
       return {
         ...seededAsset,
         ...asset,
         assetKey,
+        srcKey,
         posterSrc: asset.posterSrc || (assetKey ? assets[assetKey] : undefined),
+        src: asset.src || (srcKey ? assets[srcKey] : undefined),
       };
     }),
   };
@@ -390,10 +392,10 @@ function Viewer({ durationSeconds, isPlaying, onPlayheadChange, onTogglePlay, pr
           loop
           style={{
             aspectRatio: `${project.width} / ${project.height}`,
-            height: "100%",
+            height: "auto",
             maxHeight: "100%",
             maxWidth: "100%",
-            width: "100%",
+            width: "min(320px, 100%)",
           }}
         />
       </div>
@@ -1162,19 +1164,19 @@ function LocalNleEditorApp() {
       </div>
 
       <DragOverlay>
-        {dragLabel ? <div className="drag-overlay">{dragLabel}</div> : null}
+        {dragLabel ? <div className="davinci-drag-overlay">{dragLabel}</div> : null}
       </DragOverlay>
     </DndContext>
   );
 }
 
 export default function App() {
-  const campaignWorkspaceRequested =
+  const standaloneEditorRequested =
     typeof window !== "undefined" &&
     (
-      window.location.pathname === "/campaign" ||
-      new URLSearchParams(window.location.search).get("workspace") === "campaign"
+      window.location.pathname === "/local-editor" ||
+      new URLSearchParams(window.location.search).get("workspace") === "local-nle"
     );
 
-  return campaignWorkspaceRequested ? <CampaignWorkspaceApp /> : <LocalNleEditorApp />;
+  return standaloneEditorRequested ? <LocalNleEditorApp /> : <CampaignWorkspaceApp />;
 }

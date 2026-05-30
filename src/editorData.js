@@ -1,7 +1,7 @@
 export const editorSnapshot = {
   project: {
-    title: "Summer Glow Vitamin C Serum Launch",
-    product: "Summer Glow Vitamin C Serum",
+    title: "AHA BHA PHA 30 Days Miracle Serum Launch",
+    product: "AHA BHA PHA 30 Days Miracle Serum",
     category: "Serum",
     channels: "Shopee - TikTok Shop",
     owner: "Michael Tan",
@@ -10,15 +10,15 @@ export const editorSnapshot = {
   projects: [
     {
       id: "summer-glow",
-      title: "Summer Glow Vitamin C Serum Launch",
-      product: "Summer Glow Vitamin C Serum",
+      title: "AHA BHA PHA 30 Days Miracle Serum Launch",
+      product: "AHA BHA PHA 30 Days Miracle Serum",
       category: "Serum",
       channels: "Shopee - TikTok Shop",
       owner: "Michael Tan",
       role: "Seller Pro",
-      thumb: "projectThumb",
+      thumb: "actualShot1",
       status: "Editing",
-      brief: "Brightening serum routine cut",
+      brief: "AHA BHA PHA serum routine cut",
     },
     {
       id: "cloud-bounce",
@@ -46,10 +46,10 @@ export const editorSnapshot = {
     },
   ],
   video: {
-    durationSeconds: 36,
+    durationSeconds: 30,
     currentSeconds: 12,
     currentTime: "00:12",
-    totalTime: "00:36",
+    totalTime: "00:30",
     aspectRatio: "16:9",
     aspectRatios: [
       { id: "16:9", label: "16:9 Landscape" },
@@ -169,7 +169,7 @@ export const editorSnapshot = {
       { id: "disclosure", label: "AI creator disclosure enabled", done: true },
     ],
     generationSettings: [
-      { label: "Face lock", value: "86%", detail: "Stable across all six shots" },
+      { label: "Face lock", value: "86%", detail: "Stable across all six real-footage cuts" },
       { label: "Wardrobe", value: "Cream tank + robe", detail: "Matches clean skincare routine" },
       { label: "Shot mode", value: "UGC testimonial", detail: "Phone-native framing with product holds" },
     ],
@@ -189,7 +189,7 @@ export const editorSnapshot = {
       {
         id: "conversion",
         title: "Commerce close",
-        duration: "0:29 - 0:36",
+        duration: "0:25 - 0:30",
         line: "Save the listing if dullness is your main skin concern.",
       },
     ],
@@ -201,12 +201,12 @@ export const editorSnapshot = {
     ],
   },
   shots: [
-    { id: "shot-1", number: 1, start: "0:00", startSeconds: 0, durationSeconds: 5, title: "Citrus product hook", asset: "shotProduct" },
-    { id: "shot-2", number: 2, start: "0:05", startSeconds: 5, durationSeconds: 6, title: "Dropper texture", asset: "shotDropper" },
-    { id: "shot-3", number: 3, start: "0:11", startSeconds: 11, durationSeconds: 6, title: "Creator proof frame", asset: "shotModel" },
-    { id: "shot-4", number: 4, start: "0:17", startSeconds: 17, durationSeconds: 6, title: "Skin barrier science", asset: "shotBubbles" },
-    { id: "shot-5", number: 5, start: "0:23", startSeconds: 23, durationSeconds: 6, title: "Before-after glow", asset: "shotSocial" },
-    { id: "shot-6", number: 6, start: "0:29", startSeconds: 29, durationSeconds: 7, title: "Bottle shelf close", asset: "shotBottle" },
+    { id: "shot-1", number: 1, start: "0:00", startSeconds: 0, durationSeconds: 5, title: "Bottle reveal hook", asset: "actualShot1", videoAsset: "actualVideo1", videoStartSeconds: 0, videoEndSeconds: 5 },
+    { id: "shot-2", number: 2, start: "0:05", startSeconds: 5, durationSeconds: 5, title: "Bathroom shelf proof", asset: "actualShot2", videoAsset: "actualVideo1", videoStartSeconds: 5, videoEndSeconds: 10 },
+    { id: "shot-3", number: 3, start: "0:10", startSeconds: 10, durationSeconds: 5, title: "Handheld serum hold", asset: "actualShot3", videoAsset: "actualVideo1", videoStartSeconds: 10, videoEndSeconds: 15 },
+    { id: "shot-4", number: 4, start: "0:15", startSeconds: 15, durationSeconds: 5, title: "Label macro lock", asset: "actualShot4", videoAsset: "actualVideo2", videoStartSeconds: 0, videoEndSeconds: 5 },
+    { id: "shot-5", number: 5, start: "0:20", startSeconds: 20, durationSeconds: 5, title: "Ingredient close read", asset: "actualShot5", videoAsset: "actualVideo2", videoStartSeconds: 5, videoEndSeconds: 10 },
+    { id: "shot-6", number: 6, start: "0:25", startSeconds: 25, durationSeconds: 5, title: "Bottle CTA close", asset: "actualShot6", videoAsset: "actualVideo2", videoStartSeconds: 10, videoEndSeconds: 15 },
   ],
   timelineEvents: [
     { id: "m-1", atSeconds: 0, kind: "hook" },
@@ -218,12 +218,12 @@ export const editorSnapshot = {
     { id: "m-7", atSeconds: 19, kind: "texture" },
     { id: "m-8", atSeconds: 24, kind: "product" },
     { id: "m-9", atSeconds: 26, kind: "creator" },
-    { id: "m-10", atSeconds: 31, kind: "product" },
+    { id: "m-10", atSeconds: 29, kind: "product" },
   ],
   hotspots: [
-    { id: "hotspot-1", number: 1, name: "Vitamin C Serum", range: "00:03 - 00:14", x: 39, y: 61 },
-    { id: "hotspot-2", number: 2, name: "Dropper Detail", range: "00:10 - 00:17", x: 28, y: 54 },
-    { id: "hotspot-3", number: 3, name: "Glow Result", range: "00:18 - 00:28", x: 61, y: 38 },
+    { id: "hotspot-1", number: 1, name: "AHA BHA PHA Serum", range: "00:03 - 00:14", x: 39, y: 61 },
+    { id: "hotspot-2", number: 2, name: "Dropper Detail", range: "00:10 - 00:15", x: 28, y: 54 },
+    { id: "hotspot-3", number: 3, name: "Label Proof", range: "00:18 - 00:28", x: 61, y: 38 },
   ],
   feedbackByShot: {
     "shot-1": [
@@ -381,7 +381,7 @@ export const editorSnapshot = {
     "Text on screen > long talking",
   ],
   topVideos: [
-    { rank: 1, title: "Glass Skin in 3 Steps", duration: "36.2s", channel: "TikTok", reach: "9.6M", trend: "14.2%", lift: "3.1%", asset: "shotSocial" },
+    { rank: 1, title: "Glass Skin in 3 Steps", duration: "30.1s", channel: "TikTok", reach: "9.6M", trend: "14.2%", lift: "3.1%", asset: "actualShot5" },
     { rank: 2, title: "POV: Morning Routine", duration: "28.7s", channel: "TikTok", reach: "7.8M", trend: "12.7%", lift: "2.6%", asset: "shotDropper" },
     { rank: 3, title: "This Serum Changed My Skin", duration: "31.0s", channel: "Reels", reach: "6.3M", trend: "11.3%", lift: "2.1%", asset: "shotModel" },
   ],

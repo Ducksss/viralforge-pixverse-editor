@@ -13,8 +13,24 @@ import shotProduct from "./assets/shot-product.png";
 import shotSocial from "./assets/shot-social.png";
 import socialPhoneFrame from "./assets/social-phone-frame.png";
 import mainFrame from "./assets/viralforge-main-frame.png";
+import actualVideo1 from "./assets/video/video-1.mp4";
+import actualVideo2 from "./assets/video/video-2.mp4";
+import actualShot1 from "./assets/video/posters/actual-shot-1.jpg";
+import actualShot2 from "./assets/video/posters/actual-shot-2.jpg";
+import actualShot3 from "./assets/video/posters/actual-shot-3.jpg";
+import actualShot4 from "./assets/video/posters/actual-shot-4.jpg";
+import actualShot5 from "./assets/video/posters/actual-shot-5.jpg";
+import actualShot6 from "./assets/video/posters/actual-shot-6.jpg";
 
 export const assets = {
+  actualShot1,
+  actualShot2,
+  actualShot3,
+  actualShot4,
+  actualShot5,
+  actualShot6,
+  actualVideo1,
+  actualVideo2,
   creatorDaniel,
   creatorJordan,
   creatorMaya,
@@ -30,4 +46,19 @@ export const assets = {
   shotProduct,
   shotSocial,
   socialPhoneFrame,
+};
+
+export const campaignVideoSources = {
+  actualVideo1: {
+    src: actualVideo1,
+    durationSeconds: 15.04,
+    height: 1280,
+    width: 624,
+  },
+  actualVideo2: {
+    src: actualVideo2,
+    durationSeconds: 15.04,
+    height: 1280,
+    width: 624,
+  },
 };

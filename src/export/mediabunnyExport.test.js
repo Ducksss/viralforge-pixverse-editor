@@ -76,7 +76,7 @@ function createMediabunnyMocks({ canEncode = true } = {}) {
       QUALITY_HIGH: "quality-high",
       canEncodeAudio: vi.fn(async () => canEncode),
       canEncodeVideo: vi.fn(async () => canEncode),
-      createAudioBuffer: () => ({ duration: 23, numberOfChannels: 2 }),
+      createAudioBuffer: () => ({ duration: 20, numberOfChannels: 2 }),
       createCanvas: () => ({
         width: 0,
         height: 0,
@@ -105,8 +105,8 @@ describe("Mediabunny export orchestration", () => {
       width: 1080,
       height: 1920,
       fps: 30,
-      durationSeconds: 23,
-      frameCount: 690,
+      durationSeconds: 20,
+      frameCount: 600,
       music: expect.objectContaining({ assetId: "music-glass-skin" }),
       overlays: [expect.objectContaining({ text: "Tap for the bundle" })],
     });
@@ -122,7 +122,7 @@ describe("Mediabunny export orchestration", () => {
     });
 
     expect(calls.tracks.map((track) => track.type)).toEqual(["video", "audio"]);
-    expect(calls.frames).toHaveLength(690);
+    expect(calls.frames).toHaveLength(600);
     expect(calls.audioAdds).toBe(1);
     expect(calls.finalized).toBe(true);
     expect(progress.at(-1)).toMatchObject({ stage: "complete", progress: 1 });

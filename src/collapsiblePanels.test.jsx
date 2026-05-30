@@ -62,6 +62,7 @@ describe("right rail collapsible panels", () => {
   }, 10000);
 
   it("collapses every local editor assistant block independently", () => {
+    window.history.pushState({}, "", "/local-editor");
     render(<EditorApp />);
 
     assertIndependentCollapse([

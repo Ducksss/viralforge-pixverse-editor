@@ -31,7 +31,7 @@ vi.mock("./export/mediabunnyExport.js", async () => {
 
 describe("DaVinci-style local editor", () => {
   beforeEach(() => {
-    window.history.pushState({}, "", "/");
+    window.history.pushState({}, "", "/local-editor");
     localStorage.clear();
     vi.clearAllMocks();
   });
@@ -52,19 +52,19 @@ describe("DaVinci-style local editor", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /add social proof to timeline/i }));
-    expect(screen.getByRole("button", { name: /timeline clip social proof/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /add ingredient close read to timeline/i }));
+    expect(screen.getByRole("button", { name: /timeline clip ingredient close read/i })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /timeline clip creator proof/i }));
+    await user.click(screen.getByRole("button", { name: /timeline clip handheld serum hold/i }));
     await user.click(screen.getByRole("button", { name: /move selected clip earlier/i }));
     await user.click(screen.getByRole("button", { name: /move selected clip earlier/i }));
 
     const videoTrack = screen.getByTestId("video-track");
     const clipButtons = within(videoTrack).getAllByRole("button", { name: /timeline clip/i });
-    expect(clipButtons[0]).toHaveAccessibleName(/creator proof/i);
+    expect(clipButtons[0]).toHaveAccessibleName(/handheld serum hold/i);
 
     await user.clear(screen.getByLabelText(/source out/i));
-    await user.type(screen.getByLabelText(/source out/i), "4.5");
+    await user.type(screen.getByLabelText(/source out/i), "14.5");
     expect(screen.getByText("Selected duration: 4.5s")).toBeInTheDocument();
   }, 10000);
 
