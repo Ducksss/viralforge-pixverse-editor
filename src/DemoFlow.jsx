@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Sparkles, Check, ChevronRight, Play, RefreshCw, Send, ArrowRight, X, Calendar, Pause, Volume2, VolumeX } from "lucide-react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { Sparkles, Check, ChevronRight, Play, RefreshCw, Send, ArrowRight, X, Calendar, Pause, Volume2, VolumeX, Film } from "lucide-react";
 import { assets } from "./assetMap.js";
+import { CampaignNleBay } from "./CampaignNleBay.jsx";
 import video1 from "./assets/video/video-1.mp4";
 import video2 from "./assets/video/video-2.mp4";
 
@@ -12,7 +13,19 @@ const SHOT_THUMBS = [
   { label: "Shot 5: Before / After glow", asset: "shotSocial" }
 ];
 
-export default function DemoFlow({ data, onReset }) {
+const NLE_SOURCE_WINDOWS = [
+  { videoAsset: "actualVideo1", startSeconds: 0, endSeconds: 5 },
+  { videoAsset: "actualVideo1", startSeconds: 5, endSeconds: 10 },
+  { videoAsset: "actualVideo1", startSeconds: 10, endSeconds: 15 },
+  { videoAsset: "actualVideo2", startSeconds: 0, endSeconds: 5 },
+  { videoAsset: "actualVideo2", startSeconds: 5, endSeconds: 10 },
+];
+
+function getShotTitle(label) {
+  return label.replace(/^Shot\s+\d+:\s*/i, "");
+}
+
+export default function DemoFlow({ data, initialView = "generating", onReset }) {
   const cast = Array.isArray(data.characters) && data.characters.length > 0
     ? data.characters
     : data.character
@@ -21,11 +34,12 @@ export default function DemoFlow({ data, onReset }) {
   const [variantIndex, setVariantIndex] = useState(0);
   const activeCharacter = cast[variantIndex] || data.character || cast[0];
   const characterForDisplay = activeCharacter || { name: "Spokesperson", image: undefined, style: "Relatable" };
-  const [view, setView] = useState("generating"); // generating, editor, publish, success
+  const [view, setView] = useState(initialView); // generating, editor, videoEditor, publish, success
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState("Analysing your product…");
   const [selectedShotIndex, setSelectedShotIndex] = useState(0);
   const [repromptOpen, setRepromptOpen] = useState(false);
+  const [nleStatus, setNleStatus] = useState("Ready to edit");
 
   // States initialized from wizard choice
   const [productStory, setProductStory] = useState(data.story || "");
@@ -269,7 +283,32 @@ export default function DemoFlow({ data, onReset }) {
     }
   };
 
-  const activeShots = isExtended ? SHOT_THUMBS : SHOT_THUMBS.slice(0, 3);
+  const activeShots = useMemo(() => (isExtended ? SHOT_THUMBS : SHOT_THUMBS.slice(0, 3)), [isExtended]);
+  const nleShots = useMemo(() => activeShots.map((shot, index) => {
+    const sourceWindow = NLE_SOURCE_WINDOWS[index] || NLE_SOURCE_WINDOWS[0];
+
+    return {
+      id: `demo-generated-shot-${index + 1}`,
+      title: getShotTitle(shot.label),
+      asset: shot.asset,
+      aiGenerated: true,
+      durationSeconds: sourceWindow.endSeconds - sourceWindow.startSeconds,
+      startSeconds: index * 5,
+      videoAsset: sourceWindow.videoAsset,
+      videoStartSeconds: sourceWindow.startSeconds,
+      videoEndSeconds: sourceWindow.endSeconds,
+    };
+  }), [activeShots]);
+  const nleTimelineEvents = useMemo(() => {
+    const totalDuration = nleShots.reduce((duration, shot) => duration + shot.durationSeconds, 0);
+
+    return [
+      { id: "demo-hook", atSeconds: 0, kind: "hook" },
+      { id: "demo-proof", atSeconds: Math.min(5, totalDuration), kind: "proof" },
+      { id: "demo-cta", atSeconds: Math.max(0, totalDuration - 4), kind: "cta" },
+    ];
+  }, [nleShots]);
+  const campaignTitle = `${data.product.name} - ${isExtended ? "Extended Campaign" : "PixVerse Campaign"}`;
 
   return (
     <div style={{ width: "100%", height: "100%", boxSizing: "border-box" }}>
@@ -495,6 +534,15 @@ export default function DemoFlow({ data, onReset }) {
                 <button className="btn-secondary" onClick={() => setRepromptOpen(true)} type="button">
                   Not happy? Re-prompt →
                 </button>
+                <button
+                  aria-label="Edit video in drag and drop timeline"
+                  className="btn-secondary btn-editor"
+                  onClick={() => setView("videoEditor")}
+                  type="button"
+                >
+                  <Film size={16} />
+                  Edit video →
+                </button>
                 <button className="btn-primary btn-teal" onClick={() => setView("publish")} type="button">
                   Looks good → Publish
                 </button>
@@ -552,6 +600,71 @@ export default function DemoFlow({ data, onReset }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* SCREEN 7: Drag/drop video editor */}
+      {view === "videoEditor" && (
+        <div className="demo-nle-container">
+          <header className="demo-editor-header demo-nle-header">
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "36px", height: "20px", display: "flex", alignItems: "center", overflow: "visible" }}>
+                <div className="wizard-logo-mark" style={{ transform: "scale(0.7)", transformOrigin: "left center" }} />
+              </div>
+              <strong style={{ fontSize: "16px", color: "var(--ink)" }}>ViralForge Campaign Studio</strong>
+            </div>
+            <div className="demo-editor-title">
+              <strong>{campaignTitle}</strong>
+            </div>
+            <div className="demo-nle-header-actions">
+              <button className="btn-secondary" onClick={() => setView("editor")} type="button">
+                Back to review
+              </button>
+              <button className="btn-primary btn-teal" onClick={() => setView("publish")} type="button">
+                Looks good → Publish
+              </button>
+            </div>
+          </header>
+
+          <main className="demo-nle-main">
+            <CampaignNleBay
+              onStatus={setNleStatus}
+              onSelectShot={(shotId) => {
+                const nextIndex = nleShots.findIndex((shot) => shot.id === shotId);
+                if (nextIndex >= 0) {
+                  setSelectedShotIndex(nextIndex);
+                }
+              }}
+              projectTitle={campaignTitle}
+              selectedShotId={nleShots[Math.min(selectedShotIndex, nleShots.length - 1)]?.id}
+              shots={nleShots}
+              timelineEvents={nleTimelineEvents}
+            />
+            <aside className="demo-nle-sidecar">
+              <span className="section-kicker">Local timeline</span>
+              <strong>{nleStatus}</strong>
+              <dl>
+                <div>
+                  <dt>Shots</dt>
+                  <dd>{nleShots.length}</dd>
+                </div>
+                <div>
+                  <dt>Runtime</dt>
+                  <dd>{isExtended ? "30.0s" : "15.0s"}</dd>
+                </div>
+                <div>
+                  <dt>Output</dt>
+                  <dd>9:16</dd>
+                </div>
+              </dl>
+              <button className="btn-secondary" onClick={() => setView("editor")} type="button">
+                Back to review
+              </button>
+              <button className="btn-primary btn-teal" onClick={() => setView("publish")} type="button">
+                Looks good → Publish
+              </button>
+            </aside>
+          </main>
         </div>
       )}
 

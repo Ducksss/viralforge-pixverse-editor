@@ -74,6 +74,11 @@ Core editor flow:
 7. Scrub or play the Remotion Timeline and watch the TikTok-style Social Preview stay synced to the same playhead.
 8. Export a downloadable 9:16 MP4 through the Mediabunny orchestration layer.
 
+The generated-video review flow also exposes an **Edit video** action beside
+Re-prompt and Publish. It opens the same Local NLE surface from the review
+screen, seeded with the generated shots so sellers can drag, reorder, trim,
+adjust music/CTA text, export, then return to publish.
+
 The AI People workspace is directly available at `/ai-people`. The standalone
 DaVinci-style local editor remains available at `/local-editor` or
 `/?workspace=local-nle` for focused NLE regression testing.
@@ -127,6 +132,7 @@ npm run build
 - Use the Local NLE as the primary editor inside the ViralForge campaign workspace.
 - Route directly to `/editor`, `/ai-people`, `/wizard`, or `/local-editor`.
 - The bundled campaign uses two real MP4s from `src/assets/video/`, split into six 5-second shot cards with generated poster frames under `src/assets/video/posters/`.
+- In the generated-video review screen, click **Edit video** to open the embedded drag/drop timeline before publishing.
 - Import local video/audio files into the NLE media pool (metadata is probed with Mediabunny when possible).
 - Drag campaign shots or uploaded clips into the local timeline; reorder with drag-and-drop.
 - Click timeline ruler ticks or enter an exact jump time to seek the editor playhead.
