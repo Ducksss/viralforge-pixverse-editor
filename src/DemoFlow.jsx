@@ -103,14 +103,14 @@ export default function DemoFlow({ data, onReset }) {
   useEffect(() => {
     if (videoRef.current) {
       if (isPlaying) {
-        videoRef.current.play().catch(() => {});
+        videoRef.current.play().catch(() => { });
       } else {
         videoRef.current.pause();
       }
     }
     if (socialVideoRef.current) {
       if (isPlaying) {
-        socialVideoRef.current.play().catch(() => {});
+        socialVideoRef.current.play().catch(() => { });
       } else {
         socialVideoRef.current.pause();
       }
@@ -157,11 +157,11 @@ export default function DemoFlow({ data, onReset }) {
       // Loop video 1 normally
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(() => {});
+        videoRef.current.play().catch(() => { });
       }
       if (socialVideoRef.current) {
         socialVideoRef.current.currentTime = 0;
-        socialVideoRef.current.play().catch(() => {});
+        socialVideoRef.current.play().catch(() => { });
       }
     }
   };
@@ -170,11 +170,11 @@ export default function DemoFlow({ data, onReset }) {
     setIsPlaying((prev) => {
       const nextPlay = !prev;
       if (videoRef.current) {
-        if (nextPlay) videoRef.current.play().catch(() => {});
+        if (nextPlay) videoRef.current.play().catch(() => { });
         else videoRef.current.pause();
       }
       if (socialVideoRef.current) {
-        if (nextPlay) socialVideoRef.current.play().catch(() => {});
+        if (nextPlay) socialVideoRef.current.play().catch(() => { });
         else socialVideoRef.current.pause();
       }
       return nextPlay;
@@ -192,7 +192,7 @@ export default function DemoFlow({ data, onReset }) {
 
   const handleShotCardClick = (idx) => {
     setSelectedShotIndex(idx);
-    
+
     // Seek logic to make it feel like a real editor
     if (currentVideoSrc !== video1) {
       setCurrentVideoSrc(video1);
@@ -201,11 +201,11 @@ export default function DemoFlow({ data, onReset }) {
       const shotStarts = [0, 5, 11, 17, 23];
       if (videoRef.current) {
         videoRef.current.currentTime = shotStarts[idx];
-        videoRef.current.play().catch(() => {});
+        videoRef.current.play().catch(() => { });
       }
       if (socialVideoRef.current) {
         socialVideoRef.current.currentTime = shotStarts[idx];
-        socialVideoRef.current.play().catch(() => {});
+        socialVideoRef.current.play().catch(() => { });
       }
     }, 50);
     setIsPlaying(true);
@@ -320,7 +320,7 @@ export default function DemoFlow({ data, onReset }) {
                   onTimeUpdate={handleTimeUpdate}
                   style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
                 />
-                
+
                 {/* Control Badge */}
                 <div className="video-player-badge" style={{ pointerEvents: "none" }}>
                   <Play size={10} fill="currentColor" style={{ marginRight: "4px" }} />
@@ -328,7 +328,7 @@ export default function DemoFlow({ data, onReset }) {
                     ? `Previewing Extended Campaign (${currentVideoSrc === video1 ? "Video 1" : "Video 2"})`
                     : "Previewing Campaign"}
                 </div>
-                
+
                 {/* Control Overlay Buttons */}
                 <div style={{ position: "absolute", bottom: "16px", right: "16px", zIndex: 20, display: "flex", gap: "8px" }}>
                   <button
@@ -625,7 +625,7 @@ export default function DemoFlow({ data, onReset }) {
                 The video has been successfully pushed and linked to your product listing on TikTok Shop.
               </p>
 
-              <button className="btn-primary btn-teal" onClick={onReset} type="button">
+              <button className="btn-primary btn-teal" onClick={() => { window.location.href = "/editor"; }} type="button">
                 Start new campaign
               </button>
             </div>

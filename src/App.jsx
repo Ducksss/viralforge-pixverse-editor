@@ -161,6 +161,11 @@ function hydrateProjectMedia(project) {
   return {
     ...project,
     mediaAssets: project.mediaAssets.map((asset) => {
+      const wizardRequested =
+        typeof window !== "undefined" &&
+        (window.location.pathname === "/wizard" ||
+          new URLSearchParams(window.location.search).get("workspace") ===
+            "wizard");
       const seededAsset = seededAssetById.get(asset.id);
       const assetKey = asset.assetKey || seededAsset?.assetKey;
       const srcKey = asset.srcKey || seededAsset?.srcKey;
