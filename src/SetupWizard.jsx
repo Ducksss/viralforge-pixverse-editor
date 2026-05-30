@@ -45,7 +45,7 @@ const AVATARS = [
 ];
 
 export default function SetupWizard({ onComplete }) {
-  const [step, setStep] = useState("login"); // login, connecting, query, story, character
+  const [step, setStep] = useState("query"); // Start on query; login, connecting, query, story, character
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0]);
@@ -201,9 +201,7 @@ export default function SetupWizard({ onComplete }) {
           </div>
 
           <div className="wizard-footer">
-            <button className="btn-back" onClick={() => setStep("login")} type="button">
-              <ChevronLeft size={16} /> Back
-            </button>
+            <div style={{ width: "80px" }} /> {/* Hidden Back spacer to maintain layout balance */}
             <button
               className="btn-primary btn-teal"
               style={{ width: "auto", padding: "0 24px" }}

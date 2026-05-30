@@ -154,20 +154,9 @@ describe("ViralForge editor", () => {
     const handleComplete = vi.fn();
     render(<SetupWizard onComplete={handleComplete} />);
 
-    // Screen 1: Login
-    expect(screen.getByText("Welcome to ViralForge")).toBeInTheDocument();
-    await user.type(screen.getByLabelText(/email address/i), "seller@brand.com");
-    await user.type(screen.getByLabelText(/password/i), "password123");
-    await user.click(screen.getByRole("button", { name: /sign in with tiktok shop/i }));
+    // Renders the product query screen directly
+    expect(screen.getByText("Select your product")).toBeInTheDocument();
 
-
-    // Screen 2: Connecting loader
-    expect(screen.getByText("Connecting to TikTok Shop…")).toBeInTheDocument();
-
-    // Wait for the loader to finish (1.5s delay)
-    await waitFor(() => {
-      expect(screen.getByText("Select your product")).toBeInTheDocument();
-    }, { timeout: 2000 });
 
     // Click on a product card to select it (e.g. Matte Finish Setting Spray)
     const productCard = screen.getByRole("button", { name: /matte finish setting spray/i });

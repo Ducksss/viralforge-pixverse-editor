@@ -1395,7 +1395,7 @@ function MainEditor({
 }
 
 export default function App() {
-  const [wizardComplete, setWizardComplete] = useState(true); // Set to true to bypass wizard for development; change to false or isTestEnv for demo
+  const [wizardComplete, setWizardComplete] = useState(isTestEnv);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [creatorProfiles, setCreatorProfiles] = useState(editorSnapshot.aiPeople.creatorProfiles);
   
